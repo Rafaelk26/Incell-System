@@ -9,7 +9,6 @@ import { useState } from "react";
 
 export default function RelatorioGDL(){
 
-    const { dataUserCookie } = useAuth();
 
     return(
         <>

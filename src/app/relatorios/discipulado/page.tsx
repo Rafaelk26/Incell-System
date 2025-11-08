@@ -9,7 +9,6 @@ import { useState } from "react";
 
 export default function RelatorioDiscipulado(){
 
-    const { dataUserCookie } = useAuth();
 
     return(
         <>
