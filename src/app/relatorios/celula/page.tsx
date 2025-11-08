@@ -27,7 +27,6 @@ type RelatorioForm = {
 };
 
 export default function RelatorioCelula() {
-  const { dataUserCookie } = useAuth();
 
   const { register, handleSubmit } = useForm<RelatorioForm>();
 
