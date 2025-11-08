@@ -83,12 +83,12 @@ export default function CriarUsuarios() {
 
                 <Select nome="Cargo"
                 {...register("cargo", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={"lider"} className="text-black">Líder</option>
-                  <option value={"supervisor"} className="text-black">Supervisor</option>
-                  <option value={"coordenador"} className="text-black">Coordenador</option>
-                  <option value={"pastor"} className="text-black">Pastor</option>
-                  <option value={"admin"} className="text-black">Admin</option>
+                  <option value={""} className="text-black font-semibold">Selecione</option>
+                  <option value={"lider"} className="text-black font-semibold">Líder</option>
+                  <option value={"supervisor"} className="text-black font-semibold">Supervisor</option>
+                  <option value={"coordenador"} className="text-black font-semibold">Coordenador</option>
+                  <option value={"pastor"} className="text-black font-semibold">Pastor</option>
+                  <option value={"admin"} className="text-black font-semibold">Admin</option>
                 </Select>
 
                 <Input

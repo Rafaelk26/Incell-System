@@ -19,7 +19,7 @@ import { TbHearts } from "react-icons/tb";
 
 import { FaWhatsapp } from "react-icons/fa";
 import { GoPencil, GoTrash } from "react-icons/go";
-import { IoSearchOutline } from "react-icons/io5";
+
 
 type CelulaType = {
   id: string;
@@ -120,14 +120,6 @@ export default function Celula() {
     const [ano, mes, dia] = date.split("-");
     return `${dia}/${mes}/${ano}`;
   }
-
-  /* ============================================================
-     🧠 FILTER + SORT (useMemo)
-     - filtra por celula atual (celulas[0].id)
-     - filtra por nome (contains, case-insensitive, sem acento)
-     - filtra por cargo (se selecionado)
-     - ordena por Anfitrião > LT > Discípulo
-  ============================================================ */
 
   const normalize = (s: string | undefined) =>
     (s || "")
