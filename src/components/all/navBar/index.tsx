@@ -47,33 +47,17 @@ export function Navbar(){
                                     </div>
                                 </li>
 
-                                {user?.cargo !== "admin" && (
-                                    <>
-                                        <li>
-                                            <Link href={"/dashboard"}>
-                                                <div className="flex items-center gap-2 transition-all
-                                                hover:scale-110">
-                                                    <LuLayoutDashboard size={20} color="#fff"/> 
-                                                    <span className="font-manrope font-medium text-white">Dashboard</span> 
-                                                </div>
-                                            </Link>
-                                        </li>
-                                    </>
-                                )}
-
-                                {user?.cargo === "admin" && (
-                                    <>
-                                        <li>
-                                            <Link href={"/admin"}>
-                                                <div className="flex items-center gap-2 transition-all
-                                                hover:scale-110">
-                                                    <LuLayoutDashboard size={20} color="#fff"/> 
-                                                    <span className="font-manrope font-medium text-white">Dashboard</span> 
-                                                </div>
-                                            </Link>
-                                        </li>
-                                    </>
-                                )}
+                                <>
+                                    <li>
+                                        <Link href={"/dashboard"}>
+                                            <div className="flex items-center gap-2 transition-all
+                                            hover:scale-110">
+                                                <LuLayoutDashboard size={20} color="#fff"/> 
+                                                <span className="font-manrope font-medium text-white">Dashboard</span> 
+                                            </div>
+                                        </Link>
+                                    </li>
+                                </>
 
                                 {user?.cargo === "admin" && (
                                     <>
