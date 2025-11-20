@@ -24,6 +24,7 @@ interface CelulaComLider {
   celula_nome: string;
   lider_nome: string;
   lider_id: string | null;
+  lider_cargo: string | null
 }
 
 interface Leaders {
@@ -60,7 +61,7 @@ export default function CriarMinisterioSupervisao() {
 
       const { data: users, error: errorUsers } = await supabase
         .from("users")
-        .select("id, nome");
+        .select("id, nome, cargo");
 
       if (errorUsers) throw errorUsers;
 
@@ -73,6 +74,7 @@ export default function CriarMinisterioSupervisao() {
             celula_nome: c.nome,
             lider_nome: lider ? lider.nome : "Sem líder",
             lider_id: lider ? lider.id : null,
+            lider_cargo: lider ? lider.cargo : "",
           };
         });
 
@@ -178,18 +180,18 @@ export default function CriarMinisterioSupervisao() {
                 </Select>
 
                 <Select nome="Tipo da Supervisão" {...register("genero", { required: true })}>
-                  <option value="">Selecione</option>
-                  <option value="masculina">Masculina</option>
-                  <option value="feminina">Feminina</option>
-                  <option value="kids">Kids</option>
+                  <option className="text-black" value="">Selecione</option>
+                  <option className="text-black" value="masculina">Masculina</option>
+                  <option className="text-black" value="feminina">Feminina</option>
+                  <option className="text-black" value="kids">Kids</option>
                 </Select>
 
                 <Select nome="Faixa Etária" {...register("idade", { required: true })}>
-                  <option value="">Selecione</option>
-                  <option value="05-10">05 a 10 anos</option>
-                  <option value="11-17">11 a 17 anos</option>
-                  <option value="18-40">18 a 40 anos</option>
-                  <option value="40+">40+</option>
+                  <option className="text-black" value="">Selecione</option>
+                  <option className="text-black" value="05-10">05 a 10 anos</option>
+                  <option className="text-black" value="11-17">11 a 17 anos</option>
+                  <option className="text-black" value="18-40">18 a 40 anos</option>
+                  <option className="text-black" value="40+">40+</option>
                 </Select>
               </div>
 
@@ -204,59 +206,61 @@ export default function CriarMinisterioSupervisao() {
                       <th className="p-3 text-left rounded-tr-xl"></th>
                     </tr>
                   </thead>
+                    <tbody>
+                      {celulasComLider.length > 0 ? (
+                        celulasComLider
+                          .filter(item => item.lider_cargo?.trim().toLowerCase() === "lider")
+                          .map((item) => {
+                            const isAdded = leadersArray.some(
+                              (l) => l.id === item.lider_id
+                            );
 
-                  <tbody>
-                    {celulasComLider.length > 0 ? (
-                      celulasComLider.map((item) => {
-                        const isAdded = leadersArray.some(
-                          (l) => l.id === item.lider_id
-                        );
-
-                        return (
-                          <tr
-                            key={item.id}
-                            className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
-                          >
-                            <td className="flex flex-col px-3 py-2 font-manrope font-light">
-                              <span className="text-xl font-semibold">
-                                {item.lider_nome}
-                              </span>
-                              <span className="text-gray-300">
-                                {item.celula_nome}
-                              </span>
-                            </td>
-
-                            <td className="px-3 py-2 flex gap-6 justify-end">
-                              <ButtonAction
-                                type="button" // <-- IMPEDINDO SUBMIT ACIDENTAL
-                                color={isAdded ? "bg-green-600" : "bg-blue-600"}
-                                onClick={() =>
-                                  toggleLeader({
-                                    id: item.lider_id!, // <-- CORREÇÃO IMPORTANTE
-                                    nome: item.lider_nome,
-                                    celula: item.celula_nome,
-                                  })
-                                }
+                            return (
+                              <tr
+                                key={item.id}
+                                className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
                               >
-                                <span className="font-manrope text-xl">
-                                  {isAdded ? "Adicionado" : "Adicionar"}
-                                </span>
-                              </ButtonAction>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={2}
-                          className="text-center p-6 text-white font-manrope font-semibold"
-                        >
-                          Nenhuma célula com líder registrada.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
+                                <td className="flex flex-col px-3 py-2 font-manrope font-light">
+                                  <span className="text-xl font-semibold">
+                                    {item.lider_nome}
+                                  </span>
+                                  <span className="text-gray-300">
+                                    {item.celula_nome}
+                                  </span>
+                                </td>
+
+                                <td className="px-3 py-2 flex gap-6 justify-end">
+                                  <ButtonAction
+                                    type="button"
+                                    color={isAdded ? "bg-green-600" : "bg-blue-600"}
+                                    onClick={() =>
+                                      toggleLeader({
+                                        id: item.lider_id!,
+                                        nome: item.lider_nome,
+                                        celula: item.celula_nome,
+                                      })
+                                    }
+                                  >
+                                    <span className="font-manrope text-xl">
+                                      {isAdded ? "Adicionado" : "Adicionar"}
+                                    </span>
+                                  </ButtonAction>
+                                </td>
+                              </tr>
+                            );
+                          })
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={2}
+                            className="text-center p-6 text-white font-manrope font-semibold"
+                          >
+                            Nenhuma célula com líder registrada.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+
                 </table>
               </div>
 
