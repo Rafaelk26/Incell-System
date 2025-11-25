@@ -39,23 +39,39 @@ export default function CriarMinisterioCelula() {
 
     // Requisição para buscar os líderes cadastrados
     async function requestLideres() {
-        try {
-                const { data: users, error } = await supabase
-                .from("users")
-                .select("*");
+      try {
+        const { data: users, error } = await supabase
+          .from("users")
+          .select("*");
 
-                if (error) throw error;
+        if (error) throw error;
 
-                if (users) {
-                const lideres = users.filter((user) =>
-                    ["lider", "supervisor", "coordenador", "pastor"].includes(user.cargo)
-                );
-                setDataUsers(lideres);
-            }
-        } 
-        catch (err) {
-            console.error("Erro ao buscar usuários:", err);
+        if (users) {
+          // Filtra somente cargos de liderança
+          const lideres = users.filter((user) =>
+            ["lider", "supervisor", "coordenador", "pastor"].includes(user.cargo)
+          );
+
+          // Busca as células com seus responsáveis
+          const { data: celulas, error: celError } = await supabase
+            .from("celulas")
+            .select("responsavel_id");
+
+          if (celError) throw celError;
+
+          // Monta uma lista contendo IDs de líderes que já têm célula
+          const idsComCelula = celulas?.map((c) => c.responsavel_id) || [];
+
+          // Remove do array de líderes aqueles que já têm célula
+          const lideresSemCelula = lideres.filter(
+            (l) => !idsComCelula.includes(l.id)
+          );
+          
+          setDataUsers(lideresSemCelula);
         }
+      } catch (err) {
+        console.error("Erro ao buscar usuários:", err);
+      }
     }
 
 

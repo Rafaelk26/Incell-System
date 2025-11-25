@@ -28,7 +28,7 @@ interface CelulaComLider {
 }
 
 interface Leaders {
-  id: string;      // <-- AGORA É O ID DO USER (certo!)
+  id: string;    
   nome: string;
   celula: string;
 }

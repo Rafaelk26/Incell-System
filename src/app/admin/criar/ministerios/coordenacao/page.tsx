@@ -23,7 +23,7 @@ type MinisterioCoordenacaoForm = {
 // cada item corresponde a uma supervisao real (registro na tabela `supervisoes`)
 interface CelulaComSupervisores {
   id: string; // id da supervisao (s.id)
-  celula_nome: string;
+  nome_supervisao: string;
   super_nome: string; // nome do user supervisor
   supervisao_id: string; // id da supervisao (mesmo que id, mantemos explicito)
   supervisor_user_id?: string | null; // id do user (opcional, caso precise)
@@ -54,48 +54,43 @@ export default function CriarMinisterioCoordenacao() {
     buscarCoordenadores();
   }, []);
 
-  // busca supervisoes (JOIN manual com celulas e users)
   async function buscarSupervisoesComCelas() {
-    try {
-      const { data: supervisoes, error: erroSupervisoes } = await supabase
-        .from("supervisoes")
-        .select("id, nome, supervisor_id");
+  try {
+    // Supervisões
+    const { data: supervisoes, error: erroSupervisoes } = await supabase
+      .from("supervisoes")
+      .select("id, nome, supervisor_id");
 
-      if (erroSupervisoes) throw erroSupervisoes;
+    if (erroSupervisoes) throw erroSupervisoes;
 
-      const { data: celulas, error: errorCelulas } = await supabase
-        .from("celulas")
-        .select("id, nome");
+    // Usuários (supervisores)
+    const { data: users, error: errorUsers } = await supabase
+      .from("users")
+      .select("id, nome, cargo");
 
-      if (errorCelulas) throw errorCelulas;
+    if (errorUsers) throw errorUsers;
 
-      const { data: users, error: errorUsers } = await supabase
-        .from("users")
-        .select("id, nome, cargo");
+    const resultado: CelulaComSupervisores[] = (supervisoes || []).map((s) => {
+      const supervisor = users?.find((u) => u.id === s.supervisor_id);
 
-      if (errorUsers) throw errorUsers;
+      return {
+        id: s.id,
+        supervisao_id: s.id,
+        nome_supervisao: s.nome ?? "Sem nome de supervisão",
+        super_nome: supervisor?.nome,
+        supervisor_user_id: supervisor?.id ?? null,
+        super_cargo: supervisor?.cargo ?? "",
+      };
+    });
 
-      // Construir o resultado: cada item representa uma SUPERVISAO (com id s.id)
-      const resultado: CelulaComSupervisores[] = (supervisoes || []).map((s: any) => {
-        const user = (users || []).find((u: any) => u.id === s.supervisor_id);
-
-        return {
-            id: s.id,
-            celula_nome: "Sem célula", // não existe relação na tabela
-            super_nome: user ? user.nome : "Sem supervisor",
-            supervisao_id: s.id,       // ID correto da supervisão
-            supervisor_user_id: user ? user.id : null,
-            super_cargo: user ? user.cargo : "",
-        };
-        });
-
-
-      setCelulasComLider(resultado);
-    } catch (err) {
-      console.error("Erro ao buscar supervisões:", err);
-      toast.error("Erro ao buscar supervisões.");
-    }
+    setCelulasComLider(resultado);
+  } catch (err) {
+    console.error("Erro ao buscar supervisões:", err);
+    toast.error("Erro ao buscar supervisões.");
   }
+}
+
+
 
   async function buscarCoordenadores() {
     try {
@@ -117,18 +112,20 @@ export default function CriarMinisterioCoordenacao() {
 
   // adicionar / remover supervisao no array local (sem tocar no banco)
   const toggleSupervisor = (item: CelulaComSupervisores) => {
-    const exists = supersArray.some((s) => s.supervisao_id === item.supervisao_id);
-    if (exists) {
-      setSupersArray((prev) => prev.filter((s) => s.supervisao_id !== item.supervisao_id));
-      toast.error("Supervisor removido");
-    } else {
-      setSupersArray((prev) => [
-        ...prev,
-        { supervisao_id: item.supervisao_id, nome: item.super_nome, celula: item.celula_nome },
-      ]);
-      toast.success("Supervisor adicionado");
-    }
-  };
+  const exists = supersArray.some((s) => s.supervisao_id === item.supervisao_id);
+
+  if (exists) {
+    setSupersArray((prev) => prev.filter((s) => s.supervisao_id !== item.supervisao_id));
+    toast.error("Supervisão removida");
+  } else {
+    setSupersArray((prev) => [
+      ...prev,
+      { supervisao_id: item.supervisao_id, nome: item.nome_supervisao }
+    ]);
+    toast.success("Supervisão adicionada");
+  }
+};
+
 
   // enviar tudo ao backend somente quando o usuário clicar "Registrar"
   const handleSubmitCoordenacao = async (data: MinisterioCoordenacaoForm) => {
@@ -251,7 +248,7 @@ export default function CriarMinisterioCoordenacao() {
                             >
                               <td className="flex flex-col px-3 py-2 font-manrope font-light">
                                 <span className="text-xl font-semibold">{item.super_nome}</span>
-                                <span className="text-gray-300">{item.celula_nome}</span>
+                                <span className="text-gray-300">{item.nome_supervisao}</span>
                               </td>
 
                               <td className="px-3 py-2 flex gap-6 justify-end">
