@@ -158,8 +158,11 @@ export default function CriarMinisterioCelula() {
                   <option value={"masculino"} className="text-black font-semibold">Masculino</option>
                   <option value={"feminina"} className="text-black font-semibold">Feminina</option>
                   <option value={"kids"} className="text-black font-semibold">Kids</option>
+                  <option value={"adolescente"} className="text-black font-semibold">Adolescente</option>
+                  <option value={"jovens"} className="text-black font-semibold">Jovens</option>
                   <option value={"casal"} className="text-black font-semibold">Casal</option>
                   <option value={"mista"} className="text-black font-semibold">Mista</option>
+                  <option value={"par"} className="text-black font-semibold">Par</option>
                 </Select>
 
               </div>

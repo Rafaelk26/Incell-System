@@ -8,7 +8,6 @@ export async function POST(req: Request) {
     const nome = formData.get("nome") as string;
     const supervisor_id = formData.get("supervisor_id") as string;
     const genero = formData.get("genero") as string;
-    const idade = formData.get("idade") as string;
     const leaders = JSON.parse(formData.get("leaders") as string) as Array<{
       id: string;
       nome: string;
@@ -23,7 +22,6 @@ export async function POST(req: Request) {
         nome,
         supervisor_id,
         genero,
-        idade,
       })
       .select()
       .single();

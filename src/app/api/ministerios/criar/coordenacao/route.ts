@@ -9,9 +9,6 @@ export async function POST(req: Request) {
     const nome = (formData.get("nome") as string) ?? "";
     const coordenador_id = (formData.get("coordenador_id") as string) ?? "";
     const genero = (formData.get("genero") as string) ?? "";
-    const idade = (formData.get("idade") as string) ?? "";
-
-    // Espera-se um array de objetos com pelo menos: { supervisao_id: string, nome?: string, celula?: string }
     const supersRaw = formData.get("supers") as string | null;
     const supers = supersRaw ? (JSON.parse(supersRaw) as Array<{ supervisao_id?: string; nome?: string; celula?: string }>) : [];
 
@@ -24,9 +21,6 @@ export async function POST(req: Request) {
     }
     if (!genero) {
       return NextResponse.json({ error: "Gênero é obrigatório." }, { status: 400 });
-    }
-    if (!idade) {
-      return NextResponse.json({ error: "Faixa etária é obrigatória." }, { status: 400 });
     }
     if (!Array.isArray(supers) || supers.length === 0) {
       return NextResponse.json({ error: "Escolha ao menos uma supervisão para vincular." }, { status: 400 });
@@ -70,7 +64,6 @@ export async function POST(req: Request) {
         nome,
         coordenador_id,
         genero,
-        idade,
       })
       .select()
       .single();

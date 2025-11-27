@@ -16,7 +16,6 @@ type MinisterioSupervisaoForm = {
   nome: string;
   supervisor_id?: string;
   genero: string;
-  idade: string;
 };
 
 interface CelulaComLider {
@@ -116,7 +115,6 @@ export default function CriarMinisterioSupervisao() {
     if (!data.nome.trim()) return toast.error("Informe o nome.");
     if (!data.supervisor_id) return toast.error("Selecione um supervisor.");
     if (!data.genero) return toast.error("Selecione o tipo.");
-    if (!data.idade) return toast.error("Selecione a faixa etária.");
     if (leadersArray.length === 0) return toast.error("Selecione ao menos um líder.");
 
     const formData = new FormData();
@@ -124,7 +122,6 @@ export default function CriarMinisterioSupervisao() {
     formData.append("nome", data.nome);
     formData.append("supervisor_id", data.supervisor_id);
     formData.append("genero", data.genero);
-    formData.append("idade", data.idade);
     formData.append("leaders", JSON.stringify(leadersArray));
 
     const response = await fetch("/api/ministerios/criar/supervisao", {
@@ -183,15 +180,6 @@ export default function CriarMinisterioSupervisao() {
                   <option className="text-black" value="">Selecione</option>
                   <option className="text-black" value="masculina">Masculina</option>
                   <option className="text-black" value="feminina">Feminina</option>
-                  <option className="text-black" value="kids">Kids</option>
-                </Select>
-
-                <Select nome="Faixa Etária" {...register("idade", { required: true })}>
-                  <option className="text-black" value="">Selecione</option>
-                  <option className="text-black" value="05-10">05 a 10 anos</option>
-                  <option className="text-black" value="11-17">11 a 17 anos</option>
-                  <option className="text-black" value="18-40">18 a 40 anos</option>
-                  <option className="text-black" value="40+">40+</option>
                 </Select>
               </div>
 

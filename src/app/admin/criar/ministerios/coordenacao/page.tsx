@@ -1,4 +1,4 @@
-// app/admin/criar/ministerios/coordenacao/page.tsx  (ou onde você mantém essa página)
+// app/admin/criar/ministerios/coordenacao/page.tsx 
 "use client";
 
 import ProtectedLayout from "@/app/middleware/protectedLayout";
@@ -17,22 +17,19 @@ type MinisterioCoordenacaoForm = {
   nome: string;
   coordenador_id?: string;
   genero: string;
-  idade: string;
 };
 
-// cada item corresponde a uma supervisao real (registro na tabela `supervisoes`)
 interface CelulaComSupervisores {
-  id: string; // id da supervisao (s.id)
+  id: string; 
   nome_supervisao: string;
-  super_nome: string; // nome do user supervisor
-  supervisao_id: string; // id da supervisao (mesmo que id, mantemos explicito)
-  supervisor_user_id?: string | null; // id do user (opcional, caso precise)
+  super_nome: string; 
+  supervisao_id: string;
+  supervisor_user_id?: string | null;
   super_cargo?: string | null;
 }
 
-// o que guardamos no array local antes de enviar ao backend
 interface SupersItem {
-  supervisao_id: string; // ESSENCIAL: id da supervisao (não id do user)
+  supervisao_id: string;
   nome?: string;
   celula?: string;
 }
@@ -132,7 +129,6 @@ export default function CriarMinisterioCoordenacao() {
     if (!data.nome?.trim()) return toast.error("Informe o nome.");
     if (!data.coordenador_id) return toast.error("Selecione um coordenador.");
     if (!data.genero) return toast.error("Selecione o tipo.");
-    if (!data.idade) return toast.error("Selecione a faixa etária.");
     if (supersArray.length === 0) return toast.error("Selecione ao menos um supervisor.");
 
     try {
@@ -140,8 +136,7 @@ export default function CriarMinisterioCoordenacao() {
       formData.append("nome", data.nome);
       formData.append("coordenador_id", data.coordenador_id);
       formData.append("genero", data.genero);
-      formData.append("idade", data.idade);
-      formData.append("supers", JSON.stringify(supersArray)); // cada item tem supervisao_id
+      formData.append("supers", JSON.stringify(supersArray));
 
       const response = await fetch("/api/ministerios/criar/coordenacao", {
         method: "POST",
@@ -200,27 +195,6 @@ export default function CriarMinisterioCoordenacao() {
                   </option>
                   <option className="text-black" value="feminina">
                     Feminina
-                  </option>
-                  <option className="text-black" value="kids">
-                    Kids
-                  </option>
-                </Select>
-
-                <Select nome="Faixa Etária" {...register("idade", { required: true })}>
-                  <option className="text-black" value="">
-                    Selecione
-                  </option>
-                  <option className="text-black" value="05-10">
-                    05 a 10 anos
-                  </option>
-                  <option className="text-black" value="11-17">
-                    11 a 17 anos
-                  </option>
-                  <option className="text-black" value="18-40">
-                    18 a 40 anos
-                  </option>
-                  <option className="text-black" value="40+">
-                    40+
                   </option>
                 </Select>
               </div>
