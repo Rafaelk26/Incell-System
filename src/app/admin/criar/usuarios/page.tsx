@@ -3,12 +3,14 @@
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { Navbar } from "@/components/all/navBar";
 import Perfil from "../../../../../public/assets/perfil teste.avif";
+import { SpinnerLoading } from "@/components/all/spinnerLoading";
 import Image from "next/image";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
 import { formatNumber } from "@/functions/formatNumber";
 import { Select } from "@/components/select";
 import toast from "react-hot-toast";
+import { useState } from "react";
 
 type UsuariosForm = {
   nome: string;
@@ -21,10 +23,13 @@ type UsuariosForm = {
 };
 
 export default function CriarUsuarios() {
-  const { register, handleSubmit } = useForm<UsuariosForm>(); // hook também no topo
+  const { register, handleSubmit, reset } = useForm<UsuariosForm>(); // hook também no topo
+  const [ useLoading, setUseLoading ] = useState<boolean>(false)
 
   const handleSubmitUser = async (data: UsuariosForm) => {
+        setUseLoading(true)
         try {
+                
                 const formData = new FormData();
                 formData.append("nome", data.nome);
                 formData.append("cargo", data.cargo.trim());
@@ -44,15 +49,30 @@ export default function CriarUsuarios() {
                 if (!res.ok) throw new Error(result.error || "Erro ao cadastrar usuário");
 
                 toast.success("Usuário criado com sucesso!");
+                reset({
+                  nome: "",
+                  cargo: "",
+                  dataNascimento: "",
+                  email: "",
+                  foto: null as any,
+                  telefone: ""
+                })
+                setUseLoading(false)
         } catch (err) {
                 console.error(err);
                 toast.error("Erro ao criar usuário!");
+                setUseLoading(false)
         }
     };
 
 
   return (
     <ProtectedLayout>
+      { useLoading && (
+        <>
+          <SpinnerLoading />
+        </>
+      )}
       <main className="max-w-full h-screen flex">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
@@ -120,6 +140,7 @@ export default function CriarUsuarios() {
                 <Input
                   nome="Senha"
                   type="text"
+                  value={"1234"}
                   {...register("senha", { required: true })}
                 />
                 
@@ -136,7 +157,8 @@ export default function CriarUsuarios() {
               </div>
 
               <button
-              className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg" 
+              className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg
+              hover:scale-105 hover:bg-blue-600 hover:cursor-pointer" 
               type="submit">Registrar</button>
 
             </form>

@@ -11,6 +11,7 @@ import { Select } from "@/components/select";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { SpinnerLoading } from "@/components/all/spinnerLoading";
 
 type MinisterioCelulaForm = {
   nome: string;
@@ -33,8 +34,9 @@ interface UserSupabase {
 
 
 export default function CriarMinisterioCelula() {
-  const { register, handleSubmit } = useForm<MinisterioCelulaForm>(); // hook também no topo
+  const { register, handleSubmit, reset } = useForm<MinisterioCelulaForm>(); // hook também no topo
   const [ dataUsers, setDataUsers ] = useState<UserSupabase[]>([])
+    const [ useLoading, setUseLoading ] = useState<boolean>(false)
 
 
     // Requisição para buscar os líderes cadastrados
@@ -83,6 +85,7 @@ export default function CriarMinisterioCelula() {
 
 
   const handleSubmitCelula = async (data: MinisterioCelulaForm) => {
+      setUseLoading(true)
         try {
                 const formData = new FormData();
                 formData.append("nome", data.nome);
@@ -105,17 +108,34 @@ export default function CriarMinisterioCelula() {
 
                 if (!res.ok) throw new Error(result.error || "Erro ao cadastrar nova célula");
 
+                setUseLoading(false)
                 toast.success("Nova célula criada com sucesso!");
+                reset({
+                  nome: "",
+                  responsavel_id: "",
+                  genero: "",
+                  rua: "",
+                  numero: "",
+                  bairro: "",
+                  dia_semana: "",
+                  horario: "",
+                  idade: ""
+                })
         } catch (err) {
+          setUseLoading(false)
                 toast.error("Erro ao criar nova célula!") 
                 console.error(err);
-                alert("Erro ao criar nova célula!");
         }
     };
 
 
   return (
     <ProtectedLayout>
+      { useLoading && (
+        <>
+          <SpinnerLoading />
+        </>
+      )}
       <main className="max-w-full h-screen flex">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
@@ -270,7 +290,8 @@ export default function CriarMinisterioCelula() {
               </div>
 
               <button
-              className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg" 
+              className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg
+              hover:scale-105 hover:bg-blue-600 hover:cursor-pointer" 
               type="submit">Registrar</button>
 
             </form>

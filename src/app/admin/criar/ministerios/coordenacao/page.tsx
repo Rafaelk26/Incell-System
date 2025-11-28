@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
+import { SpinnerLoading } from "@/components/all/spinnerLoading";
 
 type MinisterioCoordenacaoForm = {
   nome: string;
@@ -45,6 +46,7 @@ export default function CriarMinisterioCoordenacao() {
   const [celulasComLider, setCelulasComLider] = useState<CelulaComSupervisores[]>([]);
   const [supersArray, setSupersArray] = useState<SupersItem[]>([]);
   const [coordenadores, setCoordenadores] = useState<Coordenadores[]>([]);
+  const [ useLoading, setUseLoading ] = useState<boolean>(false)
 
   useEffect(() => {
     buscarSupervisoesComCelas();
@@ -126,6 +128,7 @@ export default function CriarMinisterioCoordenacao() {
 
   // enviar tudo ao backend somente quando o usuário clicar "Registrar"
   const handleSubmitCoordenacao = async (data: MinisterioCoordenacaoForm) => {
+    setUseLoading(true)
     if (!data.nome?.trim()) return toast.error("Informe o nome.");
     if (!data.coordenador_id) return toast.error("Selecione um coordenador.");
     if (!data.genero) return toast.error("Selecione o tipo.");
@@ -150,10 +153,11 @@ export default function CriarMinisterioCoordenacao() {
         return;
       }
 
+      setUseLoading(false)
       toast.success("Coordenação criada com sucesso!");
-      // opcional: limpar form / array
       setSupersArray([]);
     } catch (err) {
+      setUseLoading(false)
       console.error("Erro ao submeter coordenação:", err);
       toast.error("Erro ao criar coordenação.");
     }
@@ -161,6 +165,11 @@ export default function CriarMinisterioCoordenacao() {
 
   return (
     <ProtectedLayout>
+      { useLoading && (
+        <>
+          <SpinnerLoading />
+        </>
+      )}
       <main className="max-w-full h-screen flex">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">

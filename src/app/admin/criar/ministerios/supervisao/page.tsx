@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
+import { SpinnerLoading } from "@/components/all/spinnerLoading";
 
 type MinisterioSupervisaoForm = {
   nome: string;
@@ -39,10 +40,11 @@ interface Supervisores {
 }
 
 export default function CriarMinisterioSupervisao() {
-  const { register, handleSubmit } = useForm<MinisterioSupervisaoForm>();
+  const { register, handleSubmit, reset } = useForm<MinisterioSupervisaoForm>();
   const [celulasComLider, setCelulasComLider] = useState<CelulaComLider[]>([]);
   const [leadersArray, setLeadersArray] = useState<Leaders[]>([]);
   const [supervisores, setSupervisores] = useState<Supervisores[]>([]);
+  const [ useLoading, setUseLoading ] = useState<boolean>(false)
 
   // Buscar células + líderes
   useEffect(() => {
@@ -112,6 +114,7 @@ export default function CriarMinisterioSupervisao() {
 
   // Enviar para o banco somente ao clicar em Registrar
   const handleSubmitSupervisao = async (data: MinisterioSupervisaoForm) => {
+    setUseLoading(true)
     if (!data.nome.trim()) return toast.error("Informe o nome.");
     if (!data.supervisor_id) return toast.error("Selecione um supervisor.");
     if (!data.genero) return toast.error("Selecione o tipo.");
@@ -136,11 +139,22 @@ export default function CriarMinisterioSupervisao() {
       return;
     }
 
+    setUseLoading(false)
     toast.success("Supervisão criada com sucesso!");
+    reset({
+      nome: "",
+      genero: "",
+      supervisor_id: ""
+    })
   };
 
   return (
     <ProtectedLayout>
+      { useLoading && (
+        <>
+          <SpinnerLoading />
+        </>
+      )}
       <main className="max-w-full h-screen flex">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
