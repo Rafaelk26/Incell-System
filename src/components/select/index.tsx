@@ -1,14 +1,18 @@
 import { InputHTMLAttributes, SelectHTMLAttributes } from "react";
 
 interface selectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  nome: string;
+  nome?: string;
   children: React.ReactNode
 }
 
 export function Select({ nome, children, ...rest }: selectProps) {
   return (
     <div className="w-full flex flex-col gap-2">
-        <label className="font-manrope text-lg">{nome}</label>
+        {nome && (
+          <>
+            <label className="font-manrope text-lg">{nome}</label>
+          </>
+        )}
         <select
         {...rest}
         className="bg-[#514F4F]/40 p-3 pr-10 rounded-lg border border-white font-manrope
