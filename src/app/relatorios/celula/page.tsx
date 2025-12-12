@@ -8,6 +8,8 @@ import Image from "next/image";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
 import { Select } from "@/components/select";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type RelatorioForm = {
   dataCelula: string;
@@ -26,10 +28,57 @@ type RelatorioForm = {
   fotoCelula: string;
 };
 
+
+type DiscipulosType = {
+  id: string;
+  nome: string;
+  cargo: string;
+  contato: string;
+  dataNascimento: string;
+  celula_id?: string;
+};
+
 export default function RelatorioCelula() {
 
+  const { user } = useAuth();
   const { register, handleSubmit } = useForm<RelatorioForm>();
+  const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
 
+  const requestDiscipulos = useCallback(async () => {
+
+    try {
+      const cacheKey = `discipulos_all`;
+      const cachedData = localStorage.getItem(cacheKey);
+
+      if (cachedData) {
+        setDiscipulos(JSON.parse(cachedData));
+      }
+
+      const { data, error } = await supabase.from("discipulos").select("*");
+
+      if (error) throw error;
+
+      if (data) {
+        // salva em cache para respostas mais rápidas posteriormente
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        setDiscipulos(data);
+      }
+    } catch (err) {
+      console.error("Erro ao resgatar os discípulos no banco.", err);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    if (user) {
+      requestDiscipulos();
+    }
+  }, [user, requestDiscipulos]);
+
+  
+
+
+  // FUNÇÃO PARA ENVIAR O PDF PARA O BACKEND
   const handleSubmitRelatoryCell = (data: RelatorioForm) => {
     console.log("Objeto final:", data);
     // aqui você pode mandar pro backend
@@ -48,7 +97,7 @@ export default function RelatorioCelula() {
             />
           </header>
 
-          <section className="w-full md:mt-14">
+          <section className="max-w-6xl w-full px-10 md:mt-14">
             <h1 className="font-bold text-4xl font-manrope">
               Relatório de Célula
             </h1>
@@ -82,28 +131,34 @@ export default function RelatorioCelula() {
                 <Select nome="Dinâmica"
                 {...register("dinamica", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={"Rafael"} className="text-black">Rafael</option>
-                  <option value={"Rubens"} className="text-black">Rubens</option>
-                  <option value={"Cleber"} className="text-black">Cleber</option>
-                  <option value={"Ronaldo"} className="text-black">Ronaldo</option>
+                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
                 </Select>
 
                 <Select nome="Oração Inicial"
                 {...register("oracaoInicio", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={"Rafael"} className="text-black">Rafael</option>
-                  <option value={"Rubens"} className="text-black">Rubens</option>
-                  <option value={"Cleber"} className="text-black">Cleber</option>
-                  <option value={"Ronaldo"} className="text-black">Ronaldo</option>
+                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
                 </Select>
 
                 <Select nome="Oração Final"
                 {...register("oracaoFinal", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={"Rafael"} className="text-black">Rafael</option>
-                  <option value={"Rubens"} className="text-black">Rubens</option>
-                  <option value={"Cleber"} className="text-black">Cleber</option>
-                  <option value={"Ronaldo"} className="text-black">Ronaldo</option>
+                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
                 </Select>
               </div>
 
@@ -112,19 +167,23 @@ export default function RelatorioCelula() {
                 <Select nome="Oração do lanche"
                 {...register("oracaoLanche", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={"Rafael"} className="text-black">Rafael</option>
-                  <option value={"Rubens"} className="text-black">Rubens</option>
-                  <option value={"Cleber"} className="text-black">Cleber</option>
-                  <option value={"Ronaldo"} className="text-black">Ronaldo</option>
+                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
                 </Select>
 
                 <Select nome="Ministração"
                 {...register("ministracao", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={"Rafael"} className="text-black">Rafael</option>
-                  <option value={"Rubens"} className="text-black">Rubens</option>
-                  <option value={"Cleber"} className="text-black">Cleber</option>
-                  <option value={"Ronaldo"} className="text-black">Ronaldo</option>
+                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
                 </Select>
 
                 <Input
@@ -156,7 +215,7 @@ export default function RelatorioCelula() {
                 
               </div>
 
-              <div className="w-full flex items-stretch justify-between">
+              <div className="w-full flex items-stretch justify-between gap-8">
 
                 <div className="w-full flex flex-col gap-2">
                   <label className="font-manrope text-lg">Observações</label>
