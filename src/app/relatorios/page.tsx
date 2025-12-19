@@ -53,7 +53,7 @@ export default function Relatorios(){
                                     </div>
                                 </Link>
 
-                                {user?.cargo === "Supervisor" && (
+                                {user?.cargo === "supervisor" && (
                                     <>
                                         <Link href={"/relatorios/gdl"}>
                                             <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
@@ -66,7 +66,7 @@ export default function Relatorios(){
                                 )}
 
 
-                                {user?.cargo === "Coordenador" && (
+                                {user?.cargo === "coordenador" && (
                                     <>
                                         <Link href={"/relatorios/gds"}>
                                             <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
@@ -80,7 +80,7 @@ export default function Relatorios(){
 
 
 
-                                {user?.cargo === "Pastor" && (
+                                {user?.cargo === "pastor" && (
                                     <>
                                         <Link href={"/relatorios/gdc"}>
                                             <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all

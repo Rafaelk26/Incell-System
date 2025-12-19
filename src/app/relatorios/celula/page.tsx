@@ -3,13 +3,19 @@
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../../context/useUser";
 import { Navbar } from "@/components/all/navBar";
-import Perfil from "../../../../public/assets/perfil teste.avif";
-import Image from "next/image";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
 import { Select } from "@/components/select";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import Incell from "../../../../public/assets/file Incell.png";
+import toast from "react-hot-toast";
+
+/* =========================
+   TYPES
+========================= */
 
 type RelatorioForm = {
   dataCelula: string;
@@ -25,222 +31,234 @@ type RelatorioForm = {
   aceitouJesus: string;
   supervisorPresente: string;
   observacoes: string;
-  fotoCelula: string;
+  fotoCelula: FileList;
 };
-
 
 type DiscipulosType = {
   id: string;
   nome: string;
   cargo: string;
-  contato: string;
-  dataNascimento: string;
-  celula_id?: string;
 };
 
-export default function RelatorioCelula() {
+type CelulaType = {
+  id: string;
+  nome: string;
+};
 
+/* =========================
+   COMPONENT
+========================= */
+
+export default function RelatorioCelula() {
   const { user } = useAuth();
-  const { register, handleSubmit } = useForm<RelatorioForm>();
+  const { register, handleSubmit, reset } = useForm<RelatorioForm>();
+
   const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
+  const [celula, setCelula] = useState<CelulaType | null>(null);
+
+  /* =========================
+     REQUESTS
+  ========================= */
 
   const requestDiscipulos = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("discipulos")
+      .select("id, nome, cargo");
 
-    try {
-      const cacheKey = `discipulos_all`;
-      const cachedData = localStorage.getItem(cacheKey);
-
-      if (cachedData) {
-        setDiscipulos(JSON.parse(cachedData));
-      }
-
-      const { data, error } = await supabase.from("discipulos").select("*");
-
-      if (error) throw error;
-
-      if (data) {
-        // salva em cache para respostas mais rápidas posteriormente
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-        setDiscipulos(data);
-      }
-    } catch (err) {
-      console.error("Erro ao resgatar os discípulos no banco.", err);
-    }
+    if (!error && data) setDiscipulos(data);
   }, []);
 
+  const requestCelulas = useCallback(async () => {
+    if (!user?.id) return;
+
+    const { data, error } = await supabase
+      .from("celulas")
+      .select("id, nome")
+      .eq("responsavel_id", user.id)
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      console.error("Célula não encontrada");
+      return;
+    }
+
+    setCelula(data[0]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user) {
-      requestDiscipulos();
-    }
-  }, [user, requestDiscipulos]);
+    if (!user) return;
+    requestDiscipulos();
+    requestCelulas();
+  }, [user, requestDiscipulos, requestCelulas]);
 
-  
+  /* =========================
+     UTILITIES
+  ========================= */
 
+  const fileToBase64 = (file: File) =>
+    new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
 
-  // FUNÇÃO PARA ENVIAR O PDF PARA O BACKEND
-  const handleSubmitRelatoryCell = (data: RelatorioForm) => {
-    console.log("Objeto final:", data);
-    // aqui você pode mandar pro backend
+  const urlToBase64 = async (url: string) => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return fileToBase64(blob as File);
   };
+
+  const formatarDataBR = (data: string) => {
+    if (!data) return "";
+    const [ano, mes, dia] = data.split("-");
+    return `${dia}/${mes}/${ano}`;
+  };
+
+  /* =========================
+     PDF
+  ========================= */
+
+  async function gerarPdf(dados: RelatorioForm): Promise<string> {
+    const doc = new jsPDF();
+    let currentY = 10;
+
+    const logoBase64 = await urlToBase64(Incell.src);
+    doc.addImage(logoBase64, "PNG", 85, currentY, 40, 20);
+
+    currentY += 30;
+
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("Relatório de Célula", 105, currentY, { align: "center" });
+
+    currentY += 10;
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(14);
+    doc.text(`Célula: ${celula?.nome}`, 105, currentY, { align: "center" });
+
+    currentY += 10;
+
+    const fotoBase64 = await fileToBase64(dados.fotoCelula[0]);
+    doc.addImage(fotoBase64, "JPEG", 25, currentY, 160, 80);
+
+    currentY += 90;
+
+    autoTable(doc, {
+      startY: currentY,
+      theme: "grid",
+      head: [["Campo", "Informação"]],
+      body: [
+        ["Data", formatarDataBR(dados.dataCelula)],
+        ["Horário", `${dados.horaInicio} - ${dados.horaFinal}`],
+        ["Oração Inicial", dados.oracaoInicio],
+        ["Dinâmica", dados.dinamica],
+        ["Ministração", dados.ministracao],
+        ["Oração do Lanche", dados.oracaoLanche],
+        ["Oração Final", dados.oracaoFinal],
+        ["Visitantes", dados.visitantes],
+        ["Reconciliações", dados.reconciliacao],
+        ["Aceitaram Jesus", dados.aceitouJesus],
+        ["Supervisor Presente", dados.supervisorPresente],
+      ],
+      headStyles: {
+        fillColor: [0, 0, 0],
+        textColor: 255,
+      },
+      columnStyles: {
+        0: {
+          fillColor: [0, 0, 0],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+      },
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("Observações", 14, finalY);
+
+    doc.setFont("Helvetica", "normal");
+    doc.text(dados.observacoes, 14, finalY + 6, { maxWidth: 180 });
+
+    return doc.output("datauristring");
+  }
+
+  /* =========================
+     SUBMIT
+  ========================= */
+
+  const handleSubmitRelatoryCell = async (data: RelatorioForm) => {
+    if (!user || !celula) {
+      toast.error("Usuário ou célula inválidos");
+      return;
+    }
+
+    try {
+      toast.loading("Gerando relatório...");
+
+      const pdfBase64 = await gerarPdf(data);
+      const formData = new FormData();
+
+      formData.append("responsavel", user.id);
+      formData.append("tipo", "CELULA");
+      formData.append("conteudo", pdfBase64);
+      formData.append("celula_id", celula.id);
+
+      const res = await fetch("/api/relatorios/celula", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
+
+      toast.dismiss();
+      toast.success("Relatório criado com sucesso!");
+      reset();
+
+    } catch (err) {
+      console.error(err);
+      toast.dismiss();
+      toast.error("Erro ao criar relatório!");
+    }
+  };
+
+  /* =========================
+     UI
+  ========================= */
 
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
-        <Navbar />
-        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
-          <header className="w-full flex justify-end px-10 pt-6">
-            <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
-              alt="Perfil"
-            />
-          </header>
+      <Navbar />
+      <main className="max-w-6xl mx-auto p-10">
+        <h1 className="text-4xl font-bold mb-10">Relatório de Célula</h1>
 
-          <section className="max-w-6xl w-full px-10 md:mt-14">
-            <h1 className="font-bold text-4xl font-manrope">
-              Relatório de Célula
-            </h1>
+        <form onSubmit={handleSubmit(handleSubmitRelatoryCell)} className="flex flex-col gap-4">
+          <Input nome="Data" type="date" {...register("dataCelula", { required: true })} />
+          <Input nome="Hora início" type="time" {...register("horaInicio", { required: true })} />
+          <Input nome="Hora final" type="time" {...register("horaFinal", { required: true })} />
 
-            <form
-              onSubmit={handleSubmit(handleSubmitRelatoryCell)}
-              className="mt-10 flex flex-col gap-4"
-            >
-              <div className="w-full flex gap-10">
-                <Input
-                  nome="Data da célula"
-                  type="date"
-                  {...register("dataCelula", { required: true })}
-                />
+          <Select nome="Dinâmica" {...register("dinamica")}>
+            <option value="">Selecione</option>
+            {discipulos.map(d => (
+              <option key={d.id} value={d.nome}>{d.nome} - {d.cargo}</option>
+            ))}
+          </Select>
 
-                <Input
-                  nome="Hora inicial"
-                  type="time"
-                  {...register("horaInicio", { required: true })}
-                />
+          <textarea
+            className="p-3 border rounded"
+            placeholder="Observações"
+            {...register("observacoes", { required: true })}
+          />
 
-                <Input
-                  nome="Hora final"
-                  type="time"
-                  {...register("horaFinal", { required: true })}
-                />
-              </div>
+          <Input nome="Foto da célula" type="file" {...register("fotoCelula", { required: true })} />
 
-              <div className="w-full flex gap-10">
-
-                <Select nome="Dinâmica"
-                {...register("dinamica", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
-                  {discipulos.map((d)=> (
-                    <>
-                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
-                    </>
-                  ))}
-                </Select>
-
-                <Select nome="Oração Inicial"
-                {...register("oracaoInicio", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
-                  {discipulos.map((d)=> (
-                    <>
-                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
-                    </>
-                  ))}
-                </Select>
-
-                <Select nome="Oração Final"
-                {...register("oracaoFinal", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
-                  {discipulos.map((d)=> (
-                    <>
-                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
-                    </>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="w-full flex gap-10">
-
-                <Select nome="Oração do lanche"
-                {...register("oracaoLanche", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
-                  {discipulos.map((d)=> (
-                    <>
-                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
-                    </>
-                  ))}
-                </Select>
-
-                <Select nome="Ministração"
-                {...register("ministracao", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
-                  {discipulos.map((d)=> (
-                    <>
-                      <option value={d.nome} className="text-black font-bold">{d.nome} - {d.cargo}</option>
-                    </>
-                  ))}
-                </Select>
-
-                <Input
-                  nome="Quantos visitantes?"
-                  type="number"
-                  {...register("visitantes", { required: true })}
-                />
-              </div>
-
-              <div className="w-full flex gap-10">
-                <Input
-                  nome="Quantos reconciliaram?"
-                  type="number"
-                  {...register("reconciliacao", { required: true })}
-                />
-
-                <Input
-                  nome="Quantos aceitaram Jesus?"
-                  type="number"
-                  {...register("aceitouJesus", { required: true })}
-                />
-
-                <Select nome="Supervisor presente?"
-                {...register("supervisorPresente", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  <option value={"Sim"} className="text-black">Sim</option>
-                  <option value={"Não"} className="text-black">Não</option>
-                </Select>
-                
-              </div>
-
-              <div className="w-full flex items-stretch justify-between gap-8">
-
-                <div className="w-full flex flex-col gap-2">
-                  <label className="font-manrope text-lg">Observações</label>
-                  <textarea
-                  className="bg-[#514F4F]/40 p-4 rounded-lg border border-white
-                  hover:border-blue-400 
-                  focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
-                  {...register("observacoes", { required: true })}>
-                  </textarea>
-                </div>
-
-                <Input
-                  nome="Foto da célula"
-                  type="file"
-                  {...register("fotoCelula", { required: true })}
-                />
-              </div>
-
-              <button
-              className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg" 
-              type="submit">Registrar</button>
-
-            </form>
-          </section>
-        </main>
+          <button className="bg-blue-600 text-white p-3 rounded font-bold">
+            Registrar
+          </button>
+        </form>
       </main>
     </ProtectedLayout>
   );
