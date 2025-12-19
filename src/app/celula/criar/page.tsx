@@ -71,32 +71,32 @@ export default function CriarDiscipulos() {
 
   const handleSubmitDiscipulo = async (data: DiscipulosForm) => {
         try {
-                const formData = new FormData();
-                formData.append("celula_id", celulas[0].id)
-                formData.append("nome", data.nome);
-                formData.append("cargo", data.cargo.trim());
-                formData.append("contato", data.contato);
-                formData.append("dataNascimento", data.dataNascimento);
+          const formData = new FormData();
+          formData.append("celula_id", celulas[0].id)
+          formData.append("nome", data.nome);
+          formData.append("cargo", data.cargo.trim());
+          formData.append("contato", data.contato);
+          formData.append("dataNascimento", data.dataNascimento);
 
-                toast.loading("Cadastrando...");
+          toast.loading("Cadastrando...");
 
-                const res = await fetch("/api/celula/criar", {
-                method: "POST",
-                body: formData,
-                });
+          const res = await fetch("/api/celula/criar", {
+          method: "POST",
+          body: formData,
+          });
 
-                const result = await res.json();
+          const result = await res.json();
 
 
-                if (!res.ok) throw new Error(result.error || "Erro ao cadastrar discípulo!");
-                toast.dismiss();
-                toast.success("Discípulo criado com sucesso!");
+          if (!res.ok) throw new Error(result.error || "Erro ao cadastrar discípulo!");
+          toast.dismiss();
+          toast.success("Discípulo criado com sucesso!");
 
-                reset();
+          reset();
         } catch (err) {
-                console.error(err);
-                toast.dismiss();
-                toast.error("Erro ao criar discípulo!");
+          console.error(err);
+          toast.dismiss();
+          toast.error("Erro ao criar discípulo!");
         }
     };
 

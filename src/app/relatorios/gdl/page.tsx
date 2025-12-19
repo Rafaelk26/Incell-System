@@ -216,7 +216,7 @@ useEffect(() => {
     const finalY = (doc as any).lastAutoTable.finalY + 10;
 
     const presentes = leadersArray.map(
-        (l) => `• ${l.nome} (${l.celula})`
+        (l) => `• ${l.nome}`
         );
 
         const ausentes = celulasComLider
@@ -272,8 +272,7 @@ useEffect(() => {
         method: "POST",
         body: formData,
       });
-
-
+      console.log(res)
       const result = await res.json();
       if (!res.ok) {
         console.error("Erro da API:", result);

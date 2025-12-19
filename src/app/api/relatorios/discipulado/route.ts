@@ -14,11 +14,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Dados ausentes" }, { status: 400 });
     }
 
-
     const base64 = pdfBase64.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
 
     const filePath = `${celula_id}/relatorio-${Date.now()}.pdf`;
+
+   
     const { error: uploadError } = await supabase.storage
       .from("relatorios")
       .upload(filePath, buffer, {
@@ -27,12 +28,16 @@ export async function POST(req: Request) {
       });
 
     if (uploadError) throw uploadError;
+
+
     const { data: signed, error: signedError } =
       await supabase.storage
         .from("relatorios")
         .createSignedUrl(filePath, 60);
 
     if (signedError) throw signedError;
+
+    
     const { data, error } = await supabase
       .from("relatorios")
       .insert({
@@ -50,7 +55,7 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
-    // Agendar remoção do arquivo e do registro após expirar o link
+  
 
   setTimeout(async () => {
     try {

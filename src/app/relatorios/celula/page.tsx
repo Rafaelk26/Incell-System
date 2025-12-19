@@ -12,6 +12,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Incell from "../../../../public/assets/file Incell.png";
 import toast from "react-hot-toast";
+import Image from "next/image";
+import Perfil from "../../../../public/assets/perfil teste.avif";
 
 /* =========================
    TYPES
@@ -56,17 +58,23 @@ export default function RelatorioCelula() {
   const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
   const [celula, setCelula] = useState<CelulaType | null>(null);
 
-  /* =========================
-     REQUESTS
-  ========================= */
 
   const requestDiscipulos = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("discipulos")
-      .select("id, nome, cargo");
+  if (!celula?.id) return;
 
-    if (!error && data) setDiscipulos(data);
-  }, []);
+  const { data, error } = await supabase
+    .from("discipulos")
+    .select("id, nome, cargo")
+    .eq("celula_id", celula.id);
+
+  if (error) {
+    console.error("Erro ao buscar discípulos:", error);
+    return;
+  }
+
+  setDiscipulos(data);
+}, [celula?.id]);
+
 
   const requestCelulas = useCallback(async () => {
     if (!user?.id) return;
@@ -75,25 +83,29 @@ export default function RelatorioCelula() {
       .from("celulas")
       .select("id, nome")
       .eq("responsavel_id", user.id)
-      .limit(1);
+      .single();
 
-    if (error || !data || data.length === 0) {
-      console.error("Célula não encontrada");
+    if (error) {
+      console.error("Erro ao buscar célula:", error);
       return;
     }
 
-    setCelula(data[0]);
+    setCelula(data);
   }, [user?.id]);
+
 
   useEffect(() => {
     if (!user) return;
-    requestDiscipulos();
     requestCelulas();
-  }, [user, requestDiscipulos, requestCelulas]);
+  }, [user, requestCelulas]);
 
-  /* =========================
-     UTILITIES
-  ========================= */
+  useEffect(() => {
+    if (!celula) return;
+    requestDiscipulos();
+  }, [celula, requestDiscipulos]);
+
+
+
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve) => {
@@ -114,9 +126,6 @@ export default function RelatorioCelula() {
     return `${dia}/${mes}/${ano}`;
   };
 
-  /* =========================
-     PDF
-  ========================= */
 
   async function gerarPdf(dados: RelatorioForm): Promise<string> {
     const doc = new jsPDF();
@@ -185,9 +194,6 @@ export default function RelatorioCelula() {
     return doc.output("datauristring");
   }
 
-  /* =========================
-     SUBMIT
-  ========================= */
 
   const handleSubmitRelatoryCell = async (data: RelatorioForm) => {
     if (!user || !celula) {
@@ -211,8 +217,13 @@ export default function RelatorioCelula() {
         body: formData,
       });
 
+      console.log(res)
+
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error);
+      if (!res.ok) {
+        console.error("Erro da API:", result);
+        throw new Error(result.error || "Erro desconhecido");
+      }
 
       toast.dismiss();
       toast.success("Relatório criado com sucesso!");
@@ -225,40 +236,192 @@ export default function RelatorioCelula() {
     }
   };
 
-  /* =========================
-     UI
-  ========================= */
 
   return (
     <ProtectedLayout>
-      <Navbar />
-      <main className="max-w-6xl mx-auto p-10">
-        <h1 className="text-4xl font-bold mb-10">Relatório de Célula</h1>
+      <main className="max-w-full h-screen flex">
+        <Navbar />
+        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
+          <header className="w-full flex justify-end px-10 pt-6">
+            <Image
+              className="w-12 rounded-full border border-white"
+              src={Perfil}
+              alt="Perfil"
+            />
+          </header>
 
-        <form onSubmit={handleSubmit(handleSubmitRelatoryCell)} className="flex flex-col gap-4">
-          <Input nome="Data" type="date" {...register("dataCelula", { required: true })} />
-          <Input nome="Hora início" type="time" {...register("horaInicio", { required: true })} />
-          <Input nome="Hora final" type="time" {...register("horaFinal", { required: true })} />
+          <section className="max-w-6xl w-full px-10 md:mt-14 md:mb-10">
+            <h1 className="font-bold text-4xl font-manrope">
+              Relatório de Célula
+            </h1>
 
-          <Select nome="Dinâmica" {...register("dinamica")}>
-            <option value="">Selecione</option>
-            {discipulos.map(d => (
-              <option key={d.id} value={d.nome}>{d.nome} - {d.cargo}</option>
-            ))}
-          </Select>
+            <form
+              onSubmit={handleSubmit(handleSubmitRelatoryCell)}
+              className="mt-10 flex flex-col gap-4"
+            >
+              <div className="w-full flex gap-10">
+                <Input
+                  nome="Data da célula"
+                  type="date"
+                  {...register("dataCelula", { required: true })}
+                />
 
-          <textarea
-            className="p-3 border rounded"
-            placeholder="Observações"
-            {...register("observacoes", { required: true })}
-          />
 
-          <Input nome="Foto da célula" type="file" {...register("fotoCelula", { required: true })} />
+                <Input
+                  nome="Hora inicial"
+                  type="time"
+                  {...register("horaInicio", { required: true })}
+                />
 
-          <button className="bg-blue-600 text-white p-3 rounded font-bold">
-            Registrar
-          </button>
-        </form>
+                <Input
+                  nome="Hora final"
+                  type="time"
+                  {...register("horaFinal", { required: true })}
+                />
+              </div>
+
+
+              <div className="w-full flex gap-10">
+                <Select nome="Dinâmica"
+                {...register("dinamica", { required: true })}>
+                  <option value={""} className="text-black">Selecione</option>
+                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
+                </Select>
+
+
+                <Select nome="Ministração"
+                {...register("ministracao", { required: true })}>
+                  <option value={""} className="text-black">Selecione</option>
+                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
+                </Select>
+
+                <Select nome="Oração Início"
+                {...register("oracaoInicio", { required: true })}>
+                  <option value={""} className="text-black">Selecione</option>
+                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
+                </Select>
+              </div>
+
+
+              <div className="w-full flex gap-10">
+                <Select nome="Oração do Lanche"
+                {...register("oracaoLanche", { required: true })}>
+                  <option value={""} className="text-black">Selecione</option>
+                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
+                </Select>
+
+
+                <Select nome="Oração Final"
+                {...register("oracaoFinal", { required: true })}>
+                  <option value={""} className="text-black">Selecione</option>
+                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+                  {discipulos.map((d)=> (
+                    <>
+                      <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
+                    </>
+                  ))}
+                </Select>
+
+                <Input
+                  nome="Aceitaram Jesus?"
+                  type="number"
+                  min={0}
+                  {...register("aceitouJesus", { required: true })}
+                />
+              </div>
+
+
+              <div className="w-full flex gap-10">
+                <Input
+                  nome="Reconciliações?"
+                  type="number"
+                  min={0}
+                  {...register("reconciliacao", { required: true })}
+                />
+
+
+                <Input
+                  nome="Visitantes?"
+                  type="number"
+                  min={0}
+                  {...register("visitantes", { required: true })}
+                />
+
+                {user?.cargo === "lider" && (
+                  <>
+                    <Select nome="Supervisor Presente?"
+                    {...register("supervisorPresente", { required: true })}>
+                      <option value={""} className="text-black font-bold">Selecione</option>
+                      <option value="Sim" className="text-black font-bold">Sim</option>
+                      <option value="Não" className="text-black font-bold">Não</option>
+                    </Select>
+                  </>
+                )}
+
+                {user?.cargo === "supervisor" && (
+                  <>
+                    <Select nome="Coordenador Presente?"
+                    {...register("supervisorPresente", { required: true })}>
+                      <option value={""} className="text-black font-bold">Selecione</option>
+                      <option value="Sim" className="text-black font-bold">Sim</option>
+                      <option value="Não" className="text-black font-bold">Não</option>
+                    </Select>
+                  </>
+                )}
+              </div>
+
+
+
+              <div className="w-full flex items-stretch justify-between gap-8">
+
+                <div className="w-full flex flex-col gap-2">
+                  <label className="font-manrope text-lg">Observações</label>
+                  <textarea
+                  className="bg-[#514F4F]/40 p-4 rounded-lg border border-white
+                  hover:border-blue-400 
+                  focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
+                  {...register("observacoes", { required: true })}>
+                  </textarea>
+                </div>
+
+                <Input
+                  nome="Foto da Célula"
+                  type="file"
+                  {...register("fotoCelula", { required: true })}
+                />
+              </div>
+
+
+
+              <button
+              className="w-25 p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+              hover:scale-105 hover:cursor-pointer
+              focus:outline-none" 
+              type="submit">Registrar</button>
+
+            </form>
+          </section>
+        </main>
       </main>
     </ProtectedLayout>
   );
