@@ -17,7 +17,8 @@ import { BiEdit, BiTrash } from "react-icons/bi";
 // jsPDF + AutoTable
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { AlignCenter } from "lucide-react";
+import Link from "next/link";
+import toast from "react-hot-toast";
 
 interface CelulaProps {
   id: string;
@@ -34,6 +35,7 @@ interface UsuarioProps {
   id: string;
   nome: string;
   cargo: string;
+  telefone: string;
 }
 
 export default function AdminCelulas() {
@@ -58,11 +60,27 @@ export default function AdminCelulas() {
   async function buscarUsuarios() {
     const { data: usuarios } = await supabase
       .from("users")
-      .select("id, nome, cargo");
+      .select("id, nome, cargo, telefone");
 
     if (usuarios) setUsuariosS(usuarios);
   }
 
+  async function handleDeleteCell(idCell: string) {
+    try{
+      await supabase
+      .from("celulas")
+      .delete()
+      .eq("id", idCell);
+      
+      buscarCelulas();
+      toast.success("Célula deletada com sucesso!");
+
+    }
+    catch(error){
+      toast.error("Erro ao deletar célula.");
+      console.log("Erro ao deletar célula:", error);
+  }
+}
 
   async function gerarBase64(url: string) {
     const res = await fetch(url);
@@ -78,7 +96,7 @@ export default function AdminCelulas() {
   async function gerarPDF() { 
   const doc = new jsPDF();
 
-  let currentY = 10; // 🔥 INICIALIZA A POSIÇÃO VERTICAL
+  let currentY = 10;
 
   const dataAtual = new Date().toLocaleDateString("pt-BR");
 
@@ -114,10 +132,13 @@ export default function AdminCelulas() {
   // MARGEM APÓS A IMAGEM
   currentY += imgHeight + 8;
 
+
+  currentY += 10;
+
   // TÍTULO
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(24);
-  doc.text("Relatório de Células", 105, currentY, { align: "center" });
+  doc.text(`Total de Células: ${celulasS.length}`, 105, currentY, { align: "center" });
 
   // MARGEM ENTRE TÍTULO E SUBTÍTULO
   currentY += 10;
@@ -255,15 +276,15 @@ export default function AdminCelulas() {
               {/* Tipo da Célula */}
               
               <Select>
-                <option value="">Tipo da Célula</option>
-                <option value="masculino">Masculino</option>
-                <option value="feminina">Feminina</option>
-                <option value="kids">Kids</option>
-                <option value="adolescente">Adolescente</option>
-                <option value="jovens">Jovens</option>
-                <option value="casal">Casal</option>
-                <option value="mista">Mista</option>
-                <option value="par">Par</option>
+                <option value="" className="font-bold text-black">Tipo da Célula</option>
+                <option value="masculino" className="font-bold text-black">Masculino</option>
+                <option value="feminina" className="font-bold text-black">Feminina</option>
+                <option value="kids" className="font-bold text-black">Kids</option>
+                <option value="adolescente" className="font-bold text-black">Adolescente</option>
+                <option value="jovens" className="font-bold text-black">Jovens</option>
+                <option value="casal" className="font-bold text-black">Casal</option>
+                <option value="mista" className="font-bold text-black">Mista</option>
+                <option value="par" className="font-bold text-black">Par</option>
               </Select>
 
               <ButtonAction type="button" color={"bg-blue-600"}>
@@ -312,12 +333,15 @@ export default function AdminCelulas() {
                             <td className="px-3 py-2 font-manrope">{item.bairro}</td>
 
                             <td className="px-3 py-3 flex gap-6 justify-end">
-                              <ButtonAction type="button" color={"bg-green-600"}>
-                                <div className="w-full flex gap-2">
-                                  <AiOutlineWhatsApp size={24} />
-                                  Whatsapp
-                                </div>
-                              </ButtonAction>
+                              <Link href={`https://wa.me/55${lider?.telefone.slice(1).replace(/\D/g, "")}`} target="_blank">
+                                <ButtonAction type="button" color={"bg-green-600"}>
+                                  <div className="w-full flex gap-2">
+                                    <AiOutlineWhatsApp size={24} />
+                                    Whatsapp
+                                  </div>
+                                </ButtonAction>
+                              </Link>
+                              
 
                               <ButtonAction type="button" color={"bg-yellow-600"}>
                                 <div className="w-full flex gap-2">
@@ -326,7 +350,7 @@ export default function AdminCelulas() {
                                 </div>
                               </ButtonAction>
 
-                              <ButtonAction type="button" color={"bg-red-600"}>
+                              <ButtonAction type="button" color={"bg-red-600"} onClick={() => handleDeleteCell(item.id)}>
                                 <div className="w-full flex gap-2">
                                   <BiTrash size={24} />
                                   Deletar
