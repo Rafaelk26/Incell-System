@@ -16,10 +16,12 @@ import IncellLogo from "../../../public/assets/file Incell.png";
 
 import { IoMdMale, IoMdFemale } from "react-icons/io";
 import { IoMaleFemale } from "react-icons/io5";
-import { FaRegStar } from "react-icons/fa";
+import { FaRegStar, FaMale } from "react-icons/fa";
 import { TbHearts } from "react-icons/tb";
 import { AiOutlineWhatsApp } from "react-icons/ai";
 import { BiEdit, BiTrash } from "react-icons/bi";
+import { HiMiniUsers } from "react-icons/hi2";
+import { FaUserGraduate } from "react-icons/fa6";
 import toast from "react-hot-toast";
 
 /* ===================== TYPES ===================== */
@@ -27,7 +29,7 @@ import toast from "react-hot-toast";
 type CelulaType = {
   id: string;
   nome: string;
-  genero: "masculino" | "feminina" | "kids" | "mista" | "casal";
+  genero: "masculino" | "feminina" | "kids" | "adolescente" | "jovens" | "mista" | "casal" | "par";
 };
 
 type DiscipulosType = {
@@ -290,12 +292,40 @@ export default function Celula() {
                       </>
                     )}
 
+                    {celula?.genero === "adolescente" && (
+                      <>
+                        <div className="p-1 w-fit bg-orange-500 rounded-full">
+                          <FaMale size={16} color="#000" />
+                        </div>
+                        <span>Adolescente</span>
+                      </>
+                    )}
+
+
+                    {celula?.genero === "jovens" && (
+                      <>
+                        <div className="p-1 w-fit bg-cyan-500 rounded-full">
+                          <FaUserGraduate size={16} color="#000" />
+                        </div>
+                        <span>Jovens</span>
+                      </>
+                    )}
+
                     {celula?.genero === "casal" && (
                       <>
                         <div className="p-1 w-fit bg-red-500 rounded-full">
                           <TbHearts size={16} color="#000" />
                         </div>
                         <span>Casal</span>
+                      </>
+                    )}
+
+                    {celula?.genero === "par" && (
+                      <>
+                        <div className="p-1 w-fit bg-purple-500 rounded-full">
+                          <HiMiniUsers size={16} color="#000" />
+                        </div>
+                        <span>Par</span>
                       </>
                     )}
                   </div>
