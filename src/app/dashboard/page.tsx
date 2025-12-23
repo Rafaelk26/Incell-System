@@ -4,10 +4,12 @@ import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../context/useUser";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useMemo } from "react";
+import { useDashboardData } from "../hook/dashboard";
+import { useHorizontalDragScroll } from "../hook/useHorizontalDragScroll";
 import { Spinner } from "@/components/all/spiner";
 import Perfil from "../../../public/assets/perfil teste.avif";
+
 
 /* ============================================================
    📊 DASHBOARD PAGE
@@ -15,123 +17,21 @@ import Perfil from "../../../public/assets/perfil teste.avif";
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [velocity, setVelocity] = useState(0);
-  const momentumRef = useRef<number | null>(null);
+  const {
+    scrollRef,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+  } = useHorizontalDragScroll();
 
-  const [celulas, setCelulas] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    discipulos,
+    totalLideres,
+    loading,
+  } = useDashboardData(user?.id);
 
-  /* ============================================================
-     ⚙️ FUNÇÕES DE SCROLL SUAVE
-  ============================================================ */
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - (scrollRef.current?.offsetLeft || 0));
-    setScrollLeft(scrollRef.current?.scrollLeft || 0);
-    if (momentumRef.current) cancelAnimationFrame(momentumRef.current);
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    startMomentumScroll();
-  }, [velocity]);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      const x = e.pageX - (scrollRef.current?.offsetLeft || 0);
-      const walk = (x - startX) * 1.2;
-      setVelocity(walk);
-      if (scrollRef.current) scrollRef.current.scrollLeft = scrollLeft - walk;
-    },
-    [isDragging, scrollLeft, startX]
-  );
-
-  const startMomentumScroll = useCallback(() => {
-    let currentVelocity = velocity;
-    const step = () => {
-      if (!scrollRef.current) return;
-      scrollRef.current.scrollLeft -= currentVelocity;
-      currentVelocity *= 0.95;
-      if (Math.abs(currentVelocity) > 0.5)
-        momentumRef.current = requestAnimationFrame(step);
-    };
-    momentumRef.current = requestAnimationFrame(step);
-  }, [velocity]);
-
-  useEffect(() => {
-    return () => {
-      if (momentumRef.current) cancelAnimationFrame(momentumRef.current);
-    };
-  }, []);
-
-  /* ============================================================
-     📡 BUSCA DE DADOS (SUPABASE + CACHE LOCAL)
-  ============================================================ */
-  const requestCelulas = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      const cacheKey = `celulas_${user.id}`;
-      const cachedData = localStorage.getItem(cacheKey);
-
-      if (cachedData) {
-        setCelulas(JSON.parse(cachedData));
-        setLoading(false);
-      }
-
-      const { data, error } = await supabase
-        .from("celulas")
-        .select("*")
-        .eq("responsavel_id", user.id);
-
-      if (error) throw error;
-
-      if (data && JSON.stringify(data) !== cachedData) {
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-        setCelulas(data);
-      }
-    } catch (err) {
-      console.error("Erro ao buscar células:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (user) requestCelulas();
-  }, [user, requestCelulas]);
-
-  /* ============================================================
-     🧠 DADOS MEMORIZADOS
-  ============================================================ */
   const perfilImage = useMemo(() => Perfil, []);
-  const notificacoesRecentes = useMemo(
-    () => [
-      "Pastor marcou reunião GD.",
-      "Discipulado com líder X marcado.",
-      "Discipulado com líder Y confirmado.",
-    ],
-    []
-  );
 
-  const ultimosRelatorios = useMemo(
-    () => [
-      "Relatório enviado em 28 de agosto.",
-      "Relatório enviado em 12 de setembro.",
-      "Relatório enviado em 19 de setembro.",
-    ],
-    []
-  );
-
-  /* ============================================================
-     ⏳ CARREGAMENTO
-  ============================================================ */
   if (!user || loading) {
     return (
       <main className="w-full h-screen flex justify-center items-center text-white">
@@ -177,14 +77,14 @@ export default function Dashboard() {
                   onMouseMove={handleMouseMove}
                 >
                   <div className="flex gap-10 w-full justify-start">
-                    {/* CARD CÉLULAS */}
+                    {/* CARD DISCÍPULOS */}
                     {user?.cargo !== "pastor" && (
-                      <Card title="Células" value={celulas?.length || 0} />
+                      <Card title="Discípulos" value={discipulos?.length} />
                     )}
 
                     {/* CARD LÍDERES */}
                     {user?.cargo === "supervisor" && (
-                      <Card title="Líderes" value={5} />
+                      <Card title="Líderes" value={totalLideres} />
                     )}
 
                     {/* CARD SUPERVISORES */}
@@ -212,8 +112,8 @@ export default function Dashboard() {
                 {/* ======== RELATÓRIOS E NOTIFICAÇÕES ======== */}
                 <section className="w-full flex flex-col md:flex-row justify-between gap-12 mt-10 mb-10">
                   <div className="w-full md:w-1/2 flex flex-col gap-6">
-                    <InfoBox title="Últimos Relatórios" items={ultimosRelatorios} />
-                    <InfoBox title="Notificações Recentes" items={notificacoesRecentes} />
+                    <InfoBox title="Últimos Relatórios" items={[]} />
+                    <InfoBox title="Notificações Recentes" items={[]} />
                   </div>
 
                   <div className="w-full md:w-1/2 flex flex-col items-start bg-[#514F4F]/40 px-6 py-6 rounded-md">

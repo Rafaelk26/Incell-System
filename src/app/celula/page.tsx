@@ -4,7 +4,7 @@ import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../context/useUser";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Spinner } from "@/components/all/spiner";
 import { Button } from "@/components/login/buttonAction";
@@ -12,19 +12,22 @@ import { ButtonAction } from "@/components/all/buttonAction";
 import { Input } from "@/components/inputs";
 import Perfil from "../../../public/assets/perfil teste.avif";
 import Link from "next/link";
+import IncellLogo from "../../../public/assets/file Incell.png";
+
 import { IoMdMale, IoMdFemale } from "react-icons/io";
 import { IoMaleFemale } from "react-icons/io5";
 import { FaRegStar } from "react-icons/fa";
 import { TbHearts } from "react-icons/tb";
+import { AiOutlineWhatsApp } from "react-icons/ai";
+import { BiEdit, BiTrash } from "react-icons/bi";
+import toast from "react-hot-toast";
 
-import { FaWhatsapp } from "react-icons/fa";
-import { GoPencil, GoTrash } from "react-icons/go";
-
+/* ===================== TYPES ===================== */
 
 type CelulaType = {
   id: string;
   nome: string;
-  genero: string;
+  genero: "masculino" | "feminina" | "kids" | "mista" | "casal";
 };
 
 type DiscipulosType = {
@@ -33,146 +36,170 @@ type DiscipulosType = {
   cargo: string;
   contato: string;
   dataNascimento: string;
-  celula_id?: string; // importante para filtrar por célula
+  celula_id?: string;
 };
 
-/* ============================================================
-   📊 CELULA PAGE
-============================================================ */
+/* ===================== COMPONENT ===================== */
+
 export default function Celula() {
   const { user } = useAuth();
-  const [celulas, setCelulas] = useState<CelulaType[]>([]);
+
+  const [celula, setCelula] = useState<CelulaType | null>(null);
   const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // filtros
   const [searchName, setSearchName] = useState("");
-  const [filterCargo, setFilterCargo] = useState(""); // "" => todos, ou "Anfitrião","LT","Discípulo"
+  const [filterCargo, setFilterCargo] = useState("");
 
-  /* ============================================================
-     📡 BUSCA DE DADOS (SUPABASE + CACHE LOCAL)
-  ============================================================ */
+  /* ===================== CACHE CONTROL ===================== */
 
-  const requestCelulas = useCallback(async () => {
+  function clearCacheIfUserChanged(userId: string) {
+    const lastUser = localStorage.getItem("last_user_id");
+
+    if (lastUser !== userId) {
+      Object.keys(localStorage).forEach((key) => {
+        if (
+          key.startsWith("celula_responsavel_") ||
+          key.startsWith("discipulos_")
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      localStorage.setItem("last_user_id", userId);
+    }
+  }
+
+  /* ===================== FETCH CÉLULA ===================== */
+
+  const fetchCelula = async () => {
     if (!user?.id) return;
 
     try {
-      const cacheKey = `celulas_${user.id}`;
-      const cachedData = localStorage.getItem(cacheKey);
-
-      if (cachedData) {
-        setCelulas(JSON.parse(cachedData));
-        setLoading(false);
-      }
+      clearCacheIfUserChanged(user.id);
 
       const { data, error } = await supabase
         .from("celulas")
         .select("*")
-        .eq("responsavel_id", user.id);
-
-      if (error) throw error;
-
-      if (data && JSON.stringify(data) !== cachedData) {
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-        setCelulas(data);
-      }
-    } catch (err) {
-      console.error("Erro ao buscar dados:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  // FUNÇÃO PARA RESGATAR OS DISCÍPULOS (traz todos e filtramos por célula no cliente)
-  const requestDiscipulos = useCallback(async () => {
-    try {
-      const cacheKey = `discipulos_all`;
-      const cachedData = localStorage.getItem(cacheKey);
-
-      if (cachedData) {
-        setDiscipulos(JSON.parse(cachedData));
-      }
-
-      const { data, error } = await supabase.from("discipulos").select("*");
+        .eq("responsavel_id", user.id)
+        .single();
 
       if (error) throw error;
 
       if (data) {
-        // salva em cache para respostas mais rápidas posteriormente
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-        setDiscipulos(data);
+        localStorage.setItem(
+          `celula_responsavel_${user.id}`,
+          JSON.stringify(data)
+        );
+        setCelula(data);
+      } else {
+        setCelula(null);
       }
     } catch (err) {
-      console.error("Erro ao resgatar os discípulos no banco.", err);
+      console.error("Erro ao buscar célula", err);
+      setCelula(null);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    if (user) {
-      requestCelulas();
-      requestDiscipulos();
+    if (user?.id) {
+      setLoading(true);
+      fetchCelula();
     }
-  }, [user, requestCelulas, requestDiscipulos]);
+  }, [user?.id]);
 
-  function formatDate(date: string) {
-    if (!date) return "";
+  /* ===================== FETCH DISCÍPULOS ===================== */
 
-    const [ano, mes, dia] = date.split("-");
-    return `${dia}/${mes}/${ano}`;
-  }
+  const fetchDiscipulos = async () => {
+    if (!celula?.id) return;
 
-  const normalize = (s: string | undefined) =>
-    (s || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
+    try {
+      const { data, error } = await supabase
+        .from("discipulos")
+        .select("*")
+        .eq("celula_id", celula.id);
 
-  const currentCelulaId = celulas?.[0]?.id;
+      if (error) throw error;
+
+      localStorage.setItem(
+        `discipulos_${celula.id}`,
+        JSON.stringify(data || [])
+      );
+
+      setDiscipulos(data || []);
+    } catch (err) {
+      console.error("Erro ao buscar discípulos", err);
+      setDiscipulos([]);
+    }
+  };
+
+  useEffect(() => {
+    if (celula?.id) {
+      fetchDiscipulos();
+    }
+  }, [celula?.id]);
+
+  /* ===================== FILTER ===================== */
+
+  const normalize = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   const filteredDiscipulos = useMemo(() => {
-    if (!discipulos || discipulos.length === 0) return [];
+    let arr = [...discipulos];
 
-    // primeiro filtra por célula (se tivermos a célula)
-    let arr = discipulos;
-    if (currentCelulaId) {
-      arr = arr.filter((d) => d.celula_id === currentCelulaId);
-    }
-
-    // filtra por nome
-    if (searchName.trim() !== "") {
+    if (searchName) {
       const s = normalize(searchName);
       arr = arr.filter((d) => normalize(d.nome).includes(s));
     }
 
-    // filtra por cargo (se selecionado)
-    if (filterCargo && filterCargo !== "") {
-      const target = normalize(filterCargo);
-      arr = arr.filter((d) => normalize(d.cargo) === target);
+    if (filterCargo) {
+      arr = arr.filter(
+        (d) => normalize(d.cargo) === normalize(filterCargo)
+      );
     }
 
-    // ordenação customizada
-    const ordem: Record<string, number> = {
-      anfitriao: 1,
-      lt: 2,
-      discipulo: 3,
-    };
+    return arr;
+  }, [discipulos, searchName, filterCargo]);
 
-    // retorna uma cópia ordenada (não muta original)
-    return [...arr].sort((a, b) => {
-      const pesoA = ordem[normalize(a.cargo)] ?? 99;
-      const pesoB = ordem[normalize(b.cargo)] ?? 99;
+  /* ===================== DELETE ===================== */
 
-      if (pesoA !== pesoB) return pesoA - pesoB;
+  async function handleDeleteDisciple(id: string) {
+    if (!celula?.id) return;
 
-      // se mesmo peso, ordena por nome como fallback
-      return normalize(a.nome).localeCompare(normalize(b.nome));
+    const { error } = await supabase
+      .from("discipulos")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao deletar discípulo");
+      return;
+    }
+
+    setDiscipulos((prev) => {
+      const updated = prev.filter((d) => d.id !== id);
+      localStorage.setItem(
+        `discipulos_${celula.id}`,
+        JSON.stringify(updated)
+      );
+      return updated;
     });
-  }, [discipulos, currentCelulaId, searchName, filterCargo]);
 
-  /* ============================================================
-     ⏳ CARREGAMENTO
-  ============================================================ */
+    toast.success("Discípulo deletado com sucesso");
+  }
+
+  /* ===================== DATE ===================== */
+
+  function formatDate(date: string) {
+    if (!date) return "";
+    const [ano, mes, dia] = date.split("-");
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  /* ===================== LOADING ===================== */
+
   if (!user || loading) {
     return (
       <main className="w-full h-screen flex justify-center items-center text-white">
@@ -180,185 +207,218 @@ export default function Celula() {
       </main>
     );
   }
-
-  /* ============================================================
-     🎨 RENDERIZAÇÃO PRINCIPAL
-  ============================================================ */
+  /* ===================== RENDER ===================== */
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
-        <Navbar />
-        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
-          <header className="w-full flex justify-end pt-6">
-            <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
-              alt="Perfil"
-              priority
-            />
-          </header>
 
-          {/* ==================== PAGE CELULA PRINCIPAL ==================== */}
-
-          <section className="w-full">
-            <h1 className="font-bold text-4xl font-manrope">
-              <span className="text-xl font-manrope font-light">Célula</span>{" "}
-              {celulas[0]?.nome ?? ""}
-            </h1>
-
-            <div className="mt-2 flex gap-2">
-              <span className="font-manrope">Tipo de célula:</span>
-              {celulas[0]?.genero === "masculino" && (
-                <>
-                  <div className="p-1 w-fit bg-blue-500 rounded-full">
-                    <IoMdMale size={16} color="#000" />
-                  </div>
-                  <span>Masculina</span>
-                </>
-              )}
-
-              {celulas[0]?.genero === "feminina" && (
-                <>
-                  <div className="p-1 w-fit bg-pink-500 rounded-full">
-                    <IoMdFemale size={16} color="#000" />
-                  </div>
-                  <span>Feminina</span>
-                </>
-              )}
-
-              {celulas[0]?.genero === "kids" && (
-                <>
-                  <div className="p-1 w-fit bg-yellow-500 rounded-full">
-                    <FaRegStar size={16} color="#000" />
-                  </div>
-                  <span>Kids</span>
-                </>
-              )}
-
-              {celulas[0]?.genero === "mista" && (
-                <>
-                  <div className="p-1 w-fit bg-green-500 rounded-full">
-                    <IoMaleFemale size={16} color="#000" />
-                  </div>
-                  <span>Mista</span>
-                </>
-              )}
-
-              {celulas[0]?.genero === "casal" && (
-                <>
-                  <div className="p-1 w-fit bg-red-500 rounded-full">
-                    <TbHearts size={16} color="#000" />
-                  </div>
-                  <span>Casal</span>
-                </>
-              )}
+      {!celula && (
+        <>
+          <main className="w-full h-screen flex justify-center items-center text-white">
+            <div className="flex flex-col items-center gap-6">
+              <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
+              <span className="font-manrope font-semibold text-3xl">
+                Você não possui uma célula cadastrada
+              </span>
+              <Link 
+              className="text-xl font-manrope font-light text-blue-400 hover:underline"
+              href={"/dashboard"}>
+                Voltar para dashboard
+              </Link>
             </div>
+          </main>
+        </>
+      )}
 
-            <div className="w-full flex justify-between items-end mt-6">
-              <h1 className="font-bold text-3xl font-manrope">Liderança</h1>
-
-              <div className="w-max flex gap-4">
-                <div className="w-64">
-                  {/* Input de busca por nome ligado ao state */}
-                  <Input
-                    placeholder="Buscar discípulo por nome"
-                    value={searchName}
-                    onChange={(e: any) => setSearchName(e.target.value)}
+      {celula && (
+        <>
+          <>
+            <main className="max-w-full h-screen flex">
+              <Navbar />
+              <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+                <header className="w-full flex justify-end pt-6">
+                  <Image
+                    className="w-12 rounded-full border border-white"
+                    src={Perfil}
+                    alt="Perfil"
+                    priority
                   />
-                </div>
+                </header>
 
-                <select
-                  name="funcao"
-                  value={filterCargo}
-                  onChange={(e) => setFilterCargo(e.target.value)}
-                  className="bg-[#514F4F]/10 p-3 pr-10 rounded-lg border border-white font-manrope hover:border-blue-400 focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
-                >
-                  <option value="" className="text-black font-semibold">Filtrar cargo</option>
-                  <option value="" className="text-black font-semibold">Todos</option>
-                  <option value="Anfitrião" className="text-black font-semibold">Anfitrião</option>
-                  <option value="LT" className="text-black font-semibold">LT</option>
-                  <option value="Discípulo" className="text-black font-semibold">Discípulo</option>
-                </select>
-              </div>
-            </div>
+                {/* ==================== PAGE CELULA PRINCIPAL ==================== */}
 
-            {/* TABELA DE DADOS DA CÉLULA */}
+                <section className="w-full">
+                  <h1 className="font-bold text-4xl font-manrope">
+                    <span className="text-xl font-manrope font-light">Célula</span>{" "}
+                    {celula?.nome}
+                  </h1>
 
-            <div className="w-full mt-6 overflow-x-auto">
-              <table className="w-full border-collapse text-white">
-                {/* CABEÇALHO */}
-                <thead>
-                  <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
-                    <th className="p-3 text-left rounded-tl-xl">Nome</th>
-                    <th className="p-3 text-left">Função</th>
-                    <th className="p-3 text-left">Telefone</th>
-                    <th className="p-3 text-left">Data de Nascimento</th>
-                    <th className="p-3 text-center rounded-tr-xl">Ações</th>
-                  </tr>
-                </thead>
+                  <div className="mt-2 flex gap-2">
+                    <span className="font-manrope">Tipo de célula:</span>
+                    {celula?.genero === "masculino" && (
+                      <>
+                        <div className="p-1 w-fit bg-blue-500 rounded-full">
+                          <IoMdMale size={16} color="#000" />
+                        </div>
+                        <span>Masculina</span>
+                      </>
+                    )}
 
-                {/* CORPO */}
-                <tbody>
-                  {filteredDiscipulos.length > 0 ? (
-                    filteredDiscipulos.map((d) => (
-                      <tr
-                        key={d.id}
-                        className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
+                    {celula?.genero === "feminina" && (
+                      <>
+                        <div className="p-1 w-fit bg-pink-500 rounded-full">
+                          <IoMdFemale size={16} color="#000" />
+                        </div>
+                        <span>Feminina</span>
+                      </>
+                    )}
+
+                    {celula?.genero === "kids" && (
+                      <>
+                        <div className="p-1 w-fit bg-yellow-500 rounded-full">
+                          <FaRegStar size={16} color="#000" />
+                        </div>
+                        <span>Kids</span>
+                      </>
+                    )}
+
+                    {celula?.genero === "mista" && (
+                      <>
+                        <div className="p-1 w-fit bg-green-500 rounded-full">
+                          <IoMaleFemale size={16} color="#000" />
+                        </div>
+                        <span>Mista</span>
+                      </>
+                    )}
+
+                    {celula?.genero === "casal" && (
+                      <>
+                        <div className="p-1 w-fit bg-red-500 rounded-full">
+                          <TbHearts size={16} color="#000" />
+                        </div>
+                        <span>Casal</span>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="w-full flex justify-between items-end mt-6">
+                    <h1 className="font-bold text-3xl font-manrope">Liderança</h1>
+
+                    <div className="w-max flex gap-4">
+                      <div className="w-64">
+                        {/* Input de busca por nome ligado ao state */}
+                        <Input
+                          placeholder="Buscar discípulo por nome"
+                          value={searchName}
+                          onChange={(e: any) => setSearchName(e.target.value)}
+                        />
+                      </div>
+
+                      <select
+                        name="funcao"
+                        value={filterCargo}
+                        onChange={(e) => setFilterCargo(e.target.value)}
+                        className="bg-[#514F4F]/10 p-3 pr-10 rounded-lg border border-white font-manrope hover:border-blue-400 focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
                       >
-                        <td className="px-3 py-2 font-manrope font-light">
-                          {d.nome}
-                        </td>
-                        <td className="px-3 py-2 font-manrope font-light capitalize">
-                          {d.cargo}
-                        </td>
-                        <td className="px-3 py-2 font-manrope font-light">
-                          {d.contato}
-                        </td>
-                        <td className="px-3 py-2 font-manrope font-light">
-                          {formatDate(d.dataNascimento)}
-                        </td>
-                        <td className="px-3 py-2 font-manrope font-light text-center flex gap-6 justify-end">
-                          {/* WHATSAPP */}
-                          <ButtonAction color="bg-green-600" link="#">
-                            <FaWhatsapp size={22} color="#fff" />
-                          </ButtonAction>
+                        <option value="" className="text-black font-semibold">Filtrar cargo</option>
+                        <option value="" className="text-black font-semibold">Todos</option>
+                        <option value="Anfitrião" className="text-black font-semibold">Anfitrião</option>
+                        <option value="LT" className="text-black font-semibold">LT</option>
+                        <option value="Discípulo" className="text-black font-semibold">Discípulo</option>
+                      </select>
+                    </div>
+                  </div>
 
-                          {/* EDITAR */}
-                          <ButtonAction color="bg-yellow-700" link="#">
-                            <GoPencil size={21} color="#fff" />
-                          </ButtonAction>
+                  {/* TABELA DE DADOS DA CÉLULA */}
 
-                          {/* DELETAR */}
-                          <ButtonAction color="bg-red-700" link="#">
-                            <GoTrash size={21} color="#fff" />
-                          </ButtonAction>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="text-center p-20 text-white font-manrope font-semibold"
-                      >
-                        Não possui cadastro.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  <div className="w-full mt-6 overflow-x-auto">
+                    <table className="w-full border-collapse text-white">
+                      {/* CABEÇALHO */}
+                      <thead>
+                        <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
+                          <th className="p-3 text-left rounded-tl-xl">Nome</th>
+                          <th className="p-3 text-left">Função</th>
+                          <th className="p-3 text-left">Telefone</th>
+                          <th className="p-3 text-left">Data de Nascimento</th>
+                          <th className="p-3 text-left rounded-tr-xl">Ações</th>
+                        </tr>
+                      </thead>
 
-            <div className="w-full flex justify-end mt-10">
-              <div className="w-max">
-                <Link href={"/celula/criar"}>
-                  <Button nome="Cadastrar Discípulo" />
-                </Link>
-              </div>
-            </div>
-          </section>
-        </main>
-      </main>
-    </ProtectedLayout>
+                      {/* CORPO */}
+                      <tbody>
+                        {filteredDiscipulos.length > 0 ? (
+                          filteredDiscipulos.map((d) => (
+                            <tr
+                              key={d.id}
+                              className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
+                            >
+                              <td className="px-3 py-2 font-manrope font-light">
+                                {d.nome}
+                              </td>
+                              <td className="px-3 py-2 font-manrope font-light capitalize">
+                                {d.cargo}
+                              </td>
+                              <td className="px-3 py-2 font-manrope font-light">
+                                {d.contato}
+                              </td>
+                              <td className="px-3 py-2 font-manrope font-light">
+                                {formatDate(d.dataNascimento)}
+                              </td>
+                              <td className="px-3 py-2 font-manrope font-light text-center flex gap-6 justify-end">
+                                {/* WHATSAPP */}
+                                <Link href={`https://wa.me/55${d?.contato.slice(1).replace(/\D/g, "")}`} target="_blank">
+                                  <ButtonAction type="button" color={"bg-green-600"}>
+                                    <div className="w-full flex gap-2">
+                                      <AiOutlineWhatsApp size={24} />
+                                      Whatsapp
+                                    </div>
+                                  </ButtonAction>
+                                </Link>
+
+                                {/* EDITAR */}
+                                <ButtonAction type="button" color={"bg-yellow-600"}>
+                                <div className="w-full flex gap-2">
+                                  <BiEdit size={24} />
+                                  Editar
+                                </div>
+                              </ButtonAction>
+
+                                {/* DELETAR */}
+                                <ButtonAction type="button" color={"bg-red-600"} onClick={() => handleDeleteDisciple(d.id)}>
+                                  <div className="w-full flex gap-2">
+                                    <BiTrash size={24} />
+                                    Deletar
+                                  </div>
+                                </ButtonAction>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="text-center p-20 text-white font-manrope font-semibold"
+                            >
+                              Nenhum discípulo encontrado
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="w-full flex justify-end mt-10">
+                    <div className="w-max">
+                      <Link href={"/celula/criar"}>
+                        <Button nome="Cadastrar Discípulo" />
+                      </Link>
+                    </div>
+                  </div>
+                </section>
+              </main>
+            </main>
+          </>
+        </>
+      )}
+      </ProtectedLayout>
   );
 }

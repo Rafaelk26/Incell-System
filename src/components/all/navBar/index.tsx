@@ -192,7 +192,7 @@ export function Navbar(){
                                 { user?.cargo === "supervisor" && (
                                     <>
                                         <li>
-                                            <Link href={"/"}>
+                                            <Link href={"/supervisao"}>
                                                 <div className="flex items-center gap-2 transition-all
                                                 hover:scale-110">
                                                     <FaPeopleGroup size={20} color="#fff"/> 
@@ -206,7 +206,7 @@ export function Navbar(){
                                 {user?.cargo === "coordenador" && (
                                     <>
                                         <li>
-                                            <Link href={"/"}>
+                                            <Link href={"/coordenacao"}>
                                                 <div className="flex items-center gap-2 transition-all
                                                 hover:scale-110">
                                                     <FaPeopleGroup size={20} color="#fff"/> 
