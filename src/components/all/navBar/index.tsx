@@ -266,8 +266,10 @@ export function Navbar(){
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-full flex gap-2 items-center">
                             <Image 
-                            className="w-10 rounded-full border border-white"
-                            src={Perfil} 
+                            className="w-12 h-12 rounded-full border-2 border-white"
+                            src={user?.foto || ""}
+                            width={50}
+                            height={50}
                             alt="Perfil"/>
 
                             <Link href={"/perfil"}>{user?.nome}</Link>

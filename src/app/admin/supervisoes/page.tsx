@@ -8,10 +8,10 @@ import Image from "next/image";
 import Perfil from "../../../../public/assets/perfil teste.avif";
 import Incell from "../../../../public/assets/file Incell.png";
 import { supabase } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { AiOutlineWhatsApp, AiFillFilePdf } from "react-icons/ai";
-import { BiEdit, BiTrash } from "react-icons/bi";
+import { BiEdit, BiPlus, BiTrash } from "react-icons/bi";
 import { AiFillCloseCircle } from "react-icons/ai";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -46,6 +46,7 @@ export default function AdminSupervisoes() {
   const [usuarios, setUsuarios] = useState<UsuarioProps[]>([]);
   const [lideres, setLideres] = useState<LideresProps[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lideresEmSupervisao, setLideresEmSupervisao] = useState<string[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [supervisaoSelecionada, setSupervisaoSelecionada] =
@@ -102,12 +103,53 @@ export default function AdminSupervisoes() {
     setLideres(formatado);
   }
 
+
+
+  async function buscarLideresEmSupervisao() {
+    const { data, error } = await supabase
+      .from("supervisao_lideres")
+      .select("lider_id");
+
+    if (error) {
+      toast.error("Erro ao buscar líderes vinculados");
+      return;
+    }
+
+    const ids = data.map((item) => item.lider_id);
+    setLideresEmSupervisao(ids);
+  }
+
+
   /* ================== AÇÕES ================== */
+
+  async function handleAddLeader(liderId: string) {
+  if (!supervisaoSelecionada) return;
+
+  const { error } = await supabase
+    .from("supervisao_lideres")
+    .insert({
+      supervisao_id: supervisaoSelecionada.id,
+      lider_id: liderId,
+    });
+
+  if (error) {
+    toast.error("Erro ao adicionar líder");
+    return;
+  }
+
+  toast.success("Líder adicionado à supervisão");
+
+  // 🔄 Atualizações automáticas
+  buscarLideresDaSupervisao(supervisaoSelecionada.id);
+  buscarLideresEmSupervisao();
+}
+
 
   function handleEditSupervisao(supervisao: SupervisorProps) {
     setSupervisaoSelecionada(supervisao);
     setModalOpen(true);
     buscarLideresDaSupervisao(supervisao.id);
+    buscarLideresEmSupervisao()
   }
 
   async function handleDeleteSupervision(id: string) {
@@ -126,7 +168,9 @@ export default function AdminSupervisoes() {
       .eq("supervisao_id", supervisaoSelecionada.id);
 
     toast.success("Líder removido da supervisão");
+
     buscarLideresDaSupervisao(supervisaoSelecionada.id);
+    buscarLideresEmSupervisao();
   }
 
   /* ================== PDF ================== */
@@ -164,6 +208,18 @@ export default function AdminSupervisoes() {
 
     doc.save("relatorio-supervisoes.pdf");
   }
+
+  /* ================== FILTROS ================== */
+ 
+  const lideresDisponiveis = useMemo(() => {
+    return usuarios.filter(
+      (u) =>
+        u.cargo === "lider" &&
+        !lideresEmSupervisao.includes(u.id)
+    );
+  }, [usuarios, lideresEmSupervisao]);
+
+
 
   /* ================== RENDER ================== */
 
@@ -308,7 +364,7 @@ export default function AdminSupervisoes() {
 
             {modalOpen && supervisaoSelecionada && (
             <div className="fixed inset-0 bg-black/70 flex justify-center items-start pt-20 z-50">
-              <div className="bg-black border border-white rounded-xl p-6 w-[500px]">
+              <div className="bg-black border border-white rounded-xl p-6 w-[500px] h-[500px] overflow-y-auto">
                 <div className="flex justify-between items-center">
                   <div className="flex flex-col">
                     <h1 className="text-3xl font-bold font-manrope">Editar Supervisão</h1>
@@ -358,10 +414,37 @@ export default function AdminSupervisoes() {
 
 
               {/* LÍDERES QUE PODEM SER ADICIONADOS NA SUPERVISÃO */}
-              <h2 className="text-xl font-semibold font-manrope text-gray-300 mt-1">Adicionar Líderes</h2>
+              <h2 className="text-2xl font-semibold font-manrope text-gray-300 mt-8">Adicionar Líderes</h2>
 
-              <table className="w-full mt-6">
-                  
+              <table className="w-full mt-4">
+                  {lideresDisponiveis.length > 0 ? (
+                    lideresDisponiveis.map((usuario) => (
+                      <tr key={usuario.id}>
+                        <td className="py-2 font-semibold font-manrope">
+                          {usuario.nome}
+                        </td>
+                        <td className="py-2 text-right">
+                          <ButtonAction
+                            type="button"
+                            color={"bg-green-600"}
+                            onClick={() => handleAddLeader(usuario.id)}
+                          >
+                            <BiPlus size={24} />
+                          </ButtonAction>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={2}
+                        className="text-center py-6 text-gray-400 font-manrope"
+                      >
+                        Nenhum líder disponível para adicionar
+                      </td>
+                    </tr>
+                  )}
+
               </table>
               </div>
             </div>

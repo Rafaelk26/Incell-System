@@ -15,13 +15,15 @@ import IncellLogo from "../../../public/assets/file Incell.png";
 
 import { IoMdMale, IoMdFemale } from "react-icons/io";
 import { AiOutlineWhatsApp } from "react-icons/ai";
+import { FaRegEye } from "react-icons/fa";
+
 
 /* ===================== TYPES ===================== */
 
 type SupervisaoType = {
   id: string;
   nome: string;
-  genero: "masculina" | "feminina" | "kids" | "mista" | "casal";
+  genero: "masculina" | "feminina";
   supervisor_id: string;
 };
 
@@ -32,6 +34,17 @@ type LideresType = {
   dataNascimento: string;
 };
 
+type PDFsType = {
+  id: string;
+  responsavel: string;
+  tipo: string;
+  conteudo: {
+    signed_url: string;
+  };
+  celula_id: string;
+  file_path: string;
+};
+
 /* ===================== COMPONENT ===================== */
 
 export default function Supervisoes() {
@@ -39,8 +52,10 @@ export default function Supervisoes() {
 
   const [supervisao, setSupervisao] = useState<SupervisaoType | null>(null);
   const [lideres, setLideres] = useState<LideresType[]>([]);
+  const [pdfs, setPDFs] = useState<PDFsType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState("");
+  
 
   /* ===================== SUPERVISÃO ===================== */
 
@@ -106,6 +121,33 @@ export default function Supervisoes() {
     }
   }, [supervisao?.id]);
 
+
+  /* ===================== RELATÓRIOS (PDFs) ===================== */
+
+  const fetchPDFs = async (liderIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from("relatorios")
+        .select("*")
+        .in("responsavel", liderIds);
+
+      if (error) throw error;
+
+      console.log(data)
+      setPDFs(data ?? []);
+    } catch (err) {
+      console.error("Erro ao buscar relatórios", err);
+    }
+  };
+
+  useEffect(() => {
+    if (lideres.length > 0) {
+      const ids = lideres.map((l) => l.id);
+      fetchPDFs(ids);
+    }
+  }, [lideres]);
+
+
   /* ===================== FILTRO ===================== */
 
   const normalize = (s: string) =>
@@ -116,6 +158,17 @@ export default function Supervisoes() {
     const s = normalize(searchName);
     return lideres.filter((l) => normalize(l.nome).includes(s));
   }, [lideres, searchName]);
+
+  const pdfPorLider = useMemo(() => {
+  const map = new Map<string, PDFsType>();
+
+  pdfs.forEach((pdf) => {
+    map.set(pdf.responsavel, pdf);
+  });
+
+  return map;
+}, [pdfs]);
+
 
   /* ===================== HELPERS ===================== */
 
@@ -227,7 +280,8 @@ export default function Supervisoes() {
                           <th className="p-3 text-left rounded-tl-xl">Nome</th>
                           <th className="p-3 text-left">Telefone</th>
                           <th className="p-3 text-left">Data de Nascimento</th>
-                          <th className="p-3 text-left rounded-tr-xl">Ações</th>
+                          <th className="p-3 text-right">Ações</th>
+                          <th className="p-3 text-center rounded-tr-xl">Visualizar</th>
                         </tr>
                       </thead>
 
@@ -248,6 +302,7 @@ export default function Supervisoes() {
                               <td className="px-3 py-2 font-manrope font-light">
                                 {formatDate(d.dataNascimento)}
                               </td>
+
                               <td className="px-3 py-2 font-manrope font-light text-center flex gap-6 justify-end">
                                 {/* WHATSAPP */}
                                 <Link
@@ -263,6 +318,18 @@ export default function Supervisoes() {
                                   </ButtonAction>
                                 </Link>
 
+                              </td>
+
+                              <td className="px-3 py-2 font-manrope font-light text-center">
+                                <Link
+                                  href={`/supervisao/lider/${d.id}`}
+                                >
+                                  <ButtonAction type="button" color={"transparent"}>
+                                    <div className="flex gap-2 items-center">
+                                      <FaRegEye size={24} color="#fff" />
+                                    </div>
+                                  </ButtonAction>
+                                </Link>
                               </td>
                             </tr>
                           ))
