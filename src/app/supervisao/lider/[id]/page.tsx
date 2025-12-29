@@ -121,7 +121,7 @@ export default function detalheLider(){
     function formatDateBR(dateString: string) {
         if (!dateString) return "-";
 
-        const date = new Date(dateString);
+        const date = new Date(dateString).getTime() - (3 * 60 * 60 * 1000);
 
         return new Intl.DateTimeFormat("pt-BR", {
             timeZone: "America/Sao_Paulo",
@@ -203,11 +203,12 @@ export default function detalheLider(){
 
                     {/* CORPO */}
                     <tbody>
-                        <tr
-                        className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
-                        >
-                            {relatorios?.filter(r => r.tipo === 'CELULA').map((relatorio) => (
+
+                        {relatorios?.filter(r => r.tipo === 'CELULA').map((relatorio) => (
                                 <>
+                                <tr
+                                className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
+                                >
                                     <td className="px-3 py-3 font-manrope font-light">Relatório de Célula</td>
                                     <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)}</td>
                                     <td className="px-3 py-3 font-manrope font-light flex justify-end">
@@ -218,35 +219,35 @@ export default function detalheLider(){
                                             color="#fff"/>
                                         </Link>
                                     </td>
+                                </tr>
                                 </>
                             ))}
-                        </tr>
+                        
                             
-                        <tr>
                             {relatorios?.filter(r => r.tipo === 'DISCIPULADO').map((relatorio) => (
                                 <>
-                                    <td className="px-3 py-3 font-manrope font-light">Relatório de Discipulado</td>
-                                    <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)}</td>
-                                    <td className="px-3 py-3 font-manrope font-light flex justify-end">
-                                        <Link href={relatorio?.conteudo.signed_url || ""} target="_blank">
-                                            <AiFillFilePdf 
-                                            className="cursor-pointer"
-                                            size={24} 
-                                            color="#fff"/>
-                                        </Link>
-                                    </td>
+                                    <tr>
+                                        <td className="px-3 py-3 font-manrope font-light">Relatório de Discipulado</td>
+                                        <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)}</td>
+                                        <td className="px-3 py-3 font-manrope font-light flex justify-end">
+                                            <Link href={relatorio?.conteudo.signed_url || ""} target="_blank">
+                                                <AiFillFilePdf 
+                                                className="cursor-pointer"
+                                                size={24} 
+                                                color="#fff"/>
+                                            </Link>
+                                        </td>
+                                    </tr>
                                 </>
                             ))}
-                        </tr>
 
+                        {!relatorios || relatorios.length === 0 ? (
                         <tr>
-
-                            {!relatorios || relatorios.length === 0 ? (
-                                <td colSpan={3} className="pt-40 pb-3 py-3 font-manrope font-normal text-center">
-                                    Nenhum registro de relatório encontrado
-                                </td>
-                            ) : <></>}
+                            <td colSpan={3} className="pt-40 pb-3 py-3 font-manrope font-normal text-center">
+                                Nenhum registro de relatório encontrado
+                            </td>
                         </tr>
+                        ) : <></>}
 
                     </tbody>
                     </table>

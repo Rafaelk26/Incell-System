@@ -8,7 +8,6 @@ import { useMemo } from "react";
 import { useDashboardData } from "../hook/dashboard";
 import { useHorizontalDragScroll } from "../hook/useHorizontalDragScroll";
 import { Spinner } from "@/components/all/spiner";
-import Perfil from "../../../public/assets/perfil teste.avif";
 
 
 /* ============================================================
@@ -30,7 +29,7 @@ export default function Dashboard() {
     loading,
   } = useDashboardData(user?.id);
 
-  const perfilImage = useMemo(() => Perfil, []);
+  const perfilImage = useMemo(() => user?.foto || "", []);
 
   if (!user || loading) {
     return (
@@ -50,8 +49,10 @@ export default function Dashboard() {
         <main className="w-full overflow-x-hidden">
           <header className="w-full flex justify-end pe-4 pt-6">
             <Image
-              className="w-12 rounded-full border border-white"
+              className="w-16 h-16 rounded-full border border-white"
               src={perfilImage}
+              width={16}
+              height={16}
               alt="Perfil"
               priority
             />

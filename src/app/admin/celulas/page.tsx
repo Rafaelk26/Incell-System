@@ -9,9 +9,9 @@ import Image from "next/image";
 import Perfil from "../../../../public/assets/perfil teste.avif";
 import Incell from "../../../../public/assets/file Incell.png";
 import { supabase } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ButtonAction } from "@/components/all/buttonAction";
-import { AiOutlineWhatsApp, AiFillFilePdf } from "react-icons/ai";
+import { AiOutlineWhatsApp, AiFillFilePdf, AiFillCloseCircle } from "react-icons/ai";
 import { BiEdit, BiTrash } from "react-icons/bi";
 
 // jsPDF + AutoTable
@@ -19,6 +19,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useAuth } from "@/app/context/useUser";
 
 interface CelulaProps {
   id: string;
@@ -39,9 +40,16 @@ interface UsuarioProps {
 }
 
 export default function AdminCelulas() {
+  const { user } = useAuth()
   const [celulasS, setCelulasS] = useState<CelulaProps[]>([]);
   const [usuariosS, setUsuariosS] = useState<UsuarioProps[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [celulaSelecionada, setCelulaSelecionada] = useState<CelulaProps | null>(null);
+  const [search, setSearch] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [tipo, setTipo] = useState("");
+
 
   useEffect(() => {
     buscarCelulas();
@@ -81,6 +89,37 @@ export default function AdminCelulas() {
       console.log("Erro ao deletar célula:", error);
   }
 }
+
+function handleOpenEdit(celula: CelulaProps) {
+  setCelulaSelecionada(celula);
+  setModalOpen(true);
+}
+
+async function handleSaveEdit() {
+  if (!celulaSelecionada) return;
+
+  const { error } = await supabase
+    .from("celulas")
+    .update({
+      nome: celulaSelecionada.nome,
+      genero: celulaSelecionada.genero,
+      bairro: celulaSelecionada.bairro,
+    })
+    .eq("id", celulaSelecionada.id);
+
+  if (error) {
+    toast.error("Erro ao atualizar célula");
+    return;
+  }
+
+  toast.success("Célula atualizada com sucesso!");
+
+  setModalOpen(false);
+  setCelulaSelecionada(null);
+  buscarCelulas();
+}
+
+
 
   async function gerarBase64(url: string) {
     const res = await fetch(url);
@@ -178,6 +217,44 @@ export default function AdminCelulas() {
   doc.save("relatorio-celulas.pdf");
 }
 
+const normalize = (value: string) =>
+  value
+    ?.normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+
+  const dadosFiltrados = useMemo(() => {
+    let lista = [...(celulasS || [])];
+
+    // 🔎 Busca por nome do líder OU nome da célula
+    if (search) {
+      const s = normalize(search);
+      lista = lista.filter(
+        (item) =>
+          normalize(item.nome).includes(s) ||
+          normalize(item.responsavel_id).includes(s)
+      );
+    }
+
+    // 📍 Bairro
+    if (bairro) {
+      lista = lista.filter(
+        (item) => normalize(item.bairro) === normalize(bairro)
+      );
+    }
+
+    // 🧩 Tipo da célula
+    if (tipo) {
+      lista = lista.filter(
+        (item) => normalize(item.genero) === normalize(tipo)
+      );
+    }
+
+    return lista;
+  }, [celulasS, search, bairro, tipo]);
+
+
 
 
   return (
@@ -187,8 +264,10 @@ export default function AdminCelulas() {
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
           <header className="w-full flex justify-end px-10 pt-6">
             <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
+              className="w-12 h-12 rounded-full border border-white"
+              src={user?.foto || ""}
+              width={12}
+              height={12}
               alt="Perfil"
             />
           </header>
@@ -214,11 +293,13 @@ export default function AdminCelulas() {
             <div className="mt-6 flex gap-4 justify-between items-center">
               <span className="font-manrope text-xl">Filtrar</span>
 
-              <Input placeholder="Nome do Líder (ou) Nome da Célula" />
+              <Input 
+              onChange={(e)=> setSearch(e.target.value)}
+              placeholder="Nome do Líder (ou) Nome da Célula" />
 
               {/* Bairros */}
 
-              <Select>
+              <Select onChange={(e)=> setBairro(e.target.value)}>
                 <option value="" className="text-black font-semibold">Bairro</option>
                 <option value="Barranco Alto" className="text-black font-semibold">Barranco Alto</option>
                 <option value="Benfica" className="text-black font-semibold">Benfica</option>
@@ -275,7 +356,7 @@ export default function AdminCelulas() {
 
               {/* Tipo da Célula */}
               
-              <Select>
+              <Select onChange={(e)=> setTipo(e.target.value)}>
                 <option value="" className="font-bold text-black">Tipo da Célula</option>
                 <option value="masculino" className="font-bold text-black">Masculino</option>
                 <option value="feminina" className="font-bold text-black">Feminina</option>
@@ -287,7 +368,14 @@ export default function AdminCelulas() {
                 <option value="par" className="font-bold text-black">Par</option>
               </Select>
 
-              <ButtonAction type="button" color={"bg-blue-600"}>
+              <ButtonAction 
+              type="button" 
+              color={"bg-blue-600"}
+              onClick={() => {
+              setSearch("");
+              setBairro("");
+              setTipo("");
+              }}>
                 <span className="font-manrope text-md">Limpar</span>
               </ButtonAction>
             </div>
@@ -309,7 +397,7 @@ export default function AdminCelulas() {
 
                   <tbody>
                     {celulasS.length > 0 ? (
-                      celulasS.map((item) => {
+                      dadosFiltrados.map((item) => {
                         const lider = usuariosS.find(
                           (u) => u.id === item.responsavel_id && u.cargo === "lider"
                         );
@@ -343,7 +431,11 @@ export default function AdminCelulas() {
                               </Link>
                               
 
-                              <ButtonAction type="button" color={"bg-yellow-600"}>
+                              <ButtonAction
+                                type="button"
+                                color={"bg-yellow-600"}
+                                onClick={() => handleOpenEdit(item)}
+                              >
                                 <div className="w-full flex gap-2">
                                   <BiEdit size={24} />
                                   Editar
@@ -374,6 +466,147 @@ export default function AdminCelulas() {
                 </table>
               </div>
             )}
+
+
+            {modalOpen && celulaSelecionada && (
+            <div className="fixed inset-0 bg-black/70 flex justify-center items-start pt-20 z-50">
+              <div className="bg-black border border-white rounded-xl p-6 w-[500px]">
+                
+                {/* HEADER */}
+                <div className="flex justify-between items-center">
+                  <h1 className="text-2xl font-bold font-manrope">Editar Célula</h1>
+
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    className="text-red-400 hover:text-red-600"
+                  >
+                    <AiFillCloseCircle size={24} />
+                  </button>
+                </div>
+
+                {/* FORM */}
+                <div className="mt-6 flex flex-col gap-4">
+
+                  {/* Nome */}
+                  <Input
+                    value={celulaSelecionada.nome}
+                    onChange={(e) =>
+                      setCelulaSelecionada({
+                        ...celulaSelecionada,
+                        nome: e.target.value,
+                      })
+                    }
+                    placeholder="Nome da célula"
+                  />
+
+                  {/* Gênero */}
+                  <Select
+                    value={celulaSelecionada.genero}
+                    onChange={(e) =>
+                      setCelulaSelecionada({
+                        ...celulaSelecionada,
+                        genero: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="" className="font-bold text-black">Tipo da Célula</option>
+                    <option value="masculino" className="font-bold text-black">Masculino</option>
+                    <option value="feminina" className="font-bold text-black">Feminina</option>
+                    <option value="kids" className="font-bold text-black">Kids</option>
+                    <option value="adolescente" className="font-bold text-black">Adolescente</option>
+                    <option value="jovens" className="font-bold text-black">Jovens</option>
+                    <option value="casal" className="font-bold text-black">Casal</option>
+                    <option value="mista" className="font-bold text-black">Mista</option>
+                    <option value="par" className="font-bold text-black">Par</option>
+                  </Select>
+
+                  {/* Bairro */}
+                  <Select
+                    value={celulaSelecionada.bairro}
+                    onChange={(e) =>
+                      setCelulaSelecionada({
+                        ...celulaSelecionada,
+                        bairro: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="" className="text-black font-semibold">Bairro</option>
+                    <option value="Barranco Alto" className="text-black font-semibold">Barranco Alto</option>
+                    <option value="Benfica" className="text-black font-semibold">Benfica</option>
+                    <option value="Cantagalo" className="text-black font-semibold">Cantagalo</option>
+                    <option value="Capricórnio I" className="text-black font-semibold">Capricórnio I</option>
+                    <option value="Capricórnio II" className="text-black font-semibold">Capricórnio II</option>
+                    <option value="Capricórnio III" className="text-black font-semibold">Capricórnio III</option>
+                    <option value="Caputera" className="text-black font-semibold">Caputera</option>
+                    <option value="Canto do Mar" className="text-black font-semibold">Canto do Mar</option>
+                    <option value="Centro" className="text-black font-semibold">Centro</option>
+                    <option value="Cidade Jardim" className="text-black font-semibold">Cidade Jardim</option>
+                    <option value="Estrela D' Alva" className="text-black font-semibold">Estrela D' Alva</option>
+                    <option value="Getuba" className="text-black font-semibold">Getuba</option>
+                    <option value="Golfinho" className="text-black font-semibold">Golfinho</option>
+                    <option value="Indaiá" className="text-black font-semibold">Indaiá</option>
+                    <option value="Ipiranga" className="text-black font-semibold">Ipiranga</option>
+                    <option value="Jaraguá" className="text-black font-semibold">Jaraguá</option>
+                    <option value="Jaraguazinho" className="text-black font-semibold">Jaraguazinho</option>
+                    <option value="Jardim Aruan" className="text-black font-semibold">Jardim Aruan</option>
+                    <option value="Jardim Britânia" className="text-black font-semibold">Jardim Britânia</option>
+                    <option value="Jardim Califórnia" className="text-black font-semibold">Jardim Califórnia</option>
+                    <option value="Jardim Casa Branca" className="text-black font-semibold">Jardim Casa Branca</option>
+                    <option value="Jardim Flecheiras" className="text-black font-semibold">Jardim Flecheiras</option>
+                    <option value="Jardim Gaivotas" className="text-black font-semibold">Jardim Gaivotas</option>
+                    <option value="Jardim Jaqueira" className="text-black font-semibold">Jardim Jaqueira</option>
+                    <option value="Jardim Mariella" className="text-black font-semibold">Jardim Mariella</option>
+                    <option value="Jardim Olaria" className="text-black font-semibold">Jardim Olaria</option>
+                    <option value="Jardim Primavera" className="text-black font-semibold">Jardim Primavera</option>
+                    <option value="Jardim Rio Claro" className="text-black font-semibold">Jardim Rio Claro</option>
+                    <option value="Jardim Rio Santos" className="text-black font-semibold">Jardim Rio Santos</option>
+                    <option value="Jardim Tarumãs" className="text-black font-semibold">Jardim Tarumãs</option>
+                    <option value="Jardim Terralão" className="text-black font-semibold">Jardim Terralão</option>
+                    <option value="Martim de Sá" className="text-black font-semibold">Martim de Sá</option>
+                    <option value="Massaguaçu" className="text-black font-semibold">Massaguaçu</option>
+                    <option value="Morro do Algodão" className="text-black font-semibold">Morro do Algodão</option>
+                    <option value="Nova Caraguá I" className="text-black font-semibold">Nova Caraguá I</option>
+                    <option value="Nova Caraguá II" className="text-black font-semibold">Nova Caraguá II</option>
+                    <option value="Pegorelli" className="text-black font-semibold">Pegorelli</option>
+                    <option value="Perequê Mirim" className="text-black font-semibold">Perequê Mirim</option>
+                    <option value="Poiares" className="text-black font-semibold">Poiares</option>
+                    <option value="Pontal Santa Marina" className="text-black font-semibold">Pontal Santa Marina</option>
+                    <option value="Porto Novo" className="text-black font-semibold">Porto Novo</option>
+                    <option value="Praia da Cocanha" className="text-black font-semibold">Praia da Cocanha</option>
+                    <option value="Praia da Mococa" className="text-black font-semibold">Praia da Mococa</option>
+                    <option value="Praia das Palmeiras" className="text-black font-semibold">Praia das Palmeiras</option>
+                    <option value="Prainha" className="text-black font-semibold">Prainha</option>
+                    <option value="Rio do Ouro" className="text-black font-semibold">Rio do Ouro</option>
+                    <option value="Sumaré" className="text-black font-semibold">Sumaré</option>
+                    <option value="Tabatinga" className="text-black font-semibold">Tabatinga</option>
+                    <option value="Tinga" className="text-black font-semibold">Tinga</option>
+                    <option value="Travessão" className="text-black font-semibold">Travessão</option>
+                    <option value="Vila Ponte Seca" className="text-black font-semibold">Vila Ponte Seca</option>
+                  </Select>
+                </div>
+
+                {/* AÇÕES */}
+                <div className="flex justify-end gap-4 mt-8">
+                  <ButtonAction
+                    type="button"
+                    color="bg-gray-600"
+                    onClick={() => setModalOpen(false)}
+                  >
+                    Cancelar
+                  </ButtonAction>
+
+                  <ButtonAction
+                    type="button"
+                    color="bg-blue-600"
+                    onClick={handleSaveEdit}
+                  >
+                    Salvar
+                  </ButtonAction>
+                </div>
+              </div>
+            </div>
+          )}
+
           </section>
         </main>
       </main>
