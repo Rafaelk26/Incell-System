@@ -6,7 +6,6 @@ import { Navbar } from "@/components/all/navBar";
 import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import Image from "next/image";
-import Perfil from "../../../../public/assets/perfil teste.avif";
 import Incell from "../../../../public/assets/file Incell.png";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useMemo, useState } from "react";
@@ -20,6 +19,7 @@ import autoTable from "jspdf-autotable";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useAuth } from "@/app/context/useUser";
+import CountUp from 'react-countup';
 
 interface CelulaProps {
   id: string;
@@ -275,7 +275,7 @@ const normalize = (value: string) =>
           <section className="max-w-full w-full md:mt-14 mb-10">
             {/* TÍTULO + PDF */}
             <div className="flex justify-between">
-              <h1 className="font-bold text-4xl font-manrope">{celulasS.length} Células</h1>
+              <h1 className="font-bold text-4xl font-manrope"><CountUp duration={3.5} end={celulasS.length} /> Células</h1>
 
               <ButtonAction
                 type="button"

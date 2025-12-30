@@ -190,7 +190,7 @@ export default function detalheLider(){
 
                 {/* HISTÓRICO */}
 
-                <div className="w-full h-[450px] mt-6 overflow-x-auto">
+                <div className="w-full h-[400px] mt-6 overflow-x-auto">
                     <table className="w-full border-collapse text-white">
                     {/* CABEÇALHO */}
                     <thead>

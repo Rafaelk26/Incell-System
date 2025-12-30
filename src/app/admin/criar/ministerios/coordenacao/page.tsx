@@ -4,7 +4,6 @@
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
-import Perfil from "../../../../../../public/assets/perfil teste.avif";
 import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import { useForm } from "react-hook-form";
@@ -13,6 +12,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
+import { useAuth } from "@/app/context/useUser";
 
 type MinisterioCoordenacaoForm = {
   nome: string;
@@ -42,16 +42,24 @@ interface Coordenadores {
 }
 
 export default function CriarMinisterioCoordenacao() {
+
+  const { user } = useAuth();
+
   const { register, handleSubmit } = useForm<MinisterioCoordenacaoForm>();
   const [celulasComLider, setCelulasComLider] = useState<CelulaComSupervisores[]>([]);
   const [supersArray, setSupersArray] = useState<SupersItem[]>([]);
   const [coordenadores, setCoordenadores] = useState<Coordenadores[]>([]);
   const [ useLoading, setUseLoading ] = useState<boolean>(false)
+  const [coordenadoresComCoordenacao, setCoordenadoresComCoordenacao] = useState<string[]>([]);
+  const [supervisoesComCoordenacao, setSupervisoesComCoordenacao] = useState<string[]>([]);
+
 
   useEffect(() => {
     buscarSupervisoesComCelas();
     buscarCoordenadores();
+    buscarVinculosCoordenacao();
   }, []);
+
 
   async function buscarSupervisoesComCelas() {
   try {
@@ -108,6 +116,37 @@ export default function CriarMinisterioCoordenacao() {
       console.error("Erro ao buscar coordenadores:", err);
     }
   }
+
+  
+  async function buscarVinculosCoordenacao() {
+  try {
+    // 🔹 Coordenadores já vinculados
+    const { data: coordenacoes, error: errorCoordenacoes } = await supabase
+      .from("coordenacoes")
+      .select("coordenador_id");
+
+    if (errorCoordenacoes) throw errorCoordenacoes;
+
+    setCoordenadoresComCoordenacao(
+      coordenacoes.map((c) => c.coordenador_id)
+    );
+
+    // 🔹 Supervisões já vinculadas
+    const { data: coordenacaoSupervisores, error: errorSupervisores } = await supabase
+      .from("coordenacao_supervisoes")
+      .select("supervisao_id");
+
+    if (errorSupervisores) throw errorSupervisores;
+
+    setSupervisoesComCoordenacao(
+      coordenacaoSupervisores.map((s) => s.supervisao_id)
+    );
+  } catch (error) {
+    console.error("Erro ao buscar vínculos de coordenação:", error);
+  }
+}
+
+
 
   // adicionar / remover supervisao no array local (sem tocar no banco)
   const toggleSupervisor = (item: CelulaComSupervisores) => {
@@ -174,7 +213,11 @@ export default function CriarMinisterioCoordenacao() {
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
           <header className="w-full flex justify-end px-10 pt-6">
-            <Image className="w-12 rounded-full border border-white" src={Perfil} alt="Perfil" />
+            <Image className="w-12 h-12 rounded-full border border-white"
+            src={user?.foto || ""}
+            alt="Perfil"
+            width={12}
+            height={12} />
           </header>
 
           <section className="max-w-full w-full md:mt-14">
@@ -188,12 +231,16 @@ export default function CriarMinisterioCoordenacao() {
                   <option className="text-black" value="">
                     Selecione
                   </option>
-                  {coordenadores.map((coor) => (
-                    <option className="text-black" value={coor.id} key={coor.id}>
-                      {coor.nome}
-                    </option>
-                  ))}
+
+                  {coordenadores
+                    .filter(coor => !coordenadoresComCoordenacao.includes(coor.id))
+                    .map((coor) => (
+                      <option className="text-black" value={coor.id} key={coor.id}>
+                        {coor.nome}
+                      </option>
+                    ))}
                 </Select>
+
 
                 <Select nome="Tipo da Coordenação" {...register("genero", { required: true })}>
                   <option className="text-black" value="">
@@ -208,52 +255,73 @@ export default function CriarMinisterioCoordenacao() {
                 </Select>
               </div>
 
+              {coordenadores.filter(c => !coordenadoresComCoordenacao.includes(c.id)).length === 0 && (
+                <p className="text-yellow-400 mt-2 font-manrope">
+                  Todos os coordenadores já possuem uma coordenação.
+                </p>
+              )}
+
+
               {/* TABELA */}
-              <div className="w-full mt-10 overflow-x-auto">
+              <div className="w-full mt-4 overflow-x-auto">
                 <table className="w-full border-collapse text-white">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
-                      <th className="p-3 text-left rounded-tl-xl">Supervisores da Coordenação</th>
-                      <th className="p-3 text-left rounded-tr-xl"></th>
+                      <th className="text-left rounded-tl-xl">Supervisões Disponíveis</th>
+                      <th className="text-left rounded-tr-xl"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {celulasComLider.length > 0 ? (
-                      celulasComLider
-                        // opcional: filtrar apenas quem tem cargo 'supervisor' no user, se quiser
-                        .filter((item) => item.super_cargo?.trim().toLowerCase() === "supervisor")
-                        .map((item) => {
-                          const isAdded = supersArray.some((s) => s.supervisao_id === item.supervisao_id);
-                          return (
-                            <tr
-                              key={item.supervisao_id}
-                              className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
-                            >
-                              <td className="flex flex-col px-3 py-2 font-manrope font-light">
-                                <span className="text-xl font-semibold">{item.super_nome}</span>
-                                <span className="text-gray-300">{item.nome_supervisao}</span>
-                              </td>
+                  {celulasComLider
+                    .filter(item => item.super_cargo?.trim().toLowerCase() === "supervisor")
+                    .filter(item => !supervisoesComCoordenacao.includes(item.supervisao_id))
+                    .length > 0 ? (
 
-                              <td className="px-3 py-2 flex gap-6 justify-end">
-                                <ButtonAction
-                                  type="button"
-                                  color={isAdded ? "bg-green-600" : "bg-blue-600"}
-                                  onClick={() => toggleSupervisor(item)}
-                                >
-                                  <span className="font-manrope text-xl">{isAdded ? "Adicionado" : "Adicionar"}</span>
-                                </ButtonAction>
-                              </td>
-                            </tr>
-                          );
-                        })
-                    ) : (
-                      <tr>
-                        <td colSpan={2} className="text-center p-6 text-white font-manrope font-semibold">
-                          Nenhuma supervisão com supervisor registrada.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
+                    celulasComLider
+                      .filter(item => item.super_cargo?.trim().toLowerCase() === "supervisor")
+                      .filter(item => !supervisoesComCoordenacao.includes(item.supervisao_id))
+                      .map((item) => {
+                        const isAdded = supersArray.some(
+                          (s) => s.supervisao_id === item.supervisao_id
+                        );
+
+                        return (
+                          <tr
+                            key={item.supervisao_id}
+                            className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
+                          >
+                            <td className="flex flex-col px-3 py-2 font-manrope font-light">
+                              <span className="text-xl font-semibold">{item.nome_supervisao}</span>
+                              <span className="text-gray-300">{item.super_nome}</span>
+                            </td>
+
+                            <td className="px-3 py-2 flex gap-6 justify-end">
+                              <ButtonAction
+                                type="button"
+                                color={isAdded ? "bg-green-600" : "bg-blue-600"}
+                                onClick={() => toggleSupervisor(item)}
+                              >
+                                <span className="font-manrope text-xl">
+                                  {isAdded ? "Adicionado" : "Adicionar"}
+                                </span>
+                              </ButtonAction>
+                            </td>
+                          </tr>
+                        );
+                      })
+
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={2}
+                        className="text-center p-6 text-white font-manrope font-semibold"
+                      >
+                        Nenhuma supervisão disponível para adicionar à coordenação.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
                 </table>
               </div>
 

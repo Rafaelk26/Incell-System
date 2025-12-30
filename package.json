@@ -19,6 +19,7 @@
     "pdfmake": "^0.2.20",
     "pg": "^8.16.3",
     "react": "19.1.0",
+    "react-countup": "^6.5.3",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",
     "react-hot-toast": "^2.6.0",

@@ -11,6 +11,7 @@ import { formatNumber } from "@/functions/formatNumber";
 import { Select } from "@/components/select";
 import toast from "react-hot-toast";
 import { useState } from "react";
+import { useAuth } from "@/app/context/useUser";
 
 type UsuariosForm = {
   nome: string;
@@ -23,6 +24,9 @@ type UsuariosForm = {
 };
 
 export default function CriarUsuarios() {
+
+  const { user } = useAuth();
+
   const { register, handleSubmit, reset } = useForm<UsuariosForm>(); // hook também no topo
   const [ useLoading, setUseLoading ] = useState<boolean>(false)
 
@@ -78,9 +82,11 @@ export default function CriarUsuarios() {
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
           <header className="w-full flex justify-end px-10 pt-6">
             <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
+              className="w-12 h-12 rounded-full border border-white"
+              src={user?.foto || ""}
               alt="Perfil"
+              width={12}
+              height={12}
             />
           </header>
 

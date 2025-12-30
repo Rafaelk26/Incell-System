@@ -9,12 +9,14 @@ import Link from "next/link";
 import { BiSolidChurch } from "react-icons/bi";
 import { HiUsers } from "react-icons/hi";
 import { FaUsers } from "react-icons/fa6";
+import { useAuth } from "@/app/context/useUser";
 
 
 
 
 export default function CriarMinisterios(){
 
+    const { user } = useAuth();
 
     return(
         <>
@@ -24,9 +26,11 @@ export default function CriarMinisterios(){
                     <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
                         <header className="w-full flex justify-end px-10 pt-6">
                             <Image
-                            className="w-12 rounded-full border border-white"
-                            src={Perfil}
+                            className="w-12 h-12 rounded-full border border-white"
+                            src={user?.foto || ""}
                             alt="Perfil"
+                            width={12}
+                            height={12}
                             />
                         </header>
 

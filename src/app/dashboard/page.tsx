@@ -4,10 +4,12 @@ import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../context/useUser";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState, ReactNode } from "react";
 import { useDashboardData } from "../hook/dashboard";
 import { useHorizontalDragScroll } from "../hook/useHorizontalDragScroll";
 import { Spinner } from "@/components/all/spiner";
+import { supabase } from "@/lib/supabaseClient";
+import CountUp from 'react-countup';
 
 
 /* ============================================================
@@ -15,6 +17,15 @@ import { Spinner } from "@/components/all/spiner";
 ============================================================ */
 export default function Dashboard() {
   const { user } = useAuth();
+  const [usuarios, setUsuarios] = useState<Array<{ 
+    id: string; 
+    nome: string; 
+    cargo: string 
+  }>>([]);
+  const [celulas, setCelulas] = useState<Array<{ 
+    id: string; 
+    nome: string; 
+  }>>([]);
 
   const {
     scrollRef,
@@ -29,6 +40,46 @@ export default function Dashboard() {
     loading,
   } = useDashboardData(user?.id);
 
+  /* ====================== FUNÇÕES ====================== */
+
+  const pegarUsuarios = async () => {
+    try {
+      const { data: usuarios, error } = await supabase
+        .from("users")
+        .select("id, nome, cargo");
+
+        if (error) throw error;
+        
+      setUsuarios(usuarios || []);
+    }
+    catch (error) {
+      console.error("Erro ao pegar usuários:", error);
+    }
+  }
+
+
+  const pegarCelulas = async () => {
+    try {
+      const { data: celulas, error } = await supabase
+        .from("celulas")
+        .select("id, nome");
+
+        if (error) throw error;
+        
+      setCelulas(celulas || []);
+    }
+    catch (error) {
+      console.error("Erro ao pegar usuários:", error);
+    }
+  }
+
+  useEffect(() => {
+    pegarUsuarios();
+    pegarCelulas();
+  }, []);
+
+
+
   const perfilImage = useMemo(() => user?.foto || "", []);
 
   if (!user || loading) {
@@ -38,6 +89,7 @@ export default function Dashboard() {
       </main>
     );
   }
+
 
   /* ============================================================
      🎨 RENDERIZAÇÃO PRINCIPAL
@@ -80,17 +132,17 @@ export default function Dashboard() {
                   <div className="flex gap-10 w-full justify-start">
                     {/* CARD DISCÍPULOS */}
                     {user?.cargo !== "pastor" && (
-                      <Card title="Discípulos" value={discipulos?.length} />
+                      <Card title="Discípulos" value={<CountUp duration={3.5} end={discipulos?.length} />} />
                     )}
 
                     {/* CARD LÍDERES */}
                     {user?.cargo === "supervisor" && (
-                      <Card title="Líderes" value={totalLideres} />
+                      <Card title="Líderes" value={<CountUp duration={3.5} end={totalLideres} />} />
                     )}
 
                     {/* CARD SUPERVISORES */}
                     {user?.cargo === "coordenador" && (
-                      <Card title="Supervisores" value={5} />
+                      <Card title="Supervisores" value={<CountUp duration={3.5} end={0} />} />
                     )}
 
                     {/* ======== CARDS DE REUNIÕES (DINÂMICOS) ======== */}
@@ -128,11 +180,21 @@ export default function Dashboard() {
             <section className="w-full md:mt-14 md:px-4">
               <h1 className="font-bold text-4xl font-manrope">Admin</h1>
               <section className="mt-5 flex justify-between gap-4">
-                {["Líderes", "Supervisores", "Coordenadores", "Células"].map(
-                  (t, i) => (
-                    <Card key={i} title={t} value={0} />
-                  )
-                )}
+                {["Líderes", "Supervisores", "Coordenadores", "Células"].map((t, i) => (
+                <Card key={i} title={t} value={
+                    t === "Líderes" ? (
+                      <CountUp duration={3.5} end={usuarios.filter(u => u.cargo === "lider").length} />
+                    ) : t === "Supervisores" ? (
+                      <CountUp duration={3.5} end={usuarios.filter(u => u.cargo === "supervisor").length} />
+                    ) : t === "Coordenadores" ? (
+                      <CountUp duration={3.5} end={usuarios.filter(u => u.cargo === "coordenador").length} />
+                    ) : (
+                      <CountUp duration={3.5} end={celulas.length} />
+                    )
+                  }
+                />
+              ))}
+
               </section>
 
               <section className="max-w-[81rem] w-full flex gap-12 mt-10 mb-10">
@@ -153,10 +215,14 @@ export default function Dashboard() {
 /* ============================================================
    🧩 COMPONENTES REUTILIZÁVEIS
 ============================================================ */
-const Card = ({ title, value }: { title: string; value: number | string }) => (
+
+
+const Card = ({ title, value }: { title: string; value: ReactNode }) => (
   <div className="max-w-72 w-72 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-md">
     <span className="text-lg font-manrope font-semibold">{title}</span>
-    <span className="text-6xl font-manrope font-bold">{value}</span>
+    <span className="text-6xl font-manrope font-bold">
+      {value}
+    </span>
   </div>
 );
 

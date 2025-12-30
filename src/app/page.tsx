@@ -11,8 +11,8 @@ export default function Home() {
   // Texto com marcações (cores)
   const fullText = [
     { text: "A tecnologia", color: "text-blue-500" },
-    { text: " a serviço da missão do Reino.\nOnde gestão e cuidado é ", color: "text-white" },
-    { text: "fazer a diferença!", color: "text-blue-500" },
+    { text: " a serviço da missão do Reino.\nOnde gestão e cuidado ", color: "text-white" },
+    { text: "fazem a diferença!", color: "text-blue-500" },
   ];
 
   const [displayIndex, setDisplayIndex] = useState(0);
@@ -22,7 +22,7 @@ export default function Home() {
   useEffect(() => {
     const textToType = fullText.map((t) => t.text).join("");
     let index = 0;
-    const speed = 70;
+    const speed = 50;
     const typing = setInterval(() => {
       setDisplayText(textToType.slice(0, index));
       index++;

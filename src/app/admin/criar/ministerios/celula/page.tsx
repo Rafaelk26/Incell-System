@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
+import { useAuth } from "@/app/context/useUser";
 
 type MinisterioCelulaForm = {
   nome: string;
@@ -34,6 +35,8 @@ interface UserSupabase {
 
 
 export default function CriarMinisterioCelula() {
+  const { user } = useAuth();
+
   const { register, handleSubmit, reset } = useForm<MinisterioCelulaForm>(); // hook também no topo
   const [ dataUsers, setDataUsers ] = useState<UserSupabase[]>([])
     const [ useLoading, setUseLoading ] = useState<boolean>(false)
@@ -141,9 +144,11 @@ export default function CriarMinisterioCelula() {
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
           <header className="w-full flex justify-end px-10 pt-6">
             <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
+              className="w-12 h-12 rounded-full border border-white"
+              src={user?.foto || ""}
               alt="Perfil"
+              width={12}
+              height={12}
             />
           </header>
 

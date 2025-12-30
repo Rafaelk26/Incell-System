@@ -355,7 +355,7 @@ useEffect(() => {
               </div>
 
             {/* TABELA */}
-            <div className="w-full mt-10 overflow-x-auto">
+            <div className="w-full h-[400px] mt-10 overflow-x-auto">
                 <table className="w-full border-collapse text-white">
                     <thead>
                         <tr className="bg-zinc-950/90 text-white font-normal font-manrope">

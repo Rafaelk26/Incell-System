@@ -272,7 +272,7 @@ export default function Supervisoes() {
 
                   {/* TABELA DE DADOS DA CÉLULA */}
 
-                  <div className="w-full mt-6 overflow-x-auto">
+                  <div className="w-full h-[380px] mt-6 overflow-x-auto">
                     <table className="w-full border-collapse text-white">
                       {/* CABEÇALHO */}
                       <thead>

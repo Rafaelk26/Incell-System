@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
+import { useAuth } from "@/app/context/useUser";
 
 type MinisterioSupervisaoForm = {
   nome: string;
@@ -40,16 +41,23 @@ interface Supervisores {
 }
 
 export default function CriarMinisterioSupervisao() {
+
+  const { user } = useAuth();
+
   const { register, handleSubmit, reset } = useForm<MinisterioSupervisaoForm>();
   const [celulasComLider, setCelulasComLider] = useState<CelulaComLider[]>([]);
   const [leadersArray, setLeadersArray] = useState<Leaders[]>([]);
   const [supervisores, setSupervisores] = useState<Supervisores[]>([]);
   const [ useLoading, setUseLoading ] = useState<boolean>(false)
+  const [supervisoresComSupervisao, setSupervisoresComSupervisao] = useState<string[]>([]);
+  const [lideresComSupervisao, setLideresComSupervisao] = useState<string[]>([]);
+
 
   // Buscar células + líderes
   useEffect(() => {
     buscarCelulasComLider();
     buscarSupervisores();
+    buscarVinculosSupervisao();
   }, []);
 
   async function buscarCelulasComLider() {
@@ -98,6 +106,36 @@ export default function CriarMinisterioSupervisao() {
 
     return setSupervisores(listaSupervisores);
   }
+
+
+  async function buscarVinculosSupervisao() {
+  try {
+    // 🔹 Supervisores já usados
+    const { data: supervisoes, error: errorSupervisoes } = await supabase
+      .from("supervisoes")
+      .select("supervisor_id");
+
+    if (errorSupervisoes) throw errorSupervisoes;
+
+    setSupervisoresComSupervisao(
+      supervisoes.map((s) => s.supervisor_id)
+    );
+
+    // 🔹 Líderes já usados
+    const { data: supervisaoLideres, error: errorLideres } = await supabase
+      .from("supervisao_lideres")
+      .select("lider_id");
+
+    if (errorLideres) throw errorLideres;
+
+    setLideresComSupervisao(
+      supervisaoLideres.map((l) => l.lider_id)
+    );
+  } catch (error) {
+    console.error("Erro ao buscar vínculos de supervisão:", error);
+  }
+}
+
 
   // Adicionar / remover líderes SEM tocar no banco
   const toggleLeader = (leader: Leaders) => {
@@ -160,13 +198,15 @@ export default function CriarMinisterioSupervisao() {
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
           <header className="w-full flex justify-end px-10 pt-6">
             <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
+              className="w-12 h-12 rounded-full border border-white"
+              src={user?.foto || ""}
               alt="Perfil"
+              width={12}
+              height={12}
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-14">
+          <section className="max-w-full w-full md:mt-10">
             <h1 className="font-bold text-4xl font-manrope">Criar Supervisão</h1>
 
             {/* FORM */}
@@ -183,12 +223,15 @@ export default function CriarMinisterioSupervisao() {
 
                 <Select nome="Supervisor da Supervisão" {...register("supervisor_id", { required: true })}>
                   <option value="">Selecione</option>
-                  {supervisores.map((sup) => (
-                    <option className="text-black" value={sup.id} key={sup.id}>
-                      {sup.nome}
-                    </option>
+                  {supervisores
+                    .filter((sup) => !supervisoresComSupervisao.includes(sup.id))
+                    .map((sup) => (
+                      <option className="text-black" value={sup.id} key={sup.id}>
+                        {sup.nome}
+                      </option>
                   ))}
                 </Select>
+
 
                 <Select nome="Tipo da Supervisão" {...register("genero", { required: true })}>
                   <option className="text-black" value="">Selecione</option>
@@ -197,8 +240,14 @@ export default function CriarMinisterioSupervisao() {
                 </Select>
               </div>
 
+              {supervisores.filter(s => !supervisoresComSupervisao.includes(s.id)).length === 0 && (
+                  <p className="text-yellow-400 mt-2 font-manrope">
+                    Todos os supervisores já possuem uma supervisão.
+                  </p>
+                )}
+
               {/* TABELA */}
-              <div className="w-full mt-10 overflow-x-auto">
+              <div className="w-full h-[200px] mt-10 overflow-x-auto">
                 <table className="w-full border-collapse text-white">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
@@ -211,7 +260,11 @@ export default function CriarMinisterioSupervisao() {
                     <tbody>
                       {celulasComLider.length > 0 ? (
                         celulasComLider
-                          .filter(item => item.lider_cargo?.trim().toLowerCase() === "lider")
+                          .filter(item =>
+                            item.lider_cargo?.trim().toLowerCase() === "lider" &&
+                            item.lider_id &&
+                            !lideresComSupervisao.includes(item.lider_id)
+                          )
                           .map((item) => {
                             const isAdded = leadersArray.some(
                               (l) => l.id === item.lider_id
