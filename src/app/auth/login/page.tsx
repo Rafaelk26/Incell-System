@@ -82,7 +82,7 @@ export default function Login() {
           />
 
           <Link
-            href={"/"}
+            href={"/auth/password"}
             className="w-fit text-blue-400 underline hover:text-white"
           >
             Esqueci minha senha
