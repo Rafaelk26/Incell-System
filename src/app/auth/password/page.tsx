@@ -36,6 +36,8 @@ export default function Password() {
         return;
       }
 
+      console.log(data)
+
       toast.success("E-mail enviado! Verifique sua caixa de entrada.");
       setEmail("");
     } catch {
@@ -50,18 +52,21 @@ export default function Password() {
       <div className="max-w-sm w-full flex flex-col items-center gap-6">
 
         <Link href="/">
-          <Image src={IncellLogo} alt="Logo" />
+          <Image 
+          width={250}
+          src={IncellLogo} 
+          alt="Logo" />
         </Link>
 
         <h1 className="text-xl text-center font-manrope">
           Digite seu e-mail para recuperar a senha
         </h1>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-6">
           <Input
             placeholder="Ex: jorge.silva@gmail.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value.toLowerCase())}
           />
 
           <ButtonAction

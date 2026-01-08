@@ -5,7 +5,10 @@ import nodemailer from "nodemailer";
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    let { email } = await req.json();
+
+    email = email?.toLowerCase().trim();
+
 
     if (!email) {
       return NextResponse.json(
