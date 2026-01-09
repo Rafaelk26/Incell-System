@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/useUser";
+import { Navbar } from "@/components/all/navBar";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import ModalCriarReuniao from "@/components/modais/ModalCriarReuniao";
 import ModalReunioesDoDia from "@/components/modais/ModalReunioesDoDia";
+import ProtectedLayout from "@/app/middleware/protectedLayout";
 
 export default function Agenda() {
   const { user } = useAuth();
@@ -35,6 +37,7 @@ export default function Agenda() {
       const json = await res.json();
 
       if (!res.ok) {
+        console.log(json)
         toast.error("Erro ao carregar agenda");
         return;
       }
@@ -46,52 +49,53 @@ export default function Agenda() {
   }, [user]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-manrope mb-6">Agenda</h1>
+    <ProtectedLayout>
+        <main className="max-w-full h-screen flex">
+          <Navbar />
+          <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+            <h1 className="text-3xl font-manrope mb-6">Agenda</h1>
 
-      <button
-        onClick={() => setModalCriarAberto(true)}
-        className="mb-4 px-4 py-2 rounded-md bg-blue-500 text-white font-bold"
-      >
-        + Nova reunião
-      </button>
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              events={eventos}
+              displayEventTime={false}
+              dateClick={(info) => {
+                const filtrados = eventos.filter((e) =>
+                  e.start.startsWith(info.dateStr)
+                );
 
-      <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        events={eventos}
-        displayEventTime={false}
-        dateClick={(info) => {
-          const filtrados = eventos.filter((e) =>
-            e.start.startsWith(info.dateStr)
-          );
+                setEventosDoDia(filtrados);
+                setDataSelecionada(info.dateStr);
+                setModalDiaAberto(true);
+              }}
+            />
 
-          setEventosDoDia(filtrados);
-          setDataSelecionada(info.dateStr);
-          setModalDiaAberto(true);
-        }}
-      />
+            {modalCriarAberto && (
+              <ModalCriarReuniao
+                data={dataSelecionada}
+                onClose={() => setModalCriarAberto(false)}
+                onCreated={(novoEvento) =>
+                  setEventos((prev) => [...prev, novoEvento])
+                }
+              />
+            )}
 
-      {modalCriarAberto && (
-        <ModalCriarReuniao
-          data={dataSelecionada}
-          onClose={() => setModalCriarAberto(false)}
-          onCreated={(novoEvento) =>
-            setEventos((prev) => [...prev, novoEvento])
-          }
-        />
-      )}
-
-      {modalDiaAberto && (
-        <ModalReunioesDoDia
-          data={dataSelecionada}
-          eventos={eventosDoDia}
-          onClose={() => setModalDiaAberto(false)}
-          onDeleted={(id) =>
-            setEventos((prev) => prev.filter((e) => e.id !== id))
-          }
-        />
-      )}
-    </div>
+            {modalDiaAberto && dataSelecionada && (
+              <ModalReunioesDoDia
+                data={dataSelecionada}
+                eventos={eventosDoDia}
+                onClose={() => setModalDiaAberto(false)}
+                onDeleted={(id) =>
+                  setEventos((prev) => prev.filter((e) => e.id !== id))
+                }
+                onCreated={(novoEvento) =>
+                  setEventos((prev) => [...prev, novoEvento])
+                }
+              />
+              )}
+          </main>
+      </main>
+    </ProtectedLayout>
   );
 }
