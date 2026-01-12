@@ -81,27 +81,31 @@ export default function ModalReunioesDoDia({
           )}
 
           {eventosDoDia.map((e) => (
-            <div key={e.id} className="border-b py-2 mt-2">
-              <strong>{e.title}</strong>
+            <div key={e.id} className="border-b py-2 mt-2 flex justify-between">
+              <div>
+                <strong>{e.title}</strong>
 
-              {e.extendedProps?.discipulado && (
-                <p className="text-sm text-gray-400">
-                  Com: {e.extendedProps.discipulado}
+                {e.extendedProps?.discipulado && (
+                  <p className="text-sm text-gray-400">
+                    Com: {e.extendedProps.discipulado}
+                  </p>
+                )}
+
+                <p className="text-sm">
+                  {e.start.slice(11, 16)}
                 </p>
-              )}
+              </div>
 
-              <p className="text-sm">
-                {e.start.slice(11, 16)}
-              </p>
-
-              {e.editable && (
-                <button
-                  onClick={() => excluirEvento(e.id)}
-                  className="mt-2 bg-red-500 px-2 py-1 rounded text-sm"
-                >
-                  Excluir
-                </button>
-              )}
+              <div>
+                {e.editable && (
+                  <button
+                    onClick={() => excluirEvento(e.id)}
+                    className="mt-2 bg-red-500 px-2 py-1 rounded text-sm"
+                  >
+                    Excluir
+                  </button>
+                )}
+              </div>
             </div>
           ))}
 

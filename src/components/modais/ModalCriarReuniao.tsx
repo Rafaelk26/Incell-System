@@ -93,6 +93,13 @@ export default function ModalCriarReuniao({
 
   // ===== SALVAR =====
   async function salvar() {
+
+    if (!user?.id) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+
     if (!dataSelecionada) {
       toast.error("Informe a data");
       return;

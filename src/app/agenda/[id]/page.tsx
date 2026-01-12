@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/useUser";
 import { Navbar } from "@/components/all/navBar";
+import Image from "next/image";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import toast from "react-hot-toast";
 import ModalCriarReuniao from "@/components/modais/ModalCriarReuniao";
 import ModalReunioesDoDia from "@/components/modais/ModalReunioesDoDia";
@@ -53,23 +55,38 @@ export default function Agenda() {
         <main className="max-w-full h-screen flex">
           <Navbar />
           <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
-            <h1 className="text-3xl font-manrope mb-6">Agenda</h1>
+
+            <header className="w-full flex justify-end pt-6">
+              <Image
+                className="w-12 h-12 rounded-full border border-white"
+                src={user?.foto || ""}
+                width={50}
+                height={50}
+                alt="Perfil"
+                priority
+              />
+            </header>
+
+            <h1 className="text-3xl font-manrope font-semibold mb-6">Agenda</h1>
 
             <FullCalendar
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              events={eventos}
-              displayEventTime={false}
-              dateClick={(info) => {
-                const filtrados = eventos.filter((e) =>
-                  e.start.startsWith(info.dateStr)
-                );
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locales={[ptBrLocale]}
+            locale="pt-br"
+            events={eventos}
+            displayEventTime={false}
+            dateClick={(info) => {
+              const filtrados = eventos.filter((e) =>
+                e.start.startsWith(info.dateStr)
+              );
 
-                setEventosDoDia(filtrados);
-                setDataSelecionada(info.dateStr);
-                setModalDiaAberto(true);
-              }}
-            />
+              setEventosDoDia(filtrados);
+              setDataSelecionada(info.dateStr);
+              setModalDiaAberto(true);
+            }}
+          />
+
 
             {modalCriarAberto && (
               <ModalCriarReuniao
