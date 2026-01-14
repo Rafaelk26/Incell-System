@@ -39,7 +39,7 @@ export default function CriarMinisterioCelula() {
 
   const { register, handleSubmit, reset } = useForm<MinisterioCelulaForm>(); // hook também no topo
   const [ dataUsers, setDataUsers ] = useState<UserSupabase[]>([])
-    const [ useLoading, setUseLoading ] = useState<boolean>(false)
+  const [ useLoading, setUseLoading ] = useState<boolean>(false)
 
 
     // Requisição para buscar os líderes cadastrados

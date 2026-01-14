@@ -189,7 +189,7 @@ export default function Dashboard() {
                     ) : t === "Coordenadores" ? (
                       <CountUp duration={3.5} end={usuarios.filter(u => u.cargo === "coordenador").length} />
                     ) : (
-                      <CountUp duration={3.5} end={celulas.length} />
+                      <CountUp duration={3.5} end={usuarios.length - 1} />
                     )
                   }
                 />

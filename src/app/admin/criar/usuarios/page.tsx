@@ -12,6 +12,7 @@ import { Select } from "@/components/select";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { useAuth } from "@/app/context/useUser";
+import { useRouter } from "next/navigation";
 
 type UsuariosForm = {
   nome: string;
@@ -26,6 +27,7 @@ type UsuariosForm = {
 export default function CriarUsuarios() {
 
   const { user } = useAuth();
+  const router = useRouter()
 
   const { register, handleSubmit, reset } = useForm<UsuariosForm>(); // hook também no topo
   const [ useLoading, setUseLoading ] = useState<boolean>(false)
@@ -62,6 +64,10 @@ export default function CriarUsuarios() {
                   telefone: ""
                 })
                 setUseLoading(false)
+                
+                if(data.cargo.trim() === "lider") router.push("/admin/criar/ministerios/celula")
+                if(data.cargo.trim() === "supervisor") router.push("/admin/criar/ministerios/supervisao")
+                if(data.cargo.trim() === "coordenador") router.push("/admin/criar/ministerios/coordenacao")
         } catch (err) {
                 console.error(err);
                 toast.error("Erro ao criar usuário!");
