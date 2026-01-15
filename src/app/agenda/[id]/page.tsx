@@ -60,8 +60,8 @@ export default function Agenda() {
               <Image
                 className="w-12 h-12 rounded-full border border-white"
                 src={user?.foto || ""}
-                width={50}
-                height={50}
+                width={12}
+                height={12}
                 alt="Perfil"
                 priority
               />
@@ -69,24 +69,23 @@ export default function Agenda() {
 
             <h1 className="text-3xl font-manrope font-semibold mb-6">Agenda</h1>
 
-            <FullCalendar
-            plugins={[dayGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            locales={[ptBrLocale]}
-            locale="pt-br"
-            events={eventos}
-            displayEventTime={false}
-            dateClick={(info) => {
-              const filtrados = eventos.filter((e) =>
-                e.start.startsWith(info.dateStr)
-              );
+                <FullCalendar
+                  plugins={[dayGridPlugin, interactionPlugin]}
+                  initialView="dayGridMonth"
+                  locales={[ptBrLocale]}
+                  locale="pt-br"
+                  events={eventos}
+                  displayEventTime={false}
+                  dateClick={(info) => {
+                    const filtrados = eventos.filter((e) =>
+                      e.start.startsWith(info.dateStr)
+                    );
 
-              setEventosDoDia(filtrados);
-              setDataSelecionada(info.dateStr);
-              setModalDiaAberto(true);
-            }}
-          />
-
+                  setEventosDoDia(filtrados);
+                  setDataSelecionada(info.dateStr);
+                  setModalDiaAberto(true);
+                }}
+              />
 
             {modalCriarAberto && (
               <ModalCriarReuniao

@@ -295,7 +295,7 @@ const normalize = (value: string) =>
 
               <Input 
               onChange={(e)=> setSearch(e.target.value)}
-              placeholder="Nome do Líder (ou) Nome da Célula" />
+              placeholder="Nome da Célula" />
 
               {/* Bairros */}
 

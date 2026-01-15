@@ -162,8 +162,8 @@ export default function detalheLider(){
                     <Image
                     className="w-12 h-12 rounded-full border-2 border-white"
                     src={user?.foto || ""}
-                    width={50}
-                    height={50}
+                    width={12}
+                    height={12}
                     alt="Perfil"
                     priority
                     />

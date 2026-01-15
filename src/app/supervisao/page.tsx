@@ -219,8 +219,10 @@ export default function Supervisoes() {
               <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
                 <header className="w-full flex justify-end pt-6">
                   <Image
-                    className="w-12 rounded-full border border-white"
-                    src={Perfil}
+                    className="w-12 h-12 rounded-full border border-white"
+                    width={12}
+                    height={12}
+                    src={user?.foto || ""}
                     alt="Perfil"
                     priority
                   />

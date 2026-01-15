@@ -121,7 +121,7 @@ export function Navbar(){
                                 {user?.cargo !== "admin" && (
                                     <>
                                         <li>
-                                            <Link href={`agenda/${user?.id}`}>
+                                            <Link href={`/agenda/${user?.id}`}>
                                                 <div className="flex items-center gap-2 transition-all
                                                 hover:scale-110">
                                                     <FaCalendarDays size={20} color="#fff"/> 

@@ -244,8 +244,10 @@ export default function RelatorioCelula() {
         <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
           <header className="w-full flex justify-end px-10 pt-6">
             <Image
-              className="w-12 rounded-full border border-white"
-              src={Perfil}
+              className="w-12 h-12 rounded-full border border-white"
+              width={12}
+              height={12}
+              src={user?.foto || ""}
               alt="Perfil"
             />
           </header>
