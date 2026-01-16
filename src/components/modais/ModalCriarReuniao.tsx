@@ -12,11 +12,13 @@ type EventoAgenda = {
   id: string;
   title: string;
   start: string;
-  editable: boolean;
+  editable?: boolean;
+  criado_por?: string;
   backgroundColor?: string;
   borderColor?: string;
   extendedProps?: {
-    discipulado?: string | null;
+    tipo: string;
+    descricao: string | null;
   };
 };
 
@@ -144,9 +146,8 @@ export default function ModalCriarReuniao({
       backgroundColor: "#3b82f6",
       borderColor: "#3b82f6",
       extendedProps: {
-        discipulado: json.evento.discipulo
-          ? `${json.evento.discipulo.nome} — ${json.evento.discipulo.cargo}`
-          : null,
+        tipo: json.evento.tipo,
+        descricao: json.evento.discipulo,
       },
     };
 

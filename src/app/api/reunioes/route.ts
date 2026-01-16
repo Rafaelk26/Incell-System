@@ -24,28 +24,32 @@ type Discipulo = {
 export async function POST(req: Request) {
   const { userId, cargo } = await req.json();
 
-  /* 🔹 BUSCAR TODAS AS REUNIÕES + ESCOPO */
+  /* BUSCAR TODAS AS REUNIÕES + ESCOPO */
   const { data, error } = await supabase
-    .from("reunioes")
-    .select(`
-      id,
-      tipo,
-      data,
-      hora,
-      criado_por,
-      discipulado_com,
-      discipulo:discipulado_com (
-        nome,
-        cargo
-      ),
-      reuniao_escopo (
-        tipo_escopo,
-        user_id,
-        supervisao_id,
-        coordenacao_id,
-        pastoreio_id
+  .from("reunioes")
+  .select(`
+    id,
+    tipo,
+    data,
+    hora,
+    criado_por,
+    discipulado_com,
+    discipulos:discipulado_com (
+      nome,
+      cargo
+    ),
+    reuniao_escopo (
+      tipo_escopo,
+      supervisao_id,
+      coordenacao_id,
+      pastoreio_id,
+      user_id,
+      supervisoes:supervisao_id (
+        nome
       )
-    `);
+    )
+  `);
+
 
   if (error) {
     return NextResponse.json({ error }, { status: 500 });
@@ -118,25 +122,38 @@ export async function POST(req: Request) {
      🎨 MAP PARA FULLCALENDAR
   ===================================================== */
   const eventos = eventosFiltrados.map((r: any) => {
-    const discipulo: Discipulo | null =
-      Array.isArray(r.discipulo) && r.discipulo.length > 0
-        ? r.discipulo[0]
-        : null;
+  const escopo = r.reuniao_escopo?.[0] ?? null;
+  const discipulo = r.discipulos ?? null;
+    let descricao: string | null = null;
+
+    // 🔹 DISCIPULADO → nome do discípulo
+    if (r.tipo === "DISCIPULADO" && discipulo) {
+      descricao = discipulo.nome;
+    }
+
+    // 🔹 GDL → nome da supervisão
+    if (r.tipo === "GDL" && escopo?.supervisoes?.nome) {
+      descricao = escopo.supervisoes.nome;
+    }
 
     return {
       id: r.id,
       title: r.tipo,
       start: `${r.data}T${r.hora}`,
       editable: r.criado_por === userId || cargo === "pastor",
+      criado_por: r.criado_por,
       backgroundColor: cores[r.tipo],
       borderColor: cores[r.tipo],
+
       extendedProps: {
-        discipulado: discipulo
-          ? `${discipulo.nome} — ${discipulo.cargo}`
-          : null,
+        tipo: r.tipo,
+        descricao,
       },
     };
   });
+
+
+
 
   return NextResponse.json({ eventos });
 }

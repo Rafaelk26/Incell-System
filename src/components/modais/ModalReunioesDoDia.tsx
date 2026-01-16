@@ -2,14 +2,21 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import ModalCriarReuniao from "./ModalCriarReuniao";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/useUser";
+
 
 type Evento = {
   id: string;
   title: string;
   start: string;
   editable?: boolean;
+  criado_por?: string;
+  backgroundColor?: string;
+  borderColor?: string;
   extendedProps?: {
-    discipulado?: string | null;
+    tipo: string;
+    descricao: string | null;
   };
 };
 
@@ -28,12 +35,43 @@ export default function ModalReunioesDoDia({
   onDeleted,
   onCreated,
 }: ModalReuniaoProps) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [eventosDoDia, setEventosDoDia] = useState<Evento[]>([]);
   const [modalCriarAberto, setModalCriarAberto] = useState(false);
 
   useEffect(() => {
     setEventosDoDia(eventos);
+
   }, [eventos]);
+
+
+  function renderDescricao(e: Evento) {
+  const tipo = e.extendedProps?.tipo;
+  const descricao = e.extendedProps?.descricao;
+
+  if (!descricao) return null;
+
+  switch (tipo) {
+    case "DISCIPULADO":
+      return `Com: ${descricao}`;
+
+    case "GDL":
+      return `Supervisão: ${descricao}`;
+
+    case "GDS":
+      return `Coordenação: ${descricao}`;
+
+    case "GDC":
+      return `Pastoreio: ${descricao}`;
+
+    default:
+      return null;
+  }
+}
+
+
+
 
   async function excluirEvento(id: string) {
     const res = await fetch("/api/reunioes", {
@@ -50,13 +88,18 @@ export default function ModalReunioesDoDia({
     toast.success("Reunião excluída");
 
     setEventosDoDia((prev) => prev.filter((e) => e.id !== id));
+    
     onDeleted(id);
   }
 
+
   function handleCreated(evento: Evento) {
+    let link = `/agenda/${user?.id}`
+
     setEventosDoDia((prev) => [...prev, evento]);
-    onCreated(evento); // atualiza agenda principal
     setModalCriarAberto(false);
+    router.push(link);
+    onCreated(evento);
   }
 
   return (
@@ -85,11 +128,12 @@ export default function ModalReunioesDoDia({
               <div>
                 <strong>{e.title}</strong>
 
-                {e.extendedProps?.discipulado && (
-                  <p className="text-sm text-gray-400">
-                    Com: {e.extendedProps.discipulado}
-                  </p>
-                )}
+                  {renderDescricao(e) && (
+                    <p className="text-sm text-gray-400">
+                      {renderDescricao(e)}
+                    </p>
+                  )}
+
 
                 <p className="text-sm">
                   {e.start.slice(11, 16)}

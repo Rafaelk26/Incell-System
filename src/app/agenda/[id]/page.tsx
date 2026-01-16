@@ -13,6 +13,8 @@ import ModalCriarReuniao from "@/components/modais/ModalCriarReuniao";
 import ModalReunioesDoDia from "@/components/modais/ModalReunioesDoDia";
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 
+
+
 export default function Agenda() {
   const { user } = useAuth();
 
@@ -43,12 +45,13 @@ export default function Agenda() {
         toast.error("Erro ao carregar agenda");
         return;
       }
-
       setEventos(json.eventos);
+      console.log(json.eventos)
     }
 
     carregarAgenda();
   }, [user]);
+
 
   return (
     <ProtectedLayout>
