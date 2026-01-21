@@ -9,7 +9,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { Spinner } from "@/components/all/spiner";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { Input } from "@/components/inputs";
-import Perfil from "../../../public/assets/perfil teste.avif";
 import Link from "next/link";
 import IncellLogo from "../../../public/assets/file Incell.png";
 
@@ -27,12 +26,33 @@ type SupervisaoType = {
   coordenador_id: string;
 };
 
-type LideresType = {
+type SupervisaoRenderType = {
   id: string;
   nome: string;
-  telefone: string;
-  dataNascimento: string;
+  genero: "masculina" | "feminina";
+  supervisor: {
+    id: string;
+    nome: string;
+    telefone: string;
+    dataNascimento: string;
+  };
 };
+
+type CoordenacaoSupervisoesRow = {
+  supervisoes: {
+    id: string;
+    nome: string;
+    genero: "masculina" | "feminina";
+    supervisor: {
+      id: string;
+      nome: string;
+      telefone: string;
+      dataNascimento: string;
+    } | null;
+  } | null;
+};
+
+
 
 type PDFsType = {
   id: string;
@@ -51,7 +71,7 @@ export default function Coordenacoes() {
   const { user } = useAuth();
 
   const [coordenacao, setCoordenacao] = useState<SupervisaoType | null>(null);
-  const [supervisores, setSupervisores] = useState<LideresType[]>([]);
+  const [supervisores, setSupervisores] = useState<SupervisaoRenderType[]>([]);
   const [pdfs, setPDFs] = useState<PDFsType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState("");
@@ -85,45 +105,57 @@ export default function Coordenacoes() {
 
   /* ===================== LÍDERES ===================== */
 
-  const fetchLideres = async (coordenacaoId: string) => {
+  const fetchSupervisoes = async (coordenacaoId: string) => {
   try {
-    // 1️⃣ Supervisões da coordenação
-    const { data: relacoes, error: relError } = await supabase
+    const { data, error } = await supabase
       .from("coordenacao_supervisoes")
-      .select("supervisao_id")
-      .eq("coordenacao_id", coordenacaoId);
+      .select(`
+        supervisoes (
+          id,
+          nome,
+          genero,
+          supervisor:users (
+            id,
+            nome,
+            telefone,
+            dataNascimento
+          )
+        )
+      `)
+      .eq("coordenacao_id", coordenacaoId)
+      .returns<CoordenacaoSupervisoesRow[]>(); // 👈 CRÍTICO
 
-    if (relError) throw relError;
-    if (!relacoes || relacoes.length === 0) {
-      setSupervisores([]);
-      return;
-    }
+    if (error) throw error;
 
-    // 2️⃣ Buscar supervisores dessas supervisões
-    const supervisaoIds = relacoes.map((r) => r.supervisao_id);
+    const supervisoesFormatadas: SupervisaoRenderType[] =
+      data
+        ?.map((item) => item.supervisoes)
+        .filter(
+          (sup): sup is NonNullable<CoordenacaoSupervisoesRow["supervisoes"]> =>
+            !!sup && !!sup.supervisor
+        )
+        .map((sup) => ({
+          id: sup.id,
+          nome: sup.nome,
+          genero: sup.genero,
+          supervisor: sup.supervisor!,
+        })) ?? [];
 
-    const { data: supervisoes, error: supError } = await supabase
-      .from("supervisoes")
-      .select("supervisor_id")
-      .in("id", supervisaoIds);
-
-    if (supError) throw supError;
-
-    const supervisorIds = supervisoes.map((s) => s.supervisor_id);
-
-    // 3️⃣ Buscar dados dos supervisores
-    const { data: supervisoresData, error: userError } = await supabase
-      .from("users")
-      .select("id, nome, telefone, dataNascimento")
-      .in("id", supervisorIds);
-
-    if (userError) throw userError;
-
-    setSupervisores(supervisoresData ?? []);
+    setSupervisores(supervisoesFormatadas);
   } catch (err) {
-    console.error("Erro ao buscar supervisores", err);
+    console.error("Erro ao buscar supervisões", err);
   }
 };
+
+
+
+useEffect(() => {
+  if (coordenacao?.id) {
+    fetchSupervisoes(coordenacao.id);
+  }
+}, [coordenacao?.id]);
+
+
 
 
   /* ===================== RELATÓRIOS (PDFs) ===================== */
@@ -267,7 +299,7 @@ export default function Coordenacoes() {
                       <div className="w-64">
                         {/* Input de busca por nome ligado ao state */}
                         <Input
-                          placeholder="Buscar supervisor por nome"
+                          placeholder="Buscar supervisão por nome"
                           value={searchName}
                           onChange={(e: any) => setSearchName(e.target.value)}
                         />
@@ -298,45 +330,56 @@ export default function Coordenacoes() {
                               key={d.id}
                               className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
                             >
-                              <td className="px-3 py-2 font-manrope font-light">
-                                {d.nome}
-                              </td>
-                              <td className="px-3 py-2 font-manrope font-light">
-                                {d.telefone}
-                              </td>
-                              <td className="px-3 py-2 font-manrope font-light">
-                                {formatDate(d.dataNascimento)}
-                              </td>
-
-                              <td className="px-3 py-2 font-manrope font-light text-center flex gap-6 justify-end">
-                                {/* WHATSAPP */}
-                                <Link
-                                href={gerarLinkWhatsApp(d.telefone)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                >
-                                  <ButtonAction type="button" color={"bg-green-600"}>
-                                    <div className="w-full flex gap-2">
-                                      <AiOutlineWhatsApp size={24} />
-                                      Whatsapp
-                                    </div>
-                                  </ButtonAction>
-                                </Link>
-
+                              {/* NOME SUPERVISOR + SUPERVISÃO */}
+                              <td className="px-3 py-2">
+                                <div className="flex flex-col">
+                                  <span className="font-manrope font-medium">
+                                    {d.supervisor.nome}
+                                  </span>
+                                  <span className="text-sm text-zinc-400 font-manrope">
+                                    {d.nome}
+                                  </span>
+                                </div>
                               </td>
 
-                              <td className="px-3 py-2 font-manrope font-light text-center">
-                                <Link
-                                  href={`/supervisao/lider/${d.id}`}
-                                >
-                                  <ButtonAction type="button" color={"transparent"}>
-                                    <div className="flex gap-2 items-center">
-                                      <FaRegEye size={24} color="#fff" />
-                                    </div>
+                              {/* TELEFONE */}
+                              <td className="px-3 py-2 font-manrope font-light">
+                                {d.supervisor.telefone}
+                              </td>
+
+                              {/* DATA NASCIMENTO */}
+                              <td className="px-3 py-2 font-manrope font-light">
+                                {formatDate(d.supervisor.dataNascimento)}
+                              </td>
+
+                              {/* AÇÕES */}
+                              <td className="px-3 py-2">
+                                <div className="flex justify-end gap-4">
+                                  <Link
+                                    href={gerarLinkWhatsApp(d.supervisor.telefone)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ButtonAction type="button" color="bg-green-600">
+                                      <div className="flex items-center gap-2">
+                                        <AiOutlineWhatsApp size={20} />
+                                        Whatsapp
+                                      </div>
+                                    </ButtonAction>
+                                  </Link>
+                                </div>
+                              </td>
+
+                              {/* VISUALIZAR */}
+                              <td className="px-3 py-2 text-center">
+                                <Link href={`/coordenacao/supervisor/${d.id}`}>
+                                  <ButtonAction type="button" color="transparent">
+                                    <FaRegEye size={22} color="#fff" />
                                   </ButtonAction>
                                 </Link>
                               </td>
                             </tr>
+
                           ))
                         ) : (
                           <tr>
@@ -344,7 +387,7 @@ export default function Coordenacoes() {
                               colSpan={5}
                               className="text-center p-20 text-white font-manrope font-semibold"
                             >
-                              Nenhum supervisor encontrado
+                              Nenhuma supervisão encontrada
                             </td>
                           </tr>
                         )}

@@ -54,16 +54,16 @@ export default function ModalReunioesDoDia({
 
   switch (tipo) {
     case "DISCIPULADO":
-      return `Com: ${descricao}`;
+      return `${descricao}`;
 
     case "GDL":
-      return `Supervisão: ${descricao}`;
+      return `${descricao}`;
 
     case "GDS":
-      return `Coordenação: ${descricao}`;
+      return `${descricao}`;
 
     case "GDC":
-      return `Pastoreio: ${descricao}`;
+      return ` ${descricao}`;
 
     default:
       return null;

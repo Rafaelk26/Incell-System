@@ -359,7 +359,7 @@ const InfoBox = ({ title, items }: { title: string; items: string[] }) => (
     {items.length === 0 && (
       <>
         <div className="w-full h-full flex flex-col justify-center items-center mb-20">
-          <span className="text-xl font-manrope font-normal">Nenhuma notificação recebida</span>
+          <span className="text-xl font-manrope font-normal">Nenhum relatório encontrado</span>
         </div>
       </>
     )}
