@@ -24,7 +24,7 @@ type SupervisaoType = {
   id: string;
   nome: string;
   genero: "masculina" | "feminina";
-  supervisor_id: string;
+  coordenador_id: string;
 };
 
 type LideresType = {
@@ -47,31 +47,31 @@ type PDFsType = {
 
 /* ===================== COMPONENT ===================== */
 
-export default function Supervisoes() {
+export default function Coordenacoes() {
   const { user } = useAuth();
 
-  const [supervisao, setSupervisao] = useState<SupervisaoType | null>(null);
-  const [lideres, setLideres] = useState<LideresType[]>([]);
+  const [coordenacao, setCoordenacao] = useState<SupervisaoType | null>(null);
+  const [supervisores, setSupervisores] = useState<LideresType[]>([]);
   const [pdfs, setPDFs] = useState<PDFsType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState("");
   
 
-  /* ===================== SUPERVISÃO ===================== */
+  /* ===================== COORDENAÇÃO ===================== */
 
-  const fetchSupervisao = async () => {
+  const fetchCoordenacao = async () => {
     if (!user?.id) return;
 
     try {
       const { data, error } = await supabase
-        .from("supervisoes")
+        .from("coordenacoes")
         .select("*")
-        .eq("supervisor_id", user.id)
+        .eq("coordenador_id", user.id)
         .single();
 
       if (error) throw error;
 
-      setSupervisao(data);
+      setCoordenacao(data);
     } catch (err) {
       console.error("Erro ao buscar supervisão", err);
     } finally {
@@ -80,46 +80,50 @@ export default function Supervisoes() {
   };
 
   useEffect(() => {
-    fetchSupervisao();
+    fetchCoordenacao();
   }, [user?.id]);
 
   /* ===================== LÍDERES ===================== */
 
-  const fetchLideres = async (supervisaoId: string) => {
-    try {
-      // 1️⃣ Busca IDs dos líderes
-      const { data: relacoes, error: relError } = await supabase
-        .from("supervisao_lideres")
-        .select("lider_id")
-        .eq("supervisao_id", supervisaoId);
+  const fetchLideres = async (coordenacaoId: string) => {
+  try {
+    // 1️⃣ Supervisões da coordenação
+    const { data: relacoes, error: relError } = await supabase
+      .from("coordenacao_supervisoes")
+      .select("supervisao_id")
+      .eq("coordenacao_id", coordenacaoId);
 
-      if (relError) throw relError;
-      if (!relacoes || relacoes.length === 0) {
-        setLideres([]);
-        return;
-      }
-
-      const liderIds = relacoes.map((r) => r.lider_id);
-
-      // 2️⃣ Busca dados dos líderes
-      const { data: lideresData, error: lideresError } = await supabase
-        .from("users")
-        .select("id, nome, telefone, dataNascimento")
-        .in("id", liderIds);
-
-      if (lideresError) throw lideresError;
-
-      setLideres(lideresData ?? []);
-    } catch (err) {
-      console.error("Erro ao buscar líderes", err);
+    if (relError) throw relError;
+    if (!relacoes || relacoes.length === 0) {
+      setSupervisores([]);
+      return;
     }
-  };
 
-  useEffect(() => {
-    if (supervisao?.id) {
-      fetchLideres(supervisao.id);
-    }
-  }, [supervisao?.id]);
+    // 2️⃣ Buscar supervisores dessas supervisões
+    const supervisaoIds = relacoes.map((r) => r.supervisao_id);
+
+    const { data: supervisoes, error: supError } = await supabase
+      .from("supervisoes")
+      .select("supervisor_id")
+      .in("id", supervisaoIds);
+
+    if (supError) throw supError;
+
+    const supervisorIds = supervisoes.map((s) => s.supervisor_id);
+
+    // 3️⃣ Buscar dados dos supervisores
+    const { data: supervisoresData, error: userError } = await supabase
+      .from("users")
+      .select("id, nome, telefone, dataNascimento")
+      .in("id", supervisorIds);
+
+    if (userError) throw userError;
+
+    setSupervisores(supervisoresData ?? []);
+  } catch (err) {
+    console.error("Erro ao buscar supervisores", err);
+  }
+};
 
 
   /* ===================== RELATÓRIOS (PDFs) ===================== */
@@ -141,25 +145,24 @@ export default function Supervisoes() {
   };
 
   useEffect(() => {
-    if (lideres.length > 0) {
-      const ids = lideres.map((l) => l.id);
+    if (supervisores.length > 0) {
+      const ids = supervisores.map((l) => l.id);
       fetchPDFs(ids);
     }
-  }, [lideres]);
-
+  }, [supervisores]);
 
   /* ===================== FILTRO ===================== */
 
   const normalize = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  const filteredLideres = useMemo(() => {
-    if (!searchName) return lideres;
+  const filteredSupervisores = useMemo(() => {
+    if (!searchName) return supervisores;
     const s = normalize(searchName);
-    return lideres.filter((l) => normalize(l.nome).includes(s));
-  }, [lideres, searchName]);
+    return supervisores.filter((l) => normalize(l.nome).includes(s));
+  }, [supervisores, searchName]);
 
-  const pdfPorLider = useMemo(() => {
+  const pdfPorSupervisor = useMemo(() => {
   const map = new Map<string, PDFsType>();
 
   pdfs.forEach((pdf) => {
@@ -192,16 +195,16 @@ export default function Supervisoes() {
     );
   }
 
-  /* ===================== SEM SUPERVISÃO ===================== */
+  /* ===================== SEM COORDENAÇÃO ===================== */
 
-  if (!supervisao) {
+  if (!coordenacao) {
     return (
       <ProtectedLayout>
         <main className="w-full h-screen flex justify-center items-center text-white">
           <div className="flex flex-col items-center gap-6">
             <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
             <span className="text-2xl font-semibold font-manrope">
-              Você não possui uma supervisão cadastrada
+              Você não possui uma coordenação cadastrada
             </span>
           </div>
         </main>
@@ -232,13 +235,13 @@ export default function Supervisoes() {
 
                 <section className="w-full">
                   <h1 className="font-bold text-4xl font-manrope">
-                    <span className="text-xl font-manrope font-light">Supervisão</span>{" "}
-                    {supervisao?.nome}
+                    <span className="text-xl font-manrope font-light">Coordenação</span>{" "}
+                    {coordenacao?.nome}
                   </h1>
 
                   <div className="mt-2 flex gap-2">
-                    <span className="font-manrope">Tipo de supervisão:</span>
-                    {supervisao?.genero === "masculina" && (
+                    <span className="font-manrope">Tipo de coordenação:</span>
+                    {coordenacao?.genero === "masculina" && (
                       <>
                         <div className="p-1 w-fit bg-blue-500 rounded-full">
                           <IoMdMale size={16} color="#000" />
@@ -247,7 +250,7 @@ export default function Supervisoes() {
                       </>
                     )}
 
-                    {supervisao?.genero === "feminina" && (
+                    {coordenacao?.genero === "feminina" && (
                       <>
                         <div className="p-1 w-fit bg-pink-500 rounded-full">
                           <IoMdFemale size={16} color="#000" />
@@ -258,13 +261,13 @@ export default function Supervisoes() {
                   </div>
 
                   <div className="w-full flex justify-between items-end mt-6">
-                    <h1 className="font-bold text-3xl font-manrope">Liderança</h1>
+                    <h1 className="font-bold text-3xl font-manrope">Supervisões</h1>
 
                     <div className="w-max flex gap-4">
                       <div className="w-64">
                         {/* Input de busca por nome ligado ao state */}
                         <Input
-                          placeholder="Buscar líder por nome"
+                          placeholder="Buscar supervisor por nome"
                           value={searchName}
                           onChange={(e: any) => setSearchName(e.target.value)}
                         />
@@ -289,8 +292,8 @@ export default function Supervisoes() {
 
                       {/* CORPO */}
                       <tbody>
-                        {filteredLideres.length > 0 ? (
-                          filteredLideres.map((d) => (
+                        {filteredSupervisores.length > 0 ? (
+                          filteredSupervisores.map((d) => (
                             <tr
                               key={d.id}
                               className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
@@ -341,7 +344,7 @@ export default function Supervisoes() {
                               colSpan={5}
                               className="text-center p-20 text-white font-manrope font-semibold"
                             >
-                              Nenhum líder encontrado
+                              Nenhum supervisor encontrado
                             </td>
                           </tr>
                         )}

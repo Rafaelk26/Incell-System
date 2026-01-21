@@ -33,6 +33,7 @@ export default function Dashboard() {
     id: string; 
     nome: string; 
   }>>([]);
+  const [gdlEvents, setGdlEvents] = useState<Array<{ start: string }>>([]);
 
   const {
     scrollRef,
@@ -113,8 +114,53 @@ export default function Dashboard() {
   }, [user]);
 
 
+  useEffect(() => {
+  if (!user?.id) return;
 
-  const perfilImage = useMemo(() => user?.foto || "", []);
+  async function getDateGDL() {
+    try {
+      const res = await fetch("/api/reunioes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          cargo: user?.cargo,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        console.error(json);
+        toast.error("Erro ao carregar agenda");
+        return;
+      }
+
+      const reunioesGDL = json.eventos.filter(
+        (evento: any) => evento.title === "GDL"
+      );
+
+
+      for (let i = 0; i < reunioesGDL.length; i++) {
+        const dataISO = reunioesGDL[i].start;
+        const data = new Date(dataISO);
+        const dia = data.getDate();
+        const mes = data.toLocaleString("pt-BR", { month: "short" });
+        reunioesGDL[i].start = `${dia} ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
+      }
+
+      setGdlEvents(reunioesGDL);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro inesperado");
+    }
+  }
+
+  getDateGDL();
+}, [user?.id, user?.cargo]);
+
+
 
   if (!user || loading) {
     return (
@@ -181,7 +227,7 @@ export default function Dashboard() {
 
                     {/* ======== CARDS DE REUNIÕES (DINÂMICOS) ======== */}
                     {user?.cargo === "lider" && (
-                      <MeetingCard title="Reunião GDL" date="12 Set" />
+                      <MeetingCard title="Reunião GDL" date={gdlEvents[0]?.start || "S/D"} />
                     )}
 
                     {user?.cargo === "supervisor" && (
