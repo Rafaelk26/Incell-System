@@ -1,7 +1,6 @@
 "use client";
 
 import ProtectedLayout from "@/app/middleware/protectedLayout";
-import Perfil from "../../../../public/assets/perfil teste.avif";
 import Image from "next/image";
 import { Navbar } from "@/components/all/navBar";
 import { useAuth } from "@/app/context/useUser";

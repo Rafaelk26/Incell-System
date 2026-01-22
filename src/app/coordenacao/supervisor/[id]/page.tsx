@@ -52,37 +52,33 @@ export default function DetalheSupervisor() {
 
   /* ==================== BUSCAR SUPERVISÃO ==================== */
 
-  const fetchSupervisao = async () => {
+  const fetchSupervisao = async (): Promise<Supervisor | null> => {
     const { data, error } = await supabase
       .from("supervisoes")
       .select("id, nome, supervisor_id:users (id, nome, foto)")
       .eq("id", idSupervisor)
       .single();
 
-    if (error) throw error;
+    if (error || !data) return null;
+
+    const raw = data.supervisor_id;
+    const supervisorResolved: Supervisor | null =
+      Array.isArray(raw) ? raw[0] : raw ?? null;
 
     setSupervisao(data);
-    const rawSupervisor = data.supervisor_id;
-
-    const supervisorResolved =
-    Array.isArray(rawSupervisor)
-        ? rawSupervisor[0] ?? null
-        : rawSupervisor ?? null;
-
     setSupervisor(supervisorResolved);
 
+    return supervisorResolved; 
   };
+
 
   /* ==================== BUSCAR RELATÓRIOS ==================== */
 
-  const fetchRelatorios = async () => {
-
-    if(!supervisor?.id) return;
-
+  const fetchRelatorios = async (supervisorId: string) => {
     const { data, error } = await supabase
       .from("relatorios")
       .select("id, conteudo, tipo, responsavel, criado_em")
-      .eq("responsavel", supervisor.id);
+      .eq("responsavel", supervisorId);
 
     if (error) throw error;
 
@@ -90,19 +86,25 @@ export default function DetalheSupervisor() {
     console.log("Relatórios carregados:", data);
   };
 
+
   useEffect(() => {
     if (!idSupervisor) return;
 
     const load = async () => {
-      try {
-        setLoading(true);
-        await Promise.all([fetchSupervisao(), fetchRelatorios()]);
-      } catch (err) {
-        console.error("Erro ao carregar dados:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      setLoading(true);
+
+      const supervisorData = await fetchSupervisao(); // ← espera
+      if (!supervisorData?.id) return;
+
+      await fetchRelatorios(supervisorData.id); // ← agora sim
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
     load();
   }, [idSupervisor]);
@@ -214,6 +216,7 @@ export default function DetalheSupervisor() {
                         {relatorios?.filter(r => r.tipo === 'CELULA').map((relatorio) => (
                                 <>
                                 <tr
+                                key={relatorio.id}
                                 className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
                                 >
                                     <td className="px-3 py-3 font-manrope font-light">Relatório de Célula</td>
@@ -233,8 +236,26 @@ export default function DetalheSupervisor() {
                             
                             {relatorios?.filter(r => r.tipo === 'DISCIPULADO').map((relatorio) => (
                                 <>
-                                    <tr>
+                                    <tr key={relatorio.id}>
                                         <td className="px-3 py-3 font-manrope font-light">Relatório de Discipulado</td>
+                                        <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)}</td>
+                                        <td className="px-3 py-3 font-manrope font-light flex justify-end">
+                                            <Link href={relatorio?.conteudo.signed_url || ""} target="_blank">
+                                                <AiFillFilePdf 
+                                                className="cursor-pointer"
+                                                size={24} 
+                                                color="#fff"/>
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                </>
+                            ))}
+
+
+                            {relatorios?.filter(r => r.tipo === 'GDL').map((relatorio) => (
+                                <>
+                                    <tr key={relatorio.id}>
+                                        <td className="px-3 py-3 font-manrope font-light">Relatório de GDL</td>
                                         <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)}</td>
                                         <td className="px-3 py-3 font-manrope font-light flex justify-end">
                                             <Link href={relatorio?.conteudo.signed_url || ""} target="_blank">

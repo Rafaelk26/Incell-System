@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const { data: signed, error: signedError } =
       await supabase.storage
         .from("relatorios")
-        .createSignedUrl(filePath, 60);
+        .createSignedUrl(filePath, 500);
 
     if (signedError) throw signedError;
 
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         file_path: filePath,
         conteudo: {
           signed_url: signed.signedUrl,
-          expires_in: 60,
+          expires_in: 500,
         },
       })
       .select()
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     } catch (err) {
       console.error("Erro ao remover relatório expirado:", err);
     }
-  }, 60_000);
+  }, 500000);
 
 
     return NextResponse.json(

@@ -10,10 +10,9 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import Incell from "../../../../public/assets/file Incell.png";
+import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import Perfil from "../../../../public/assets/perfil teste.avif";
 
 /* =========================
    TYPES

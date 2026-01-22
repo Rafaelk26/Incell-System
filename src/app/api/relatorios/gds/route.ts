@@ -6,19 +6,22 @@ export async function POST(req: Request) {
     const formData = await req.formData();
 
     const responsavel = formData.get("responsavel") as string;
-    const tipo = formData.get("tipo") as string;
-    const celula_id = formData.get("celula_id") as string;
-    const pdfBase64 = formData.get("conteudo") as string;
+    const tipo = formData.get("tipo") as string; // "GDS"
+    const coordenacao_id = formData.get("coordenacao_id") as string;
+    const conteudo = formData.get("conteudo") as string;
 
-    if (!responsavel || !tipo || !celula_id || !pdfBase64) {
-      return NextResponse.json({ error: "Dados ausentes" }, { status: 400 });
+    if (!responsavel || !tipo || !coordenacao_id || !conteudo) {
+      return NextResponse.json(
+        { error: "Dados obrigatórios ausentes" },
+        { status: 400 }
+      );
     }
 
-
-    const base64 = pdfBase64.split(",")[1];
+    const base64 = conteudo.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
 
-    const filePath = `${celula_id}/relatorio-${Date.now()}.pdf`;
+    const filePath = `gds/${coordenacao_id}/relatorio-${Date.now()}.pdf`;
+
     const { error: uploadError } = await supabase.storage
       .from("relatorios")
       .upload(filePath, buffer, {
@@ -27,18 +30,20 @@ export async function POST(req: Request) {
       });
 
     if (uploadError) throw uploadError;
+
     const { data: signed, error: signedError } =
       await supabase.storage
         .from("relatorios")
         .createSignedUrl(filePath, 500);
 
     if (signedError) throw signedError;
+
     const { data, error } = await supabase
       .from("relatorios")
       .insert({
         responsavel,
         tipo,
-        celula_id,
+        coordenacao_id,
         file_path: filePath,
         conteudo: {
           signed_url: signed.signedUrl,
@@ -50,39 +55,18 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
-    // Agendar remoção do arquivo e do registro após expirar o link
-
-  setTimeout(async () => {
-    try {
-      await supabase
-        .storage
-        .from("relatorios")
-        .remove([filePath]);
-
-      await supabase
-        .from("relatorios")
-        .delete()
-        .eq("id", data.id);
-
-      console.log("Relatório expirado e removido com sucesso", filePath);
-    } catch (err) {
-      console.error("Erro ao remover relatório expirado:", err);
-    }
-  }, 500000);
-
-
     return NextResponse.json(
       {
-        message: "Relatório criado com sucesso!",
+        message: "Relatório GDS criado com sucesso!",
         pdf_url: signed.signedUrl,
         relatorio: data,
       },
       { status: 201 }
     );
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { error: "Erro ao criar relatório!" },
+      { error: "Erro ao criar relatório GDS" },
       { status: 500 }
     );
   }

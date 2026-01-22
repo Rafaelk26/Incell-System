@@ -3,7 +3,6 @@
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../../context/useUser";
 import { Navbar } from "@/components/all/navBar";
-import Perfil from "../../../../public/assets/perfil teste.avif";
 import Image from "next/image";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
@@ -11,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import Incell from "../../../../public/assets/file Incell.png";
+import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
 
