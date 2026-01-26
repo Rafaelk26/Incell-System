@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
 
     const responsavel = formData.get("responsavel") as string;
-    const tipo = formData.get("tipo") as string; // "GDS"
+    const tipo = formData.get("tipo") as string;
     const coordenacao_id = formData.get("coordenacao_id") as string;
     const conteudo = formData.get("conteudo") as string;
 

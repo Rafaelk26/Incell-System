@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import IncellLogo from "../../../../../public/assets/file Incell.png";
 import { AiFillFilePdf } from "react-icons/ai";
+import { Button } from "@/components/login/buttonAction";
 
 /* ===================== TYPES ===================== */
 
@@ -83,7 +84,6 @@ export default function DetalheSupervisor() {
     if (error) throw error;
 
     setRelatorios(data ?? []);
-    console.log("Relatórios carregados:", data);
   };
 
 
@@ -94,10 +94,10 @@ export default function DetalheSupervisor() {
     try {
       setLoading(true);
 
-      const supervisorData = await fetchSupervisao(); // ← espera
+      const supervisorData = await fetchSupervisao();
       if (!supervisorData?.id) return;
 
-      await fetchRelatorios(supervisorData.id); // ← agora sim
+      await fetchRelatorios(supervisorData.id);
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
     } finally {
@@ -180,19 +180,26 @@ export default function DetalheSupervisor() {
 
                 {/* ==================== PAGE SUPERVISÃO PRINCIPAL ==================== */}
 
-                <section className="w-full">
+                <section className="w-full flex items-center justify-between mt-4">
                     <div className="w-full flex items-center gap-4 mt-6">
-                    <Image
-                    className="w-16 h-16 rounded-full object-cover"
-                    src={supervisor.foto || ""}
-                    alt="Foto líder"
-                    height={50}
-                    width={50}
-                    />
-                    <div>
-                        <h1 className="font-bold text-4xl font-manrope">{supervisor.nome}</h1>
-                        <h2 className="font-light text-xl font-manrope">{supervisao.nome}</h2>
+                        <Image
+                        className="w-16 h-16 rounded-full object-cover"
+                        src={supervisor.foto || ""}
+                        alt="Foto líder"
+                        height={50}
+                        width={50}
+                        />
+                      <div>
+                          <h1 className="font-bold text-4xl font-manrope">{supervisor.nome}</h1>
+                          <h2 className="font-light text-xl font-manrope">{supervisao.nome}</h2>
+                      </div>
                     </div>
+
+                    
+                    <div className="w-70">
+                      <Link href={`/coordenacao/supervisor/observar/${supervisao.id}`}>
+                        <Button nome="Observar Supervisão"></Button>
+                      </Link>
                     </div>
                 </section>
 

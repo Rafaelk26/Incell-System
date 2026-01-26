@@ -5,7 +5,7 @@ import { Navbar } from "@/components/all/navBar";
 import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import Image from "next/image";
-import Incell from "../../../../public/assets/file Incell.png";
+import Incell from "../../../../public/assets/file Incell black.png";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState, useMemo } from "react";
 import { ButtonAction } from "@/components/all/buttonAction";
@@ -271,7 +271,7 @@ export default function AdminSupervisoes() {
       },
     });
   
-    doc.save("relatorio-supervisoes.pdf");
+    doc.save("supervisoes.pdf");
   }
 
   /* ================== FILTROS ================== */

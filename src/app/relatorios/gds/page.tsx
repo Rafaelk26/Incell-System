@@ -75,12 +75,16 @@ export default function RelatorioGDS() {
     if (!coordenacao?.id) return;
 
     const { data, error } = await supabase
-      .from("supervisoes")
+      .from("coordenacao_supervisoes")
       .select(`
-        supervisor:supervisor_id (
+        supervisoes (
           id,
           nome,
-          cargo
+          supervisor:supervisor_id (
+            id,
+            nome,
+            cargo
+          )
         )
       `)
       .eq("coordenacao_id", coordenacao.id);
@@ -90,9 +94,10 @@ export default function RelatorioGDS() {
       return;
     }
 
+
     const formatados: SupervisorType[] =
       data
-        ?.map((item: any) => item.supervisor)
+        ?.map((item: any) => item.supervisoes?.supervisor)
         .filter(
           (sup: any) => sup && sup.cargo?.toLowerCase() === "supervisor"
         )
@@ -104,6 +109,8 @@ export default function RelatorioGDS() {
 
     setSupervisores(formatados);
   }, [coordenacao?.id]);
+
+
 
   /* ==================== EFFECTS ==================== */
 
@@ -333,7 +340,7 @@ export default function RelatorioGDS() {
                     <thead>
                         <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
                         <th className="p-3 text-left rounded-tl-xl">
-                            Líderes Confirmados na Reunião
+                            Supervisores Confirmados na Reunião
                         </th>
                         <th className="p-3 text-left rounded-tr-xl"></th>
                         </tr>

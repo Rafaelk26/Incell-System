@@ -5,7 +5,7 @@ import { Navbar } from "@/components/all/navBar";
 import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import Image from "next/image";
-import Incell from "../../../../public/assets/file Incell.png";
+import Incell from "../../../../public/assets/file Incell black.png";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState, useMemo } from "react";
 import { ButtonAction } from "@/components/all/buttonAction";
@@ -83,7 +83,7 @@ export default function AdminSupervisoes() {
       .from("users")
       .select("id, nome, cargo, telefone");
 
-    setUsuarios(data || []);
+    if (data) setUsuarios(data);
   }
 
   async function buscarTodasSupervisoes() {
@@ -191,20 +191,89 @@ export default function AdminSupervisoes() {
     });
   }
 
-  async function gerarPDF() {
-    const doc = new jsPDF();
-    const img = await gerarBase64(Incell.src);
-
-    doc.addImage(img, "PNG", 90, 10, 30, 30);
-
-    autoTable(doc, {
-      startY: 50,
-      head: [["Coordenação", "Tipo"]],
-      body: coordenacoes.map((c) => [c.nome, c.genero]),
-    });
-
-    doc.save("coordenacoes.pdf");
-  }
+  async function gerarPDF() { 
+      const doc = new jsPDF();
+    
+      let currentY = 10;
+    
+      const dataAtual = new Date().toLocaleDateString("pt-BR");
+    
+      const imgGerada = await gerarBase64(Incell.src);
+    
+      // Carregar imagem para captar proporção correta
+      const img = document.createElement("img");
+      img.src = imgGerada;
+    
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+    
+      // TAMANHO MÁXIMO PERMITIDO NA PÁGINA
+      const maxWidth = 25;  
+      const maxHeight = 25;
+    
+      // CÁLCULO DO "CONTAIN"
+      let imgWidth = maxWidth;
+      let imgHeight = (img.height / img.width) * imgWidth;
+    
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = (img.width / img.height) * imgHeight;
+      }
+    
+      // CENTRALIZAÇÃO
+      const centerX = (doc.internal.pageSize.getWidth() / 2) - (imgWidth / 2);
+    
+      // FOTO
+      doc.addImage(imgGerada, "PNG", centerX, currentY, imgWidth, imgHeight);
+    
+      // MARGEM APÓS A IMAGEM
+      currentY += imgHeight + 8;
+    
+    
+      currentY += 10;
+    
+      // TÍTULO
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(24);
+      doc.text(`Total de Coordenações: ${coordenacoes.length}`, 105, currentY, { align: "center" });
+    
+      // MARGEM ENTRE TÍTULO E SUBTÍTULO
+      currentY += 10;
+    
+      // SUBTÍTULO
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text(`Gerado em: ${dataAtual}`, 105, currentY, { align: "center" });
+    
+      // MARGEM ANTES DA TABELA
+      currentY += 15;
+    
+      // TABELA
+      autoTable(doc, {
+        startY: currentY,
+        head: [["Coordenação", "Coordenador", "Tipo"]],
+        body: coordenacoes.map((item) => {
+          const coordenador = usuarios.find(
+            (u) => u.id === item.coordenador_id && u.cargo === "coordenador",
+          );
+    
+          return [
+            item.nome,
+            coordenador ? coordenador.nome : "Sem coordenador",
+            item.genero.charAt(0).toUpperCase() + item.genero.substring(1),
+          ];
+        }),
+        styles: { fontSize: 11 },
+        headStyles: {
+          fillColor: "#050505",
+          textColor: "#fff",
+          halign: "left",
+        },
+      });
+    
+      doc.save("coordenacoes.pdf");
+    }
 
   /* ================== RENDER ================== */
 

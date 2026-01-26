@@ -4,7 +4,7 @@ import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../context/useUser";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
-import { useEffect, useMemo, useState, ReactNode } from "react";
+import { useEffect, useMemo, useState, ReactNode, useRef } from "react";
 import Link from "next/link";
 import { useDashboardData } from "../hook/dashboard";
 import { useHorizontalDragScroll } from "../hook/useHorizontalDragScroll";
@@ -16,6 +16,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 import toast from "react-hot-toast";
+import * as echarts from "echarts";
 
 
 /* ============================================================
@@ -23,6 +24,11 @@ import toast from "react-hot-toast";
 ============================================================ */
 export default function Dashboard() {
   const { user } = useAuth();
+  const chartAdminRef = useRef<HTMLDivElement>(null);
+  const [discipulosAdmin, setDiscipulosAdmin] = useState<
+    { id: string; criado_em: string }[]
+  >([]);
+
   const [eventos, setEventos] = useState<any[]>([]);
   const [usuarios, setUsuarios] = useState<Array<{ 
     id: string; 
@@ -34,6 +40,7 @@ export default function Dashboard() {
     nome: string; 
   }>>([]);
   const [gdlEvents, setGdlEvents] = useState<Array<{ start: string }>>([]);
+  
 
   const {
     scrollRef,
@@ -112,6 +119,94 @@ export default function Dashboard() {
 
     carregarAgenda();
   }, [user]);
+
+
+  const agruparPorMes = (dados: { criado_em: string }[]) => {
+  const map = new Map<string, number>();
+
+  dados.forEach((d) => {
+    const date = new Date(d.criado_em);
+    const mes = `${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+    map.set(mes, (map.get(mes) ?? 0) + 1);
+  });
+
+  return Array.from(map.entries()).map(([mes, total]) => ({
+    mes,
+    total,
+  }));
+};
+
+
+
+  useEffect(() => {
+  async function carregarDiscipulos() {
+    try {
+      const { data, error } = await supabase
+        .from("discipulos")
+        .select("id, criado_em");
+
+      if (error) throw error;
+
+      setDiscipulosAdmin(data ?? []);
+    } catch (err) {
+      console.error("Erro ao buscar discípulos:", err);
+    }
+  }
+
+  carregarDiscipulos();
+}, []);
+
+
+
+useEffect(() => {
+  if (!chartAdminRef.current || discipulosAdmin.length === 0) return;
+
+  const chart = echarts.init(chartAdminRef.current);
+
+  const dados = agruparPorMes(discipulosAdmin);
+
+  chart.setOption({
+    tooltip: { trigger: "axis" },
+    grid: {
+      left: "3%",
+      right: "3%",
+      bottom: "3%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "category",
+      data: dados.map((d) => d.mes),
+      axisLabel: { color: "#fff" },
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: "#fff" },
+    },
+    series: [
+      {
+        name: "Discípulos",
+        data: dados.map((d) => d.total),
+        type: "line",
+        smooth: true,
+        symbol: "circle",
+        symbolSize: 10,
+        label: {
+          show: true,
+          position: "top",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+        areaStyle: {
+          opacity: 0.3,
+        },
+      },
+    ],
+  });
+
+  return () => chart.dispose();
+}, [discipulosAdmin]);
+
+
 
 
   useEffect(() => {
@@ -305,12 +400,19 @@ export default function Dashboard() {
               </section>
 
               <section className="max-w-[81rem] w-full flex gap-12 mt-10 mb-10">
-                <div className="max-w-full w-full flex flex-col items-start bg-[#514F4F]/40 px-6 py-6 gap-8 rounded-md">
-                  <span className="text-2xl font-manrope font-bold">
+                <div className="max-w-full w-full flex flex-col items-start bg-[#514F4F]/40 px-6 py-6 gap-6 rounded-md">
+                  
+                  <span className="text-3xl font-manrope font-bold">
                     Estatísticas
                   </span>
+
+                  <div
+                    ref={chartAdminRef}
+                    className="w-full h-[360px]"
+                  />
                 </div>
               </section>
+
             </section>
           )}
         </main>

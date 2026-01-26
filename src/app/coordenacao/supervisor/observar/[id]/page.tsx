@@ -1,7 +1,7 @@
 "use client";
 
 import ProtectedLayout from "@/app/middleware/protectedLayout";
-import { useAuth } from "../context/useUser";
+import { useAuth } from "@/app/context/useUser";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -10,11 +10,12 @@ import { Spinner } from "@/components/all/spiner";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { Input } from "@/components/inputs";
 import Link from "next/link";
-import IncellLogo from "../../../public/assets/file Incell.png";
+import IncellLogo from "../../../../../../public/assets/file Incell.png";
 
 import { IoMdMale, IoMdFemale } from "react-icons/io";
 import { AiOutlineWhatsApp } from "react-icons/ai";
 import { FaRegEye } from "react-icons/fa";
+import { useParams } from "next/navigation";
 
 
 /* ===================== TYPES ===================== */
@@ -23,36 +24,15 @@ type SupervisaoType = {
   id: string;
   nome: string;
   genero: "masculina" | "feminina";
-  coordenador_id: string;
+  supervisor_id: string;
 };
 
-type SupervisaoRenderType = {
+type LideresType = {
   id: string;
   nome: string;
-  genero: "masculina" | "feminina";
-  supervisor: {
-    id: string;
-    nome: string;
-    telefone: string;
-    dataNascimento: string;
-  };
+  telefone: string;
+  dataNascimento: string;
 };
-
-type CoordenacaoSupervisoesRow = {
-  supervisoes: {
-    id: string;
-    nome: string;
-    genero: "masculina" | "feminina";
-    supervisor: {
-      id: string;
-      nome: string;
-      telefone: string;
-      dataNascimento: string;
-    } | null;
-  } | null;
-};
-
-
 
 type PDFsType = {
   id: string;
@@ -67,31 +47,35 @@ type PDFsType = {
 
 /* ===================== COMPONENT ===================== */
 
-export default function Coordenacoes() {
+export default function SupervisaoDetalhe() {
   const { user } = useAuth();
 
-  const [coordenacao, setCoordenacao] = useState<SupervisaoType | null>(null);
-  const [supervisores, setSupervisores] = useState<SupervisaoRenderType[]>([]);
+  const params = useParams();
+  const idSupervisao = params?.id as string;
+
+
+  const [supervisao, setSupervisao] = useState<SupervisaoType | null>(null);
+  const [lideres, setLideres] = useState<LideresType[]>([]);
   const [pdfs, setPDFs] = useState<PDFsType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchName, setSearchName] = useState("");
   
 
-  /* ===================== COORDENAÇÃO ===================== */
+  /* ===================== SUPERVISÃO ===================== */
 
-  const fetchCoordenacao = async () => {
-    if (!user?.id) return;
+  const fetchSupervisao = async () => {
+    if (!idSupervisao) return;
 
     try {
       const { data, error } = await supabase
-        .from("coordenacoes")
+        .from("supervisoes")
         .select("*")
-        .eq("coordenador_id", user.id)
+        .eq("id", idSupervisao)
         .single();
 
       if (error) throw error;
 
-      setCoordenacao(data);
+      setSupervisao(data);
     } catch (err) {
       console.error("Erro ao buscar supervisão", err);
     } finally {
@@ -100,61 +84,45 @@ export default function Coordenacoes() {
   };
 
   useEffect(() => {
-    fetchCoordenacao();
-  }, [user?.id]);
+    fetchSupervisao();
+  }, [idSupervisao]);
+
 
   /* ===================== LÍDERES ===================== */
 
-  const fetchSupervisoes = async (coordenacaoId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from("coordenacao_supervisoes")
-      .select(`
-        supervisoes (
-          id,
-          nome,
-          genero,
-          supervisor:users (
-            id,
-            nome,
-            telefone,
-            dataNascimento
-          )
-        )
-      `)
-      .eq("coordenacao_id", coordenacaoId)
-      .returns<CoordenacaoSupervisoesRow[]>(); // 👈 CRÍTICO
+  const fetchLideres = async (supervisaoId: string) => {
+    try {
+      const { data: relacoes, error } = await supabase
+        .from("supervisao_lideres")
+        .select("lider_id")
+        .eq("supervisao_id", supervisaoId);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const supervisoesFormatadas: SupervisaoRenderType[] =
-      data
-        ?.map((item) => item.supervisoes)
-        .filter(
-          (sup): sup is NonNullable<CoordenacaoSupervisoesRow["supervisoes"]> =>
-            !!sup && !!sup.supervisor
-        )
-        .map((sup) => ({
-          id: sup.id,
-          nome: sup.nome,
-          genero: sup.genero,
-          supervisor: sup.supervisor!,
-        })) ?? [];
+      const liderIds = relacoes?.map((r) => r.lider_id) ?? [];
+      if (liderIds.length === 0) {
+        setLideres([]);
+        return;
+      }
 
-    setSupervisores(supervisoesFormatadas);
-  } catch (err) {
-    console.error("Erro ao buscar supervisões", err);
-  }
-};
+      const { data: lideresData, error: liderError } = await supabase
+        .from("users")
+        .select("id, nome, telefone, dataNascimento")
+        .in("id", liderIds);
 
+      if (liderError) throw liderError;
 
+      setLideres(lideresData ?? []);
+    } catch (err) {
+      console.error("Erro ao buscar líderes", err);
+    }
+  };
 
-useEffect(() => {
-  if (coordenacao?.id) {
-    fetchSupervisoes(coordenacao.id);
-  }
-}, [coordenacao?.id]);
-
+  useEffect(() => {
+    if (supervisao?.id) {
+      fetchLideres(supervisao.id);
+    }
+  }, [supervisao?.id]);
 
 
 
@@ -169,7 +137,6 @@ useEffect(() => {
 
       if (error) throw error;
 
-      console.log(data)
       setPDFs(data ?? []);
     } catch (err) {
       console.error("Erro ao buscar relatórios", err);
@@ -177,24 +144,26 @@ useEffect(() => {
   };
 
   useEffect(() => {
-    if (supervisores.length > 0) {
-      const ids = supervisores.map((l) => l.id);
-      fetchPDFs(ids);
-    }
-  }, [supervisores]);
+    if (!lideres.length) return;
+
+    const ids = lideres.map((l) => l.id);
+    fetchPDFs(ids);
+  }, [lideres]);
+
+
 
   /* ===================== FILTRO ===================== */
 
   const normalize = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  const filteredSupervisores = useMemo(() => {
-    if (!searchName) return supervisores;
+  const filteredLideres = useMemo(() => {
+    if (!searchName) return lideres;
     const s = normalize(searchName);
-    return supervisores.filter((l) => normalize(l.nome).includes(s));
-  }, [supervisores, searchName]);
+    return lideres.filter((l) => normalize(l.nome).includes(s));
+  }, [lideres, searchName]);
 
-  const pdfPorSupervisor = useMemo(() => {
+  const pdfPorLider = useMemo(() => {
   const map = new Map<string, PDFsType>();
 
   pdfs.forEach((pdf) => {
@@ -227,16 +196,16 @@ useEffect(() => {
     );
   }
 
-  /* ===================== SEM COORDENAÇÃO ===================== */
+  /* ===================== SEM SUPERVISÃO ===================== */
 
-  if (!coordenacao) {
+  if (!supervisao) {
     return (
       <ProtectedLayout>
         <main className="w-full h-screen flex justify-center items-center text-white">
           <div className="flex flex-col items-center gap-6">
-            <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
+            <Image src={IncellLogo} alt="Logo Incell" className="w-60" />
             <span className="text-2xl font-semibold font-manrope">
-              Você não possui uma coordenação cadastrada
+              Supervisão não encontrada
             </span>
           </div>
         </main>
@@ -267,13 +236,13 @@ useEffect(() => {
 
                 <section className="w-full">
                   <h1 className="font-bold text-4xl font-manrope">
-                    <span className="text-xl font-manrope font-light">Coordenação</span>{" "}
-                    {coordenacao?.nome}
+                    <span className="text-xl font-manrope font-light">Supervisão</span>{" "}
+                    {supervisao?.nome}
                   </h1>
 
                   <div className="mt-2 flex gap-2">
-                    <span className="font-manrope">Tipo de coordenação:</span>
-                    {coordenacao?.genero === "masculina" && (
+                    <span className="font-manrope">Tipo de supervisão:</span>
+                    {supervisao?.genero === "masculina" && (
                       <>
                         <div className="p-1 w-fit bg-blue-500 rounded-full">
                           <IoMdMale size={16} color="#000" />
@@ -282,7 +251,7 @@ useEffect(() => {
                       </>
                     )}
 
-                    {coordenacao?.genero === "feminina" && (
+                    {supervisao?.genero === "feminina" && (
                       <>
                         <div className="p-1 w-fit bg-pink-500 rounded-full">
                           <IoMdFemale size={16} color="#000" />
@@ -293,13 +262,13 @@ useEffect(() => {
                   </div>
 
                   <div className="w-full flex justify-between items-end mt-6">
-                    <h1 className="font-bold text-3xl font-manrope">Supervisões</h1>
+                    <h1 className="font-bold text-3xl font-manrope">Liderança</h1>
 
                     <div className="w-max flex gap-4">
                       <div className="w-64">
                         {/* Input de busca por nome ligado ao state */}
                         <Input
-                          placeholder="Buscar supervisão por nome"
+                          placeholder="Buscar líder por nome"
                           value={searchName}
                           onChange={(e: any) => setSearchName(e.target.value)}
                         />
@@ -324,63 +293,51 @@ useEffect(() => {
 
                       {/* CORPO */}
                       <tbody>
-                        {filteredSupervisores.length > 0 ? (
-                          filteredSupervisores.map((d) => (
+                        {filteredLideres.length > 0 ? (
+                          filteredLideres.map((d) => (
                             <tr
                               key={d.id}
                               className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
                             >
-                              {/* NOME SUPERVISOR + SUPERVISÃO */}
-                              <td className="px-3 py-2">
-                                <div className="flex flex-col">
-                                  <span className="font-medium font-manrope">
-                                    {d.nome}
-                                  </span>
-                                  <span className="text-sm text-zinc-400 font-manrope">
-                                    {d.supervisor.nome}
-                                  </span>
-                                  
-                                </div>
-                              </td>
-
-                              {/* TELEFONE */}
                               <td className="px-3 py-2 font-manrope font-light">
-                                {d.supervisor.telefone}
+                                {d.nome}
                               </td>
-
-                              {/* DATA NASCIMENTO */}
                               <td className="px-3 py-2 font-manrope font-light">
-                                {formatDate(d.supervisor.dataNascimento)}
+                                {d.telefone}
+                              </td>
+                              <td className="px-3 py-2 font-manrope font-light">
+                                {formatDate(d.dataNascimento)}
                               </td>
 
-                              {/* AÇÕES */}
-                              <td className="px-3 py-2">
-                                <div className="flex justify-end gap-4">
-                                  <Link
-                                    href={gerarLinkWhatsApp(d.supervisor.telefone)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <ButtonAction type="button" color="bg-green-600">
-                                      <div className="flex items-center gap-2">
-                                        <AiOutlineWhatsApp size={20} />
-                                        Whatsapp
-                                      </div>
-                                    </ButtonAction>
-                                  </Link>
-                                </div>
+                              <td className="px-3 py-2 font-manrope font-light text-center flex gap-6 justify-end">
+                                {/* WHATSAPP */}
+                                <Link
+                                href={gerarLinkWhatsApp(d.telefone)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >
+                                  <ButtonAction type="button" color={"bg-green-600"}>
+                                    <div className="w-full flex gap-2">
+                                      <AiOutlineWhatsApp size={24} />
+                                      Whatsapp
+                                    </div>
+                                  </ButtonAction>
+                                </Link>
+
                               </td>
 
-                              {/* VISUALIZAR */}
-                              <td className="px-3 py-2 text-center">
-                                <Link href={`/coordenacao/supervisor/${d.id}`}>
-                                  <ButtonAction type="button" color="transparent">
-                                    <FaRegEye size={22} color="#fff" />
+                              <td className="px-3 py-2 font-manrope font-light text-center">
+                                <Link
+                                  href={`/supervisao/lider/${d.id}`}
+                                >
+                                  <ButtonAction type="button" color={"transparent"}>
+                                    <div className="flex gap-2 items-center">
+                                      <FaRegEye size={24} color="#fff" />
+                                    </div>
                                   </ButtonAction>
                                 </Link>
                               </td>
                             </tr>
-
                           ))
                         ) : (
                           <tr>
@@ -388,7 +345,7 @@ useEffect(() => {
                               colSpan={5}
                               className="text-center p-20 text-white font-manrope font-semibold"
                             >
-                              Nenhuma supervisão encontrada
+                              Nenhum líder encontrado
                             </td>
                           </tr>
                         )}

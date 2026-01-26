@@ -1,7 +1,6 @@
 import { useAuth } from "@/app/context/useUser"
 import Image from "next/image"
 import IncellLogo from '../../../../public/assets/file Incell.png'
-import Perfil from '../../../../public/assets/perfil teste.avif'
 import Link from "next/link"
 import "../../../app/globals.css"
 
@@ -10,7 +9,7 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { FaClipboardList, FaUserAlt } from "react-icons/fa";
 import { FiUsers } from "react-icons/fi";
 import { MdSettingsSuggest } from "react-icons/md";
-
+import { FaAnglesUp } from "react-icons/fa6";
 
 
 export function Navbar(){
@@ -97,6 +96,20 @@ export function Navbar(){
                                                 hover:scale-110">
                                                     <FaPeopleGroup size={20} color="#fff"/> 
                                                     <span className="font-manrope font-medium text-white">Criar Ministério</span> 
+                                                </div>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
+
+                                {user?.cargo === "admin" && (
+                                    <>
+                                        <li>
+                                            <Link href={"/admin/promover"}>
+                                                <div className="flex items-center gap-2 transition-all
+                                                hover:scale-110">
+                                                    <FaAnglesUp size={20} color="#fff"/> 
+                                                    <span className="font-manrope font-medium text-white">Promover</span> 
                                                 </div>
                                             </Link>
                                         </li>
