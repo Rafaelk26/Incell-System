@@ -102,20 +102,6 @@ export function Navbar(){
                                     </>
                                 )}
 
-                                {user?.cargo === "admin" && (
-                                    <>
-                                        <li>
-                                            <Link href={"/admin/promover"}>
-                                                <div className="flex items-center gap-2 transition-all
-                                                hover:scale-110">
-                                                    <FaAnglesUp size={20} color="#fff"/> 
-                                                    <span className="font-manrope font-medium text-white">Promover</span> 
-                                                </div>
-                                            </Link>
-                                        </li>
-                                    </>
-                                )}
-
 
                                 {user?.cargo !== "pastor" && user?.cargo !== "admin" && (
                                     <>
@@ -167,6 +153,20 @@ export function Navbar(){
                                     )}
                                     
                                 </li>
+
+                                {user?.cargo === "admin" && (
+                                    <>
+                                        <li>
+                                            <Link href={"/admin/usuarios"}>
+                                                <div className="flex items-center gap-2 transition-all
+                                                hover:scale-110">
+                                                    <FaUserAlt size={20} color="#fff"/> 
+                                                    <span className="font-manrope font-medium text-white">Usuários</span> 
+                                                </div>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
 
                                 {user?.cargo === "pastor" && (
                                     <>
