@@ -1,5 +1,6 @@
 "use client";
 
+import { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 type UserType = {
@@ -15,6 +16,7 @@ type AuthContextType = {
   setUser: (user: UserType | null) => void;
   logout: () => void;
   isLoading: boolean;
+  atualizarUsuario: (novoUser: UserType) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,8 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/auth/login";
   };
 
+  const atualizarUsuario = (novoUser: UserType) => {
+    setUser(novoUser);
+  };
+
+
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, setUser, logout, isLoading, atualizarUsuario }}>
       {children}
     </AuthContext.Provider>
   );
