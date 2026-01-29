@@ -58,7 +58,7 @@ export function Navbar(){
                                     </li>
                                 </>
 
-                                {user?.cargo === "admin" && (
+                                {user?.cargo === "admin" || user?.nome === "Ronaldo Natalino" && (
                                     <>
                                         <li>
                                             <Link href={"/admin/estatisticas"}>
@@ -103,7 +103,7 @@ export function Navbar(){
                                 )}
 
 
-                                {user?.cargo !== "pastor" && user?.cargo !== "admin" && (
+                                {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                     <>
                                         <li>
                                             <Link href={"/relatorios"}>
@@ -140,7 +140,7 @@ export function Navbar(){
                                     <span className="font-manrope font-medium text-[#cfcfcfc2]">Gestão</span> 
                                 </div>
                                 <li>
-                                    {user?.cargo !== "pastor" && user?.cargo !== "admin" && (
+                                    {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                         <>
                                             <Link href={"/celula"}>
                                                 <div className="flex items-center gap-2 transition-all

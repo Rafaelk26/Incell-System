@@ -8,8 +8,12 @@ interface Discipulo {
 export function useDashboardData(userId?: string) {
   const [discipulos, setDiscipulos] = useState<Discipulo[]>([]);
   const [totalLideres, setTotalLideres] = useState(0);
+  const [totalSupervisores, setTotalSupervisores] = useState(0);
+  const [totalCoordenadores, setTotalCoordenadores] = useState(0);
   const [celulas, setCelulas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+
 
   const loadCelulas = useCallback(async () => {
     if (!userId) return;
@@ -22,6 +26,8 @@ export function useDashboardData(userId?: string) {
     setCelulas(data || []);
   }, [userId]);
 
+
+
   const loadDiscipulos = useCallback(async () => {
     if (!celulas[0]?.id) return;
 
@@ -32,6 +38,9 @@ export function useDashboardData(userId?: string) {
 
     setDiscipulos(data || []);
   }, [celulas]);
+
+
+
 
   const loadLideresSupervisao = useCallback(async () => {
     if (!userId) return;
@@ -52,11 +61,53 @@ export function useDashboardData(userId?: string) {
     setTotalLideres(lideres?.length || 0);
   }, [userId]);
 
+
+
+
+  const loadSupervisoresCoordenacao = useCallback(async () => {
+    if (!userId) return;
+
+    const { data: coordenacao } = await supabase
+      .from("coordenacoes")
+      .select("id")
+      .eq("coordenador_id", userId)
+      .single();
+
+    if (!coordenacao) return;
+
+    const { data: supervisores } = await supabase
+      .from("coordenacao_supervisoes")
+      .select("id")
+      .eq("coordenacao_id", coordenacao.id);
+
+    setTotalSupervisores(supervisores?.length || 0);
+  }, [userId]);
+
+
+
+
+  const loadCoordenadores = useCallback(async () => {
+  const { data: coordenadores } = await supabase
+    .from("users")
+    .select("id")
+    .eq("cargo", "coordenador");
+
+  setTotalCoordenadores(coordenadores?.length || 0);
+}, []);
+  
+
   useEffect(() => {
     if (!userId) return;
     loadCelulas();
     loadLideresSupervisao();
-  }, [userId, loadCelulas, loadLideresSupervisao]);
+    loadSupervisoresCoordenacao();
+    loadCoordenadores();
+  }, [
+    userId, 
+    loadCelulas, 
+    loadLideresSupervisao, 
+    loadSupervisoresCoordenacao, 
+    loadCoordenadores]);
 
   useEffect(() => {
     loadDiscipulos();
@@ -66,6 +117,8 @@ export function useDashboardData(userId?: string) {
   return {
     discipulos,
     totalLideres,
+    totalSupervisores,
+    totalCoordenadores,
     loading,
   };
 }

@@ -59,6 +59,9 @@ export async function POST(req: Request) {
      🔎 RESOLVER SUPERVISÃO DO LÍDER (ANTES DO FILTER)
   ===================================================== */
   let supervisaoDoLider: string | null = null;
+  let supervisaoId: string | null = null;
+  let coordenacaoId: string | null = null;
+  let pastoreioId: string | null = null;
 
   if (cargo === "lider") {
     const { data: supervisao } = await supabase
@@ -70,53 +73,113 @@ export async function POST(req: Request) {
     supervisaoDoLider = supervisao?.supervisao_id ?? null;
   }
 
+  // 🔹 Líder → supervisão
+  if (cargo === "lider") {
+    const { data } = await supabase
+      .from("supervisao_lideres")
+      .select("supervisao_id")
+      .eq("lider_id", userId)
+      .single();
+
+    supervisaoId = data?.supervisao_id ?? null;
+  }
+
+  // 🔹 Supervisor → coordenação
+  if (cargo === "supervisor") {
+    const { data } = await supabase
+      .from("supervisoes")
+      .select("id")
+      .eq("supervisor_id", userId)
+      .single();
+
+    supervisaoId = data?.id ?? null;
+
+    if (supervisaoId) {
+      const { data: c } = await supabase
+        .from("coordenacao_supervisoes")
+        .select("coordenacao_id")
+        .eq("supervisao_id", supervisaoId)
+        .single();
+
+      coordenacaoId = c?.coordenacao_id ?? null;
+    }
+  }
+
+  // 🔹 Coordenador → pastoreio
+  if (cargo === "coordenador") {
+    const { data } = await supabase
+      .from("coordenacoes")
+      .select("id")
+      .eq("coordenador_id", userId)
+      .single();
+
+    coordenacaoId = data?.id ?? null;
+
+    if (coordenacaoId) {
+      const { data: p } = await supabase
+        .from("pastoria_coordenacoes")
+        .select("pastoria_id")
+        .eq("coordenacao_id", coordenacaoId)
+        .single();
+
+      pastoreioId = p?.pastoria_id ?? null;
+    }
+  }
+
+
   /* =====================================================
      🔎 FILTRO DE VISIBILIDADE
   ===================================================== */
   const eventosFiltrados = (data ?? []).filter((r: any) => {
-    const escopo = r.reuniao_escopo?.[0];
-    if (!escopo) return false;
+  const escopo = r.reuniao_escopo?.[0];
+  if (!escopo) return false;
 
-    // 🔹 GD → todos veem
-    if (r.tipo === "GD") return true;
+  // 🔹 GD → todos
+  if (r.tipo === "GD") return true;
 
-    // 🔹 DISCIPULADO → somente quem criou
-    if (r.tipo === "DISCIPULADO") {
-      return r.criado_por === userId;
-    }
+  // 🔹 DISCIPULADO
+  if (r.tipo === "DISCIPULADO") {
+    return (
+      r.criado_por === userId ||
+      r.discipulado_com === userId
+    );
+  }
 
-    // 🔹 GDL → supervisor + líderes da mesma supervisão
-    if (r.tipo === "GDL") {
-      // Supervisor criador
-      if (r.criado_por === userId) return true;
+  // 🔹 GDL
+  if (r.tipo === "GDL") {
+    if (cargo === "supervisor")
+      return escopo.supervisao_id === supervisaoId;
 
-      // Líder da supervisão
-      if (
-        cargo === "lider" &&
-        escopo.supervisao_id &&
-        escopo.supervisao_id === supervisaoDoLider
-      ) {
-        return true;
-      }
-
-      return false;
-    }
-
-    // 🔹 GDS → coordenação / supervisão
-    if (r.tipo === "GDS") {
-      return (
-        escopo.coordenacao_id !== null ||
-        escopo.supervisao_id !== null
-      );
-    }
-
-    // 🔹 GDC → pastoreio
-    if (r.tipo === "GDC") {
-      return escopo.pastoreio_id !== null;
-    }
+    if (cargo === "lider")
+      return escopo.supervisao_id === supervisaoId;
 
     return false;
-  });
+  }
+
+  // 🔹 GDS
+  if (r.tipo === "GDS") {
+    if (cargo === "coordenador")
+      return escopo.coordenacao_id === coordenacaoId;
+
+    if (cargo === "supervisor")
+      return escopo.coordenacao_id === coordenacaoId;
+
+    return false;
+  }
+
+  // 🔹 GDC
+  if (r.tipo === "GDC") {
+    if (cargo === "pastor") return true;
+
+    if (cargo === "coordenador")
+      return escopo.pastoreio_id === pastoreioId;
+
+    return false;
+  }
+
+  return false;
+});
+
 
   /* =====================================================
      🎨 MAP PARA FULLCALENDAR
@@ -161,103 +224,93 @@ export async function POST(req: Request) {
 /* =====================================================
    PUT → CRIAR REUNIÃO + ESCOPO
 ===================================================== */
-export async function PUT(req: Request) {
-  const { tipo, data, hora, discipulado_com, criado_por } =
-    await req.json();
+  export async function PUT(req: Request) {
+    const { tipo, data, hora, discipulado_com, criado_por } =
+      await req.json();
 
-  if (!criado_por) {
-    return NextResponse.json(
-      { error: "Usuário não autenticado" },
-      { status: 401 }
-    );
-  }
+    if (!criado_por) {
+      return NextResponse.json(
+        { error: "Usuário não autenticado" },
+        { status: 401 }
+      );
+    }
 
-  /* 1️⃣ CRIAR REUNIÃO */
-  const { data: reuniao, error: reuniaoError } = await supabase
-    .from("reunioes")
-    .insert({
-      tipo,
-      data,
-      hora,
-      criado_em: new Date(),
-      discipulado_com: discipulado_com || null,
-      criado_por,
-    })
-    .select("id")
-    .single();
-
-  if (reuniaoError || !reuniao) {
-    return NextResponse.json({ error: reuniaoError }, { status: 500 });
-  }
-
-  /* 2️⃣ RESOLVER ESCOPO */
-  const escopo: any = {
-    reuniao_id: reuniao.id,
-    tipo_escopo: tipo,
-  };
-
-  if (tipo === "DISCIPULADO") {
-    escopo.user_id = criado_por;
-  }
-
-  if (tipo === "GDL") {
-    const { data: supervisao } = await supabase
-      .from("supervisoes")
+    /* 1️⃣ CRIAR REUNIÃO */
+    const { data: reuniao, error: reuniaoError } = await supabase
+      .from("reunioes")
+      .insert({
+        tipo,
+        data,
+        hora,
+        criado_em: new Date(),
+        discipulado_com: discipulado_com || null,
+        criado_por,
+      })
       .select("id")
-      .eq("supervisor_id", criado_por)
       .single();
 
-    escopo.supervisao_id = supervisao?.id ?? null;
-  }
+    if (reuniaoError || !reuniao) {
+      return NextResponse.json({ error: reuniaoError }, { status: 500 });
+    }
 
-  if (tipo === "GDS") {
-    const { data: supervisao } = await supabase
-      .from("supervisoes")
-      .select("id")
-      .eq("supervisor_id", criado_por)
-      .single();
+    /* 2️⃣ RESOLVER ESCOPO */
+    const escopo: any = {
+      reuniao_id: reuniao.id,
+      tipo_escopo: tipo,
+    };
 
-    if (supervisao) {
-      const { data } = await supabase
-        .from("coordenacao_supervisoes")
-        .select("coordenacao_id")
-        .eq("supervisao_id", supervisao.id)
+    // DISCIPULADO → individual
+    if (tipo === "DISCIPULADO") {
+      escopo.user_id = criado_por;
+    }
+
+    // GDL → supervisão
+    if (tipo === "GDL") {
+      const { data: supervisao } = await supabase
+        .from("supervisoes")
+        .select("id")
+        .eq("supervisor_id", criado_por)
         .single();
 
-      escopo.coordenacao_id = data?.coordenacao_id ?? null;
+      escopo.supervisao_id = supervisao?.id ?? null;
     }
-  }
 
-  if (tipo === "GDC") {
-    const { data: coord } = await supabase
-      .from("coordenacoes")
-      .select("id")
-      .eq("coordenador_id", criado_por)
-      .single();
-
-    if (coord) {
-      const { data } = await supabase
-        .from("pastoria_coordenacoes")
-        .select("pastoria_id")
-        .eq("coordenacao_id", coord.id)
+    // GDS → coordenação (🔥 CORRIGIDO)
+    if (tipo === "GDS") {
+      const { data: coord, error } = await supabase
+        .from("coordenacoes")
+        .select("id")
+        .eq("coordenador_id", criado_por)
         .single();
 
-      escopo.pastoreio_id = data?.pastoria_id ?? null;
+      if (error || !coord) {
+        await supabase.from("reunioes").delete().eq("id", reuniao.id);
+        return NextResponse.json(
+          { error: "Coordenação não encontrada" },
+          { status: 400 }
+        );
+      }
+
+      escopo.coordenacao_id = coord.id;
     }
+
+    // GDC → GLOBAL (🔥 SEM FILTRO)
+    if (tipo === "GDC") {
+      // nenhum escopo adicional
+    }
+
+    /* 3️⃣ INSERIR ESCOPO */
+    const { error: escopoError } = await supabase
+      .from("reuniao_escopo")
+      .insert(escopo);
+
+    if (escopoError) {
+      await supabase.from("reunioes").delete().eq("id", reuniao.id);
+      return NextResponse.json({ error: escopoError }, { status: 500 });
+    }
+
+    return NextResponse.json({ evento: reuniao });
   }
-
-  /* 3️⃣ INSERIR ESCOPO */
-  const { error: escopoError } = await supabase
-    .from("reuniao_escopo")
-    .insert(escopo);
-
-  if (escopoError) {
-    await supabase.from("reunioes").delete().eq("id", reuniao.id);
-    return NextResponse.json({ error: escopoError }, { status: 500 });
-  }
-
-  return NextResponse.json({ evento: reuniao });
-}
 
 /* =====================================================
    DELETE → EXCLUIR REUNIÃO + ESCOPO
