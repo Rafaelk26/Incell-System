@@ -10,7 +10,6 @@ import { Spinner } from "@/components/all/spiner";
 import { Button } from "@/components/login/buttonAction";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { Input } from "@/components/inputs";
-import Perfil from "../../../public/assets/perfil teste.avif";
 import Link from "next/link";
 import IncellLogo from "../../../public/assets/file Incell.png";
 
@@ -19,10 +18,12 @@ import { IoMaleFemale } from "react-icons/io5";
 import { FaRegStar, FaMale } from "react-icons/fa";
 import { TbHearts } from "react-icons/tb";
 import { AiOutlineWhatsApp } from "react-icons/ai";
-import { BiEdit, BiTrash } from "react-icons/bi";
+import { IoMdClose } from "react-icons/io";
 import { HiMiniUsers } from "react-icons/hi2";
 import { FaUserGraduate } from "react-icons/fa6";
 import toast from "react-hot-toast";
+import { Select } from "@/components/select";
+import { BiEdit, BiTrash } from "react-icons/bi";
 
 /* ===================== TYPES ===================== */
 
@@ -50,6 +51,8 @@ export default function Celula() {
   const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [modalOption, setModalOption] = useState(false);
+  const [discipleEdit, setDiscipleEdit] = useState<DiscipulosType | null>(null);
   const [searchName, setSearchName] = useState("");
   const [filterCargo, setFilterCargo] = useState("");
 
@@ -209,6 +212,43 @@ export default function Celula() {
       </main>
     );
   }
+
+  /*====================== MODAL ========================= */
+
+  function handleOpenEditModal(discipulo: DiscipulosType) {
+    setDiscipleEdit(discipulo);
+    setModalOption(true);
+  }
+
+
+  async function handleUpdateDisciple(e: React.FormEvent) {
+    e.preventDefault();
+    if (!discipleEdit) return;
+
+    const { error } = await supabase
+      .from("discipulos")
+      .update({
+        nome: discipleEdit.nome,
+        cargo: discipleEdit.cargo,
+        contato: discipleEdit.contato,
+        dataNascimento: discipleEdit.dataNascimento,
+      })
+      .eq("id", discipleEdit.id);
+
+    if (error) {
+      toast.error("Erro ao atualizar discípulo");
+      return;
+    }
+
+    setDiscipulos((prev) =>
+      prev.map((d) => (d.id === discipleEdit.id ? discipleEdit : d))
+    );
+
+    toast.success("Discípulo atualizado com sucesso");
+    setModalOption(false);
+  }
+
+
   /* ===================== RENDER ===================== */
   return (
     <ProtectedLayout>
@@ -352,7 +392,6 @@ export default function Celula() {
                         className="bg-[#514F4F]/10 p-3 pr-10 rounded-lg border border-white font-manrope hover:border-blue-400 focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
                       >
                         <option value="" className="text-black font-semibold">Filtrar cargo</option>
-                        <option value="" className="text-black font-semibold">Todos</option>
                         <option value="Anfitrião" className="text-black font-semibold">Anfitrião</option>
                         <option value="LT" className="text-black font-semibold">LT</option>
                         <option value="Discípulo" className="text-black font-semibold">Discípulo</option>
@@ -407,7 +446,11 @@ export default function Celula() {
                                 </Link>
 
                                 {/* EDITAR */}
-                                <ButtonAction type="button" color={"bg-yellow-600"}>
+                              <ButtonAction
+                                type="button"
+                                color={"bg-yellow-600"}
+                                onClick={() => handleOpenEditModal(d)}
+                              >
                                 <div className="w-full flex gap-2">
                                   <BiEdit size={24} />
                                   Editar
@@ -437,6 +480,100 @@ export default function Celula() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* MODAL DE EDIÇÃO DE DISCÍPULOS*/}
+
+                  {modalOption && (
+                    <div className="fixed inset-0 bg-black/70 flex justify-center items-start pt-20 z-50">
+                      <div className="bg-black border border-white rounded-xl p-6 w-[500px] h-[500px] overflow-y-auto">
+                        <div className="flex justify-between items-center pt-4">
+                          <div className="w-full flex flex-col">
+                            <div className="flex justify-between">
+                              <h1 className="text-3xl font-bold font-manrope">Editar Discípulo</h1>
+                              <IoMdClose
+                              className="hover:cursor-pointer bg-red-600 rounded-sm"
+                              onClick={()=> setModalOption(false)}
+                              size={24} />
+                            </div>
+                            <h2 className="text-xl font-light font-manrope text-gray-300 mt-1">{celula?.nome}</h2>
+
+                            <form
+                              className="w-full mt-6 flex flex-col gap-4"
+                              onSubmit={handleUpdateDisciple}
+                            >
+                              <Input
+                                type="text"
+                                nome="Nome do discípulo"
+                                value={discipleEdit?.nome || ""}
+                                onChange={(e: any) =>
+                                  setDiscipleEdit((prev) =>
+                                    prev ? { ...prev, nome: e.target.value } : prev
+                                  )
+                                }
+                              />
+
+                              <Select
+                                nome="Cargo do discípulo"
+                                value={discipleEdit?.cargo || ""}
+                                onChange={(e: any) =>
+                                  setDiscipleEdit((prev) =>
+                                    prev ? { ...prev, cargo: e.target.value } : prev
+                                  )
+                                }
+                              >
+                                <>
+                                  <option value="" className="text-black font-bold">Selecione...</option>
+                                  <option value="LT" className="text-black font-bold">LT</option>
+                                  <option value="Anfitrião" className="text-black font-bold">Anfitrião</option>
+                                  <option value="Discípulo" className="text-black font-bold">Discípulo</option>
+                                </>
+                              </Select>
+
+                              <Input
+                                nome="WhatsApp"
+                                type="text"
+                                value={discipleEdit?.contato || ""}
+                                onChange={(e: any) =>
+                                  setDiscipleEdit((prev) =>
+                                    prev ? { ...prev, contato: e.target.value } : prev
+                                  )
+                                }
+                              />
+
+                              <Input
+                                nome="Data de Nascimento"
+                                type="date"
+                                value={discipleEdit?.dataNascimento || ""}
+                                onChange={(e: any) =>
+                                  setDiscipleEdit((prev) =>
+                                    prev ? { ...prev, dataNascimento: e.target.value } : prev
+                                  )
+                                }
+                              />
+
+                              <div className="flex gap-2">
+                                <button 
+                                type="button"
+                                onClick={()=> setModalOption(false)}
+                                className="w-full font-manrope bg-gray-600 p-3 rounded font-bold transition-all
+                                hover:bg-gray-500 hover:cursor-pointer">
+                                  Cancelar
+                                </button>
+
+                                <button 
+                                type="submit"
+                                className="w-full font-manrope bg-blue-600 p-3 rounded font-bold transition-all
+                                hover:bg-blue-500 hover:cursor-pointer">
+                                  Alterar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
 
                   <div className="w-full flex justify-end mt-10">
                     <div className="w-max">

@@ -127,7 +127,7 @@ export default function CriarDiscipulos() {
               <div className="w-full flex gap-10">
                 <Input
                   nome="Nome do discípulo"
-                  placeholder="Ex: Alan Santos"
+                  placeholder="Ex: Matheus Santos"
                   type="text"
                   {...register("nome", { required: true })}
                 />
@@ -162,7 +162,8 @@ export default function CriarDiscipulos() {
               </div>
 
               <button
-              className="w-max p-4 mt-6 bg-blue-600 text-white font-manrope font-bold cursor-pointer rounded-lg hover:scale-105 transition-all" 
+              className="w-full p-4 mt-6 bg-blue-600 text-white font-manrope font-bold cursor-pointer rounded-lg 
+              hover:bg-blue-500 hover:cursor-pointer transition-all" 
               type="submit">Cadastrar</button>
 
             </form>

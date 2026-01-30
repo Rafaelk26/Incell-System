@@ -206,7 +206,7 @@ export default function CriarMinisterioSupervisao() {
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-10">
+          <section className="max-w-full w-full md:mt-4">
             <h1 className="font-bold text-4xl font-manrope">Criar Supervisão</h1>
 
             {/* FORM */}
@@ -247,7 +247,7 @@ export default function CriarMinisterioSupervisao() {
                 )}
 
               {/* TABELA */}
-              <div className="w-full h-[200px] mt-10 overflow-x-auto">
+              <div className="w-full h-[200px] mt-2 overflow-x-auto">
                 <table className="w-full border-collapse text-white">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
@@ -320,7 +320,8 @@ export default function CriarMinisterioSupervisao() {
               </div>
 
               <button
-                className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg mt-6"
+                className="w-full mt-4 p-4 bg-blue-600 text-white font-manrope font-bold rounded-lg transition-all
+              hover:hover:bg-blue-500 hover:cursor-pointer"
                 type="submit"
               >
                 Registrar

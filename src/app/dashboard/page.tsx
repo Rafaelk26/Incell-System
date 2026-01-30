@@ -469,7 +469,7 @@ const itensRelatorios = useMemo(() => {
 
         {r.tipo === "CELULA" && (
           <>
-            <Link href={user?.cargo === "supervisor" ? `/supervisao/lider/${r.responsavel}` : "/dashboard"}
+            <Link href={user?.cargo !== "lider" ? `/supervisao/lider/${r.responsavel}` : "/dashboard"}
               >
               <div>
                 <span>
@@ -484,14 +484,13 @@ const itensRelatorios = useMemo(() => {
 
         {r.tipo === "DISCIPULADO" && (
           <>
-            <Link href={user?.cargo === "supervisor" ? `/supervisao/lider/${r.responsavel}` : "/dashboard"}>
+            <Link href={user?.cargo !== "lider" ? `/supervisao/lider/${r.responsavel}` : "/dashboard"}>
               <div>
                 <span>
                   Relatório de Discipulado <br />
                   {formatarDataCurta(r.criado_em)} {formatarHoraBR(r.criado_em)}
                 </span>
               </div>
-              
             </Link>
           </>
           
@@ -573,7 +572,7 @@ const itensRelatorios = useMemo(() => {
 
           {/* ==================== DASHBOARD NORMAL ==================== */}
           {user?.cargo !== "admin" ? (
-            <section className="w-full flex justify-center items-center mt-10">
+            <section className="w-full flex justify-center items-center mt-4">
               <div className="w-full max-w-7xl flex flex-col justify-center px-4">
 
                 <h1 className="font-bold text-4xl font-manrope">Dashboard</h1>
@@ -670,12 +669,20 @@ const itensRelatorios = useMemo(() => {
             ) : (
             /* ==================== DASHBOARD ADMIN ==================== */
             <section className="mx-auto flex flex-col 
-            md:mt-14 md:px-4
+            md:mt-4 md:px-4
             2xl:w-7xl">
               <h1 className="text-left font-bold text-4xl font-manrope">Admin</h1>
-              <section className="mt-5 flex justify-between gap-4
-              md:max-w-6xl
-              xl:max-w-7xl">
+              <section
+                  ref={scrollRef}
+                  className={`w-full flex gap-4 mt-5 hide-scrollbar ${
+                    ["admin"].includes(user?.cargo)
+                      ? "overflow-x-auto touch-pan-x cursor-grab active:cursor-grabbing"
+                      : "overflow-visible"
+                  }`}
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onMouseMove={handleMouseMove}
+                >
                 {["Líderes", "Supervisores", "Coordenadores", "Células"].map((t, i) => (
                 <Card key={i} title={t} value={
                     t === "Líderes" ? (

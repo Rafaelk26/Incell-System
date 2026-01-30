@@ -96,7 +96,7 @@ export default function CriarUsuarios() {
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-14">
+          <section className="max-w-full w-full md:mt-4">
             <h1 className="font-bold text-4xl font-manrope">
               Criar Usuário
             </h1>
@@ -169,8 +169,8 @@ export default function CriarUsuarios() {
               </div>
 
               <button
-              className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg
-              hover:scale-105 hover:bg-blue-600 hover:cursor-pointer" 
+              className="w-full p-4 bg-blue-600 text-white font-manrope font-bold rounded-lg transition-all
+              hover:hover:bg-blue-500 hover:cursor-pointer" 
               type="submit">Registrar</button>
 
             </form>

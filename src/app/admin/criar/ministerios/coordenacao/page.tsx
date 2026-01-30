@@ -220,7 +220,7 @@ export default function CriarMinisterioCoordenacao() {
             height={12} />
           </header>
 
-          <section className="max-w-full w-full md:mt-14">
+          <section className="max-w-full w-full md:mt-4">
             <h1 className="font-bold text-4xl font-manrope">Criar Coordenação</h1>
 
             <form onSubmit={handleSubmit(handleSubmitCoordenacao)} className="mt-10 flex flex-col gap-4">
@@ -263,7 +263,7 @@ export default function CriarMinisterioCoordenacao() {
 
 
               {/* TABELA */}
-              <div className="w-full mt-4 overflow-x-auto">
+              <div className="w-full h-[200px] mt-2 overflow-x-auto">
                 <table className="w-full border-collapse text-white">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
@@ -325,7 +325,10 @@ export default function CriarMinisterioCoordenacao() {
                 </table>
               </div>
 
-              <button className="w-25 p-4 bg-blue-400 text-white font-manrope font-bold rounded-lg mt-6" type="submit">
+              <button 
+              type="submit"
+              className="w-full p-4 bg-blue-600 text-white font-manrope font-bold rounded-lg transition-all
+              hover:hover:bg-blue-500 hover:cursor-pointer">
                 Registrar
               </button>
             </form>
