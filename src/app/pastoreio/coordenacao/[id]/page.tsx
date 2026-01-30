@@ -123,10 +123,26 @@ export default function DetalheCoordenador() {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "short",
-      timeStyle: "short",
-      timeZone: "America/Sao_Paulo",
     }).format(date);
   }
+
+  function formatarDataCurta(dataISO: string) {
+  const data = new Date(dataISO);
+  const dia = data.getDate();
+  const mes = data.toLocaleString("pt-BR", { month: "short" });
+  return `${dia} ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
+}
+
+
+function formatarHoraBR(dataISO: string) {
+  const dataUTC = new Date(dataISO + "Z");
+
+  return dataUTC.toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
   /* ==================== LOADING ==================== */
 
@@ -248,7 +264,7 @@ export default function DetalheCoordenador() {
                                 <>
                                     <tr key={relatorio.id}>
                                         <td className="px-3 py-3 font-manrope font-light">Relatório de GDS</td>
-                                        <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)}</td>
+                                        <td className="px-3 py-3 font-manrope font-light">{formatDateBR(relatorio?.criado_em)} {formatarHoraBR(relatorio?.criado_em)}</td>
                                         <td className="px-3 py-3 font-manrope font-light flex justify-end">
                                             <Link href={relatorio?.conteudo.signed_url || ""} target="_blank">
                                                 <AiFillFilePdf 

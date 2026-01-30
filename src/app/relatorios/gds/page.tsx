@@ -284,7 +284,7 @@ export default function RelatorioGDS() {
             />
           </header>
 
-          <section className="max-w-6xl w-full px-10 md:mt-14 md:mb-10">
+          <section className="max-w-6xl w-full px-10 md:mt-4 md:mb-10">
             <h1 className="font-bold text-4xl font-manrope">
               Relatório de GDS
             </h1>
@@ -326,23 +326,23 @@ export default function RelatorioGDS() {
                   {...register("observacoes", { required: true })}>
                   </textarea>
                 </div>
-
-                <Input
-                  nome="Foto do discipulado"
-                  type="file"
-                  {...register("fotoGDS", { required: true })}
-                />
               </div>
 
+              <Input
+                nome="Foto"
+                type="file"
+                {...register("fotoGDS", { required: true })}
+              />
+
             {/* TABELA */}
-            <div className="w-full h-[400px] mt-10 overflow-x-auto">
+            <div className="w-full h-[200px] mt-0 overflow-x-auto">
                 <table className="w-full border-collapse text-white">
                     <thead>
                         <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
-                        <th className="p-3 text-left rounded-tl-xl">
+                        <th className="p-3 text-left font-manrope rounded-tl-xl">
                             Supervisores Confirmados na Reunião
                         </th>
-                        <th className="p-3 text-left rounded-tr-xl"></th>
+                        <th className="max-w-full p-3 text-left rounded-tr-xl"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -356,42 +356,42 @@ export default function RelatorioGDS() {
 
                             return (
                             <tr
-                                key={item.id}
-                                className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
+                              key={item.id}
+                              className="odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
                             >
-                                <td className="flex flex-col justify-center px-3 py-2 font-manrope font-light">
+                              <td className="w-full px-3 py-2 font-manrope font-light">
                                 <span className="text-xl font-semibold">
-                                    {item.nome}
+                                  {item.nome}
                                 </span>
-                                </td>
+                              </td>
 
-                                <td className="px-3 py-2 flex gap-6 justify-end">
+                              <td className="px-3 py-2 text-right">
                                 <ButtonAction
-                                    type="button"
-                                    color={isAdded ? "bg-green-600" : "bg-red-600"}
-                                    onClick={() =>
+                                  type="button"
+                                  color={isAdded ? "bg-green-600" : "bg-red-600"}
+                                  onClick={() =>
                                     toggleSupervisor({
-                                        id: item.id!,
-                                        nome: item.nome,
+                                      id: item.id!,
+                                      nome: item.nome,
                                     })
-                                    }
+                                  }
                                 >
-                                    <span className="font-manrope text-xl">
+                                  <span className="font-manrope text-xl">
                                     {isAdded ? "Presente" : "Ausente"}
-                                    </span>
+                                  </span>
                                 </ButtonAction>
-                                </td>
+                              </td>
                             </tr>
                             );
                         })
                     ) : (
                         <tr>
-                        <td
-                            colSpan={2}
-                            className="text-center p-6 text-white font-manrope font-semibold"
-                        >
-                            Nenhum supervisor encontrado.
-                        </td>
+                          <td
+                              colSpan={2}
+                              className="text-center p-6 text-white font-manrope font-semibold"
+                          >
+                              Nenhum supervisor encontrado.
+                          </td>
                         </tr>
                     )}
                     </tbody>
@@ -399,11 +399,11 @@ export default function RelatorioGDS() {
                 </table>
             </div>
 
-              <button
-              className="w-25 p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
-              hover:scale-105 hover:cursor-pointer
-              focus:outline-none" 
-              type="submit">Registrar</button>
+            <button
+            className="w-full p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+            hover:bg-blue-500 hover:cursor-pointer
+            focus:outline-none" 
+            type="submit">Registrar</button>
 
             </form>
           </section>

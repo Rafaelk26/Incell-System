@@ -5,12 +5,11 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
-    const responsavel = formData.get("responsavel") as string;
-    const tipo = formData.get("tipo") as string; // "GDS"
-    const coordenacao_id = formData.get("coordenacao_id") as string;
+    const responsavel = formData.get("responsavel") as string; // pastor
+    const tipo = formData.get("tipo") as string; // "GDC"
     const conteudo = formData.get("conteudo") as string;
 
-    if (!responsavel || !tipo || !coordenacao_id || !conteudo) {
+    if (!responsavel || !tipo || !conteudo) {
       return NextResponse.json(
         { error: "Dados obrigatórios ausentes" },
         { status: 400 }
@@ -21,7 +20,7 @@ export async function POST(req: Request) {
     const base64 = conteudo.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
 
-    const filePath = `gds/${coordenacao_id}/relatorio-${Date.now()}.pdf`;
+    const filePath = `gdc/relatorio-${Date.now()}.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("relatorios")
@@ -32,13 +31,13 @@ export async function POST(req: Request) {
 
     if (uploadError) throw uploadError;
 
-    /* ================= URL ASSINADA (24h) ================= */
-    const EXPIRES_IN = 24 * 60 * 60; // 86400 segundos = 24h
+    /* ================= URL ASSINADA (1 DIA) ================= */
+     const EXPIRES_IN = 24 * 60 * 60; // 86400 segundos = 24h
 
     const { data: signed, error: signedError } =
       await supabase.storage
         .from("relatorios")
-        .createSignedUrl(filePath, EXPIRES_IN);
+        .createSignedUrl(filePath, EXPIRES_IN); // 24h
 
     if (signedError) throw signedError;
 
@@ -47,8 +46,7 @@ export async function POST(req: Request) {
       .from("relatorios")
       .insert({
         responsavel,
-        tipo: "GDS",
-        coordenacao_id,
+        tipo: "GDC",
         file_path: filePath,
         conteudo: {
           signed_url: signed.signedUrl,
@@ -60,7 +58,9 @@ export async function POST(req: Request) {
 
     if (error) throw error;
 
-    /* ================= LIMPEZA AUTOMÁTICA (24h) ================= */
+    /* ---------------------------
+       LIMPEZA AUTOMÁTICA (24 HORAS)
+    ---------------------------- */
     setTimeout(async () => {
       try {
         await supabase.storage
@@ -72,15 +72,15 @@ export async function POST(req: Request) {
           .delete()
           .eq("id", data.id);
 
-        console.log("Relatório GDS expirado e removido:", filePath);
+        console.log("Relatório GDC expirado e removido:", filePath);
       } catch (err) {
-        console.error("Erro ao remover relatório GDS:", err);
+        console.error("Erro ao remover relatório GDC:", err);
       }
-    }, EXPIRES_IN * 1000); // converte para ms
+    }, EXPIRES_IN * 1000);
 
     return NextResponse.json(
       {
-        message: "Relatório GDS criado com sucesso!",
+        message: "Relatório GDC criado com sucesso!",
         pdf_url: signed.signedUrl,
         relatorio: data,
       },
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { error: "Erro ao criar relatório GDS" },
+      { error: "Erro ao criar relatório GDC" },
       { status: 500 }
     );
   }

@@ -18,6 +18,8 @@ export async function POST(req: Request) {
     const base64 = pdfBase64.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
 
+     const EXPIRES_IN = 24 * 60 * 60; // 86400 segundos = 24h
+
     const filePath = `${celula_id}/relatorio-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from("relatorios")
@@ -30,7 +32,7 @@ export async function POST(req: Request) {
     const { data: signed, error: signedError } =
       await supabase.storage
         .from("relatorios")
-        .createSignedUrl(filePath, 500);
+        .createSignedUrl(filePath, EXPIRES_IN);
 
     if (signedError) throw signedError;
     const { data, error } = await supabase
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
         file_path: filePath,
         conteudo: {
           signed_url: signed.signedUrl,
-          expires_in: 500,
+          expires_in: EXPIRES_IN,
         },
       })
       .select()
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
     } catch (err) {
       console.error("Erro ao remover relatório expirado:", err);
     }
-  }, 500000);
+  }, EXPIRES_IN * 1000);
 
 
     return NextResponse.json(

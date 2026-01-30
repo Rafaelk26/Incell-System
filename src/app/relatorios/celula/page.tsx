@@ -251,7 +251,7 @@ export default function RelatorioCelula() {
             />
           </header>
 
-          <section className="max-w-6xl w-full px-10 md:mt-14 md:mb-10">
+          <section className="max-w-6xl w-full px-10 md:mt-4 md:mb-10">
             <h1 className="font-bold text-4xl font-manrope">
               Relatório de Célula
             </h1>
@@ -396,7 +396,7 @@ export default function RelatorioCelula() {
               <div className="w-full flex items-stretch justify-between gap-8">
 
                 <div className="w-full flex flex-col gap-2">
-                  <label className="font-manrope text-lg">Observações</label>
+                  <label className="font-manrope text-lg">Observações:</label>
                   <textarea
                   className="bg-[#514F4F]/40 p-4 rounded-lg border border-white
                   hover:border-blue-400 
@@ -404,19 +404,19 @@ export default function RelatorioCelula() {
                   {...register("observacoes", { required: true })}>
                   </textarea>
                 </div>
+              </div>
 
-                <Input
+              <Input
                   nome="Foto da Célula"
                   type="file"
                   {...register("fotoCelula", { required: true })}
                 />
-              </div>
 
 
 
               <button
-              className="w-25 p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
-              hover:scale-105 hover:cursor-pointer
+              className="w-full p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+              hover:bg-blue-500 hover:cursor-pointer
               focus:outline-none" 
               type="submit">Registrar</button>
 

@@ -40,6 +40,7 @@ export default function Dashboard() {
     nome: string; 
   }>>([]);
   const [relatorios, setRelatorios] = useState<any[]>([]);
+  const [mapUsuarios, setMapUsuarios] = useState<Record<string, string>>({});
   const [gdlEvents, setGdlEvents] = useState<Array<{ start: string }>>([]);
   const [gdsEvents, setGdsEvents] = useState<Array<{ start: string }>>([]);
   const [gdcEvents, setGdcEvents] = useState<Array<{ start: string }>>([]);
@@ -162,11 +163,24 @@ export default function Dashboard() {
   carregarDiscipulos();
 }, []);
 
+
+
 function formatarDataCurta(dataISO: string) {
   const data = new Date(dataISO);
   const dia = data.getDate();
   const mes = data.toLocaleString("pt-BR", { month: "short" });
   return `${dia} ${mes.charAt(0).toUpperCase() + mes.slice(1)}`;
+}
+
+
+function formatarHoraBR(dataISO: string) {
+  const dataUTC = new Date(dataISO + "Z");
+
+  return dataUTC.toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 
@@ -218,6 +232,36 @@ useEffect(() => {
 
   return () => chart.dispose();
 }, [discipulosAdmin]);
+
+
+useEffect(() => {
+  if (!relatorios.length) return;
+
+  async function carregarUsuarios() {
+    const ids = Array.from(
+      new Set(relatorios.map(r => r.responsavel))
+    );
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, nome")
+      .in("id", ids);
+
+    if (error) {
+      console.error("Erro ao buscar usuários:", error);
+      return;
+    }
+
+    const mapa: Record<string, string> = {};
+    data?.forEach(u => {
+      mapa[u.id] = u.nome;
+    });
+
+    setMapUsuarios(mapa);
+  }
+
+  carregarUsuarios();
+}, [relatorios]);
 
 
 
@@ -292,63 +336,82 @@ async function buscarRelatorios() {
 
   /* ================= SUPERVISOR ================= */
   if (user.cargo === "supervisor") {
-    tipos = ["CELULA", "DISCIPULADO", "GDL"];
+    tipos = ["CELULA", "DISCIPULADO"];
 
-    // 1️⃣ Descobrir a supervisão do supervisor
-    const { data: supervisao } = await supabase
+    // 1️⃣ Descobrir supervisão do supervisor
+    const { data: supervisao, error: erroSupervisao } = await supabase
       .from("supervisoes")
       .select("id")
       .eq("supervisor_id", user.id)
       .single();
 
-    if (supervisao) {
-      // 2️⃣ Buscar líderes dessa supervisão
-      const { data: lideres } = await supabase
-        .from("celulas")
-        .select("lider_id")
-        .eq("supervisao_id", supervisao.id);
-
-      const lideresIds = lideres?.map(l => l.lider_id) || [];
-      responsaveis.push(...lideresIds);
+    if (erroSupervisao || !supervisao) {
+      console.error("Supervisor sem supervisão");
+      return [];
     }
+
+    // 2️⃣ Buscar TODOS os líderes dessa supervisão
+    const { data: lideres, error: erroLideres } = await supabase
+      .from("supervisao_lideres")
+      .select("lider_id")
+      .eq("supervisao_id", supervisao.id);
+
+    if (erroLideres) {
+      console.error("Erro ao buscar líderes:", erroLideres);
+    }
+
+    const lideresIds = lideres?.map(l => l.lider_id) || [];
+
+    responsaveis = lideresIds;
   }
 
-  /* ================= COORDENADOR ================= */
-  if (user.cargo === "coordenador") {
-    tipos = ["CELULA", "DISCIPULADO", "GDS"];
+/* ================= COORDENADOR ================= */
+if (user.cargo === "coordenador") {
+  tipos = ["CELULA", "DISCIPULADO", "GDL"];
 
-    // 1️⃣ Descobrir a coordenação do coordenador
-    const { data: coordenacao } = await supabase
-      .from("coordenacoes")
-      .select("id")
-      .eq("coordenador_id", user.id)
-      .single();
+  // 1️⃣ Descobrir a coordenação do coordenador
+  const { data: coordenacao, error: erroCoord } = await supabase
+    .from("coordenacoes")
+    .select("id")
+    .eq("coordenador_id", user.id)
+    .single();
 
-    if (coordenacao) {
-      // 2️⃣ Buscar supervisões dessa coordenação
-      const { data: supervisoes } = await supabase
-        .from("coordenacao_supervisoes")
-        .select("supervisao_id")
-        .eq("coordenacao_id", coordenacao.id);
-
-      const supervisoesIds = supervisoes?.map(s => s.supervisao_id) || [];
-
-      // 3️⃣ Buscar usuários supervisores dessas supervisões
-      if (supervisoesIds.length > 0) {
-        const { data: supervisoresUsers } = await supabase
-          .from("users")
-          .select("id")
-          .in("supervisao_id", supervisoesIds);
-
-        const supervisoresIds = supervisoresUsers?.map(u => u.id) || [];
-        responsaveis.push(...supervisoresIds);
-      }
-    }
+  if (erroCoord || !coordenacao) {
+    console.error("Coordenador sem coordenação");
+    return [];
   }
+
+  // 2️⃣ Buscar supervisões dessa coordenação
+  const { data: supervisoes, error: erroSup } = await supabase
+    .from("coordenacao_supervisoes")
+    .select("supervisao_id")
+    .eq("coordenacao_id", coordenacao.id);
+
+  if (erroSup || !supervisoes?.length) {
+    console.error("Coordenação sem supervisões");
+    return [];
+  }
+
+  const supervisoesIds = supervisoes.map(s => s.supervisao_id);
+
+  // 3️⃣ Buscar os supervisores dessas supervisões
+  const { data: supervisores, error: erroUsers } = await supabase
+    .from("supervisoes")
+    .select("supervisor_id")
+    .in("id", supervisoesIds);
+
+  if (erroUsers || !supervisores?.length) {
+    console.error("Nenhum supervisor encontrado");
+    return [];
+  }
+
+  // 👉 IDs corretos para usar no relatório
+  responsaveis = supervisores.map(s => s.supervisor_id);
+}
 
   /* ================= PASTOR ================= */
   if (user.cargo === "pastor") {
-    tipos = ["CELULA", "DISCIPULADO", "GDC"];
+    tipos = ["CELULA", "DISCIPULADO", "GDS", "GDC"];
 
     const { data: coordenadores } = await supabase
       .from("users")
@@ -377,52 +440,106 @@ async function buscarRelatorios() {
 }
 
 useEffect(() => {
+  console.log(relatorios)
   buscarRelatorios().then(setRelatorios);
 }, [user?.id]);
 
 const itensRelatorios = useMemo(() => {
-  return relatorios.map(r => (
-    <div
-      key={r.id}
-      className="odd:bg-zinc-900/60 even:bg-zinc-800/10 rounded-md p-3"
-    >
-      {r.tipo === "CELULA" && (
-        <span>
-          Relatório de Célula <br />
-          {formatarDataCurta(r.criado_em)}
-        </span>
-      )}
+  return relatorios.map(r => {
+    const nomeResponsavel =
+      (user?.cargo === "supervisor" || user?.cargo === "coordenador" || user?.cargo === "pastor")
+        ? mapUsuarios[r.responsavel]
+        : null;
 
-      {r.tipo === "DISCIPULADO" && (
-        <span>
-          Relatório de Discipulado <br />
-          {formatarDataCurta(r.criado_em)}
-        </span>
-      )}
+    return (
+      <div
+        key={r.id}
+        className="odd:bg-zinc-900/60 even:bg-zinc-800/10 rounded-md p-3"
+      >
+        {/* NOME DO RESPONSÁVEL */}
+        {nomeResponsavel && (
+          <span className="block text-sm text-zinc-400 mb-1">
+            {user?.cargo === "supervisor" && "Líder: "}
+            {user?.cargo === "coordenador" && "Supervisor: "}
+            {r.tipo === "GDS" && "Coordenador: "}
+            {r.tipo === "GDC" && "Pastor: "}
+            {nomeResponsavel}
+          </span>
+        )}
 
-      {r.tipo === "GDL" && (
-        <span>
-          Relatório GDL <br />
-          {formatarDataCurta(r.criado_em)}
-        </span>
-      )}
+        {r.tipo === "CELULA" && (
+          <>
+            <Link href={user?.cargo === "supervisor" ? `/supervisao/lider/${r.responsavel}` : "/dashboard"}
+              >
+              <div>
+                <span>
+                  Relatório de Célula <br />
+                  {formatarDataCurta(r.criado_em)} {formatarHoraBR(r.criado_em)}
+                </span>
+              </div>
+              
+            </Link>
+          </>
+        )}
 
-      {r.tipo === "GDS" && (
-        <span>
-          Relatório GDS <br />
-          {formatarDataCurta(r.criado_em)}
-        </span>
-      )}
+        {r.tipo === "DISCIPULADO" && (
+          <>
+            <Link href={user?.cargo === "supervisor" ? `/supervisao/lider/${r.responsavel}` : "/dashboard"}>
+              <div>
+                <span>
+                  Relatório de Discipulado <br />
+                  {formatarDataCurta(r.criado_em)} {formatarHoraBR(r.criado_em)}
+                </span>
+              </div>
+              
+            </Link>
+          </>
+          
+        )}
 
-      {r.tipo === "GDC" && (
-        <span>
-          Relatório GDC <br />
-          {formatarDataCurta(r.criado_em)}
-        </span>
-      )}
-    </div>
-  ));
-}, [relatorios]);
+        {r.tipo === "GDL" && (
+          <>
+            <Link href={`/coordenacao/supervisor/${r.supervisao_id}`}>
+              <div>
+                <span>
+                  Relatório GDL <br />
+                  {formatarDataCurta(r.criado_em)} {formatarHoraBR(r.criado_em)}
+                </span>
+              </div>
+            </Link>
+          </>
+          
+        )}
+
+        {r.tipo === "GDS" && (
+          <>
+            <Link href={`/pastoreio/coordenacao/${r.coordenacao_id}`}>
+              <div>
+                <span>
+                  Relatório GDS <br />
+                  {formatarDataCurta(r.criado_em)} {formatarHoraBR(r.criado_em)}
+                </span>
+              </div>
+            </Link>
+          </>
+        )}
+
+        {r.tipo === "GDC" && (
+          <>
+            <Link href={``}>
+              <div>
+                <span>
+                  Relatório GDC <br />
+                  {formatarDataCurta(r.criado_em)} {formatarHoraBR(r.criado_em)}
+                </span>
+              </div>
+            </Link>
+          </>
+        )}
+      </div>
+    );
+  });
+}, [relatorios, mapUsuarios, user?.cargo]);
 
 
 
@@ -627,7 +744,7 @@ const InfoBox = ({ title, items }: { title: string; items: ReactNode[] }) => (
       <>
         <div className="w-full flex flex-col gap-3">
           {items.map((item, i) => (
-            <div key={i} className="font-manrope font-bold">{item}</div>
+            <div key={i} className="font-manrope font-semibold">{item}</div>
           ))}
         </div>
       </>

@@ -46,10 +46,12 @@ export async function POST(req: Request) {
     /* ---------------------------
       URL ASSINADA (TEMPORÁRIA)
     ---------------------------- */
+     const EXPIRES_IN = 24 * 60 * 60; 
+
     const { data: signed, error: signedError } =
       await supabase.storage
         .from("relatorios")
-        .createSignedUrl(filePath, 500);
+        .createSignedUrl(filePath, EXPIRES_IN);
 
     if (signedError) {
       console.error("Erro signed URL:", signedError);
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
         file_path: filePath,
         conteudo: {
           signed_url: signed.signedUrl,
-          expires_in: 500,
+          expires_in: EXPIRES_IN,
         },
       })
       .select()
@@ -97,7 +99,7 @@ export async function POST(req: Request) {
       } catch (err) {
         console.error("Erro ao remover relatório:", err);
       }
-    }, 500000);
+    }, EXPIRES_IN * 1000);
 
     return NextResponse.json(
       {

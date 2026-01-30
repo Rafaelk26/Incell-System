@@ -1,5 +1,4 @@
 "use client";
-
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../../context/useUser";
 import { Navbar } from "@/components/all/navBar";
@@ -14,7 +13,7 @@ import autoTable from "jspdf-autotable";
 import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 
-
+/* ==================== TIPOS ==================== */
 type RelatorioForm = {
   discipulo: string;
   dataDiscipulado: string;
@@ -24,7 +23,7 @@ type RelatorioForm = {
   fotoDiscipulado: FileList;
 };
 
-type DiscipulosType = {
+type PessoaType = {
   id: string;
   nome: string;
   cargo: string;
@@ -35,61 +34,133 @@ type CelulaType = {
   nome: string;
 };
 
-
 export default function RelatorioDiscipulado() {
   const { user } = useAuth();
   const { register, handleSubmit, reset } = useForm<RelatorioForm>();
-  const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
+
   const [celula, setCelula] = useState<CelulaType | null>(null);
+  const [supervisaoNome, setSupervisaoNome] = useState<string | null>(null);
+  const [coordenacaoNome, setCoordenacaoNome] = useState<string | null>(null);
+  const [opcoesSelect, setOpcoesSelect] = useState<PessoaType[]>([]);
 
-
-  const requestDiscipulos = useCallback(async () => {
-  if (!celula?.id) return;
-
-  const { data, error } = await supabase
-    .from("discipulos")
-    .select("id, nome, cargo")
-    .eq("celula_id", celula.id);
-
-  if (error) {
-    console.error("Erro ao buscar discípulos:", error);
-    return;
-  }
-
-  setDiscipulos(data);
-}, [celula?.id]);
-
-
-  const requestCelulas = useCallback(async () => {
+  /* ==================== CÉLULA ==================== */
+  const requestCelula = useCallback(async () => {
     if (!user?.id) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("celulas")
       .select("id, nome")
       .eq("responsavel_id", user.id)
       .single();
 
-    if (error) {
-      console.error("Erro ao buscar célula:", error);
-      return;
-    }
-
-    setCelula(data);
+    if (data) setCelula(data);
   }, [user?.id]);
 
+  /* ==================== DISCÍPULOS DA CÉLULA ==================== */
+  const buscarDiscipulosCelula = async (celulaId: string) => {
+    const { data } = await supabase
+      .from("discipulos")
+      .select("id, nome, cargo")
+      .eq("celula_id", celulaId);
 
-  useEffect(() => {
+    return data ?? [];
+  };
+
+  /* ==================== REGRAS POR CARGO ==================== */
+  const montarOpcoesSelect = useCallback(async () => {
     if (!user) return;
-    requestCelulas();
-  }, [user, requestCelulas]);
+
+    let lista: PessoaType[] = [];
+
+    // 1️⃣ Discípulos da célula (se existir)
+    if (celula?.id) {
+      const discipulos = await buscarDiscipulosCelula(celula.id);
+      lista.push(...discipulos);
+    }
+
+    // 2️⃣ SUPERVISOR → líderes da supervisão
+    if (user.cargo === "supervisor") {
+      const { data: supervisao } = await supabase
+        .from("supervisoes")
+        .select("id")
+        .eq("supervisor_id", user.id)
+        .single();
+
+      if (supervisao) {
+        const { data: lideres } = await supabase
+          .from("supervisao_lideres")
+          .select(`
+            lider:lider_id (
+              id,
+              nome,
+              cargo
+            )
+          `)
+          .eq("supervisao_id", supervisao.id);
+
+        lideres?.forEach((l: any) => {
+          if (l.lider) lista.push(l.lider);
+        });
+      }
+    }
+
+    // 3️⃣ COORDENADOR → supervisores da coordenação
+    if (user.cargo === "coordenador") {
+      const { data: coordenacao } = await supabase
+        .from("coordenacoes")
+        .select("id")
+        .eq("coordenador_id", user.id)
+        .single();
+
+      if (coordenacao) {
+        const { data: supervisores } = await supabase
+          .from("coordenacao_supervisoes")
+          .select(`
+            supervisoes (
+              supervisor:supervisor_id (
+                id,
+                nome,
+                cargo
+              )
+            )
+          `)
+          .eq("coordenacao_id", coordenacao.id);
+
+        supervisores?.forEach((s: any) => {
+          if (s.supervisoes?.supervisor)
+            lista.push(s.supervisoes.supervisor);
+        });
+      }
+    }
+
+    // 4️⃣ PASTOR → TODOS os coordenadores
+    if (user.cargo === "pastor") {
+      const { data: coordenadores } = await supabase
+        .from("users")
+        .select("id, nome, cargo")
+        .eq("cargo", "coordenador");
+
+      if (coordenadores) lista.push(...coordenadores);
+    }
+
+    // 🔒 Remove duplicados
+    const unicos = Array.from(
+      new Map(lista.map((p) => [p.id, p])).values()
+    );
+
+    setOpcoesSelect(unicos);
+  }, [user, celula]);
+
+  /* ==================== EFFECTS ==================== */
+  useEffect(() => {
+    requestCelula();
+  }, [requestCelula]);
 
   useEffect(() => {
-    if (!celula) return;
-    requestDiscipulos();
-  }, [celula, requestDiscipulos]);
+    montarOpcoesSelect();
+  }, [montarOpcoesSelect]);
 
-
-
+  /* ==================== PDF ==================== */
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -104,11 +175,28 @@ export default function RelatorioDiscipulado() {
   };
 
   const formatarDataBR = (data: string) => {
-    if (!data) return "";
     const [ano, mes, dia] = data.split("-");
     return `${dia}/${mes}/${ano}`;
   };
 
+
+  function getTituloContextual() {
+    if (user?.cargo === "pastor") return null;
+
+    if (user?.cargo === "lider") {
+      return celula?.nome ? `Célula: ${celula.nome}` : null;
+    }
+
+    if (user?.cargo === "supervisor") {
+      return supervisaoNome ? `Supervisão: ${supervisaoNome}` : null;
+    }
+
+    if (user?.cargo === "coordenador") {
+      return coordenacaoNome ? `Coordenação: ${coordenacaoNome}` : null;
+    }
+
+    return null;
+  }
 
 
   async function gerarPdf(dados: RelatorioForm): Promise<string> {
@@ -117,182 +205,139 @@ export default function RelatorioDiscipulado() {
 
     const logoBase64 = await urlToBase64(Incell.src);
     doc.addImage(logoBase64, "PNG", 85, currentY, 40, 20);
-
     currentY += 30;
 
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(20);
     doc.text("Relatório de Discipulado", 105, currentY, { align: "center" });
-
     currentY += 10;
 
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(14);
-    doc.text(`Célula: ${celula?.nome}`, 105, currentY, { align: "center" });
+    const tituloContextual = getTituloContextual();
 
-    currentY += 10;
+    if (tituloContextual) {
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(14);
+      doc.text(tituloContextual, 105, currentY, { align: "center" });
+      currentY += 10;
+    }
 
     const fotoBase64 = await fileToBase64(dados.fotoDiscipulado[0]);
     doc.addImage(fotoBase64, "JPEG", 25, currentY, 160, 80);
-
     currentY += 90;
-
 
     autoTable(doc, {
       startY: currentY,
       theme: "grid",
       head: [["Campo", "Informação"]],
       body: [
-        ["Quem foi Discipulado", `${dados.discipulo}`],
+        ["Quem foi Discipulado", dados.discipulo],
         ["Data", formatarDataBR(dados.dataDiscipulado)],
         ["Horário", `${dados.horaInicio} - ${dados.horaFinal}`],
       ],
-      headStyles: {
-        fillColor: [0, 0, 0],
-        textColor: 255,
-      },
+      headStyles: { fillColor: [0, 0, 0], textColor: 255 },
       columnStyles: {
-        0: {
-          fillColor: [0, 0, 0],
-          textColor: 255,
-          fontStyle: "bold",
-        },
+        0: { fillColor: [0, 0, 0], textColor: 255, fontStyle: "bold" },
       },
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
 
     doc.setFont("Helvetica", "bold");
+    doc.setFontSize(14);
     doc.text("Observações", 14, finalY);
 
     doc.setFont("Helvetica", "normal");
+    doc.setFontSize(11);
     doc.text(dados.observacoes, 14, finalY + 6, { maxWidth: 180 });
 
     return doc.output("datauristring");
   }
 
-
+  /* ==================== SUBMIT ==================== */
   const handleSubmitRelatoryCell = async (data: RelatorioForm) => {
-    if (!user || !celula) {
-      toast.error("Usuário ou célula inválidos");
-      return;
-    }
-
     try {
       toast.loading("Gerando relatório...");
+      const pdf = await gerarPdf(data);
 
-      const pdfBase64 = await gerarPdf(data);
       const formData = new FormData();
-
-      formData.append("responsavel", user.id);
+      formData.append("responsavel", user!.id);
       formData.append("tipo", "DISCIPULADO");
-      formData.append("conteudo", pdfBase64);
-      formData.append("celula_id", celula.id);
+      formData.append("conteudo", pdf);
+      if (celula?.id) formData.append("celula_id", celula.id);
 
       const res = await fetch("/api/relatorios/discipulado", {
         method: "POST",
         body: formData,
       });
 
-      console.log(res)
-
-      const result = await res.json();
-      if (!res.ok) {
-        console.error("Erro da API:", result);
-        throw new Error(result.error || "Erro desconhecido");
-      }
+      if (!res.ok) throw new Error();
 
       toast.dismiss();
       toast.success("Relatório criado com sucesso!");
       reset();
-
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.dismiss();
-      toast.error("Erro ao criar relatório!");
+      toast.error("Erro ao criar relatório");
     }
   };
 
-
+  /* ==================== RENDER ==================== */
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="h-screen flex">
         <Navbar />
         <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
-          <header className="w-full flex justify-end px-10 pt-6">
+          <header className="flex justify-end px-10 pt-6">
             <Image
-              className="w-12 h-12 rounded-full border border-white"
-              width={12}
-              height={12}
               src={user?.foto || ""}
               alt="Perfil"
+              width={50}
+              height={50}
+              className="rounded-full border w-12 h-12"
             />
           </header>
 
-          <section className="max-w-6xl w-full px-10 md:mt-14 md:mb-10">
-            <h1 className="font-bold text-4xl font-manrope">
-              Relatório de Discipulado
-            </h1>
+          <section className="max-w-6xl px-10 mt-4">
+            <h1 className="text-4xl font-bold font-manrope">Relatório de Discipulado</h1>
 
             <form
               onSubmit={handleSubmit(handleSubmitRelatoryCell)}
               className="mt-10 flex flex-col gap-4"
             >
-              <div className="w-full flex gap-10">
-                <Select nome="Quem foi discipulado?"
-                {...register("discipulo", { required: true })}>
-                  <option value={""} className="text-black">Selecione</option>
-                  {discipulos.map((d)=> (
-                    <>
-                      <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
-                    </>
+              <div className="flex gap-10">
+                <Select
+                  nome="Quem foi discipulado?"
+                  {...register("discipulo", { required: true })}
+                >
+                  <option value="" className="text-black font-bold">Selecione</option>
+                  {opcoesSelect.map((p) => (
+                    <option key={p.id} value={p.nome} className="text-black font-bold">
+                      {p.nome} - {p.cargo}
+                    </option>
                   ))}
                 </Select>
 
-                <Input
-                  nome="Data do discipulado"
-                  type="date"
-                  {...register("dataDiscipulado", { required: true })}
-                />
-
-                <Input
-                  nome="Hora inicial"
-                  type="time"
-                  {...register("horaInicio", { required: true })}
-                />
-
-                <Input
-                  nome="Hora final"
-                  type="time"
-                  {...register("horaFinal", { required: true })}
-                />
+                <Input type="date" nome="Data" {...register("dataDiscipulado")} />
+                <Input type="time" nome="Hora inicial" {...register("horaInicio")} />
+                <Input type="time" nome="Hora final" {...register("horaFinal")} />
               </div>
 
-              <div className="w-full flex items-stretch justify-between gap-8">
+              <label className="m-0 p-0 font-manrope text-lg">Observações:</label>
+              <textarea
+                className="bg-[#514F4F]/40 p-4 rounded-lg border"
+                {...register("observacoes", { required: true })}
+              />
 
-                <div className="w-full flex flex-col gap-2">
-                  <label className="font-manrope text-lg">Observações</label>
-                  <textarea
-                  className="bg-[#514F4F]/40 p-4 rounded-lg border border-white
-                  hover:border-blue-400 
-                  focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
-                  {...register("observacoes", { required: true })}>
-                  </textarea>
-                </div>
+              <Input
+                nome="Foto"
+                type="file"
+                {...register("fotoDiscipulado", { required: true })}
+              />
 
-                <Input
-                  nome="Foto do discipulado"
-                  type="file"
-                  {...register("fotoDiscipulado", { required: true })}
-                />
-              </div>
-
-              <button
-              className="w-25 p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
-              hover:scale-105 hover:cursor-pointer
-              focus:outline-none" 
-              type="submit">Registrar</button>
-
+              <button className="bg-blue-600 p-3 rounded font-bold transition-all
+              hover:bg-blue-500 hover:cursor-pointer">
+                Registrar
+              </button>
             </form>
           </section>
         </main>
