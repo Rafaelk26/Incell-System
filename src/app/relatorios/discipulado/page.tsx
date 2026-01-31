@@ -287,24 +287,27 @@ export default function RelatorioDiscipulado() {
       <main className="h-screen flex">
         <Navbar />
         <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
-          <header className="flex justify-end px-10 pt-6">
+          <header className="w-full flex justify-end px-6 pt-6 md:px-10">
             <Image
               src={user?.foto || ""}
               alt="Perfil"
               width={50}
               height={50}
-              className="rounded-full border w-12 h-12"
+              className="rounded-full border border-white w-12 h-12"
             />
           </header>
 
           <section className="max-w-6xl px-10 mt-4">
-            <h1 className="text-4xl font-bold font-manrope">Relatório de Discipulado</h1>
+            <h1 className="w-full text-3xl font-bold font-manrope text-center 
+            md:text-start md:text-4xl">Relatório de Discipulado</h1>
 
             <form
               onSubmit={handleSubmit(handleSubmitRelatoryCell)}
-              className="mt-10 flex flex-col gap-4"
+              className="mt-10 flex flex-col gap-4 mb-24
+              md:mb-0"
             >
-              <div className="flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Select
                   nome="Quem foi discipulado?"
                   {...register("discipulo", { required: true })}
@@ -334,8 +337,10 @@ export default function RelatorioDiscipulado() {
                 {...register("fotoDiscipulado", { required: true })}
               />
 
-              <button className="bg-blue-600 p-3 rounded font-bold transition-all
-              hover:bg-blue-500 hover:cursor-pointer">
+              <button className="w-full p-3 mt-4 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+              md:mt-0
+              hover:bg-blue-500 hover:cursor-pointer
+              focus:outline-none">
                 Registrar
               </button>
             </form>

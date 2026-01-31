@@ -305,16 +305,18 @@ useEffect(() => {
             />
           </header>
 
-          <section className="max-w-6xl w-full px-10 md:mt-4 md:mb-10">
-            <h1 className="font-bold text-4xl font-manrope">
+          <section className="max-w-6xl w-full px-10 mt-8 mb-16 md:mt-4 md:mb-10">
+            <h1 className="font-bold text-center text-4xl font-manrope
+            md:text-start">
               Relatório de GDL
             </h1>
 
             <form
               onSubmit={handleSubmit(handleSubmitRelatoryCell)}
-              className="mt-10 flex flex-col gap-4"
+              className="flex flex-col gap-4 md:mt-10"
             >
-              <div className="w-full flex gap-10">
+              <div className="mt-10 flex flex-col gap-4
+              md:mb-0 md:flex-row md:mt-0">
 
                 <Input
                   nome="Data do discipulado"
@@ -336,7 +338,7 @@ useEffect(() => {
               </div>
 
 
-              <div className="w-full flex items-stretch justify-between gap-8">
+              <div className="w-full md:flex md:tems-stretch md:justify-between md:gap-8">
 
                 <div className="w-full flex flex-col gap-2">
                   <label className="font-manrope text-lg">Observações</label>
@@ -360,8 +362,9 @@ useEffect(() => {
                 <table className="w-full border-collapse text-white">
                     
                     <thead className="w-full">
-                        <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
-                        <th className="p-3 text-left font-manrope rounded-tl-xl">
+                        <tr className="w-full bg-zinc-950/90 text-white text-sm font-normal font-manrope 
+                        md:text-md">
+                        <th className="w-full p-3 text-left rounded-tl-xl">
                           Líderes Confirmados na Reunião
                         </th>
                         <th className="max-w-full p-3 text-left rounded-tr-xl"></th>
@@ -422,11 +425,11 @@ useEffect(() => {
                 </table>
             </div>
 
-              <button
-              className="w-full p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
-              hover:bg-blue-500 hover:cursor-pointer
-              focus:outline-none" 
-              type="submit">Registrar</button>
+            <button
+            className="w-full p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+            hover:bg-blue-500 hover:cursor-pointer
+            focus:outline-none" 
+            type="submit">Registrar</button>
 
             </form>
           </section>

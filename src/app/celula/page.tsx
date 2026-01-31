@@ -207,7 +207,7 @@ export default function Celula() {
 
   if (!user || loading) {
     return (
-      <main className="w-full h-screen flex justify-center items-center text-white">
+      <main className="w-full h-dvh flex justify-center items-center text-white md:h-screen">
         <Spinner />
       </main>
     );
@@ -255,7 +255,7 @@ export default function Celula() {
 
       {!celula && (
         <>
-          <main className="w-full h-screen flex justify-center items-center text-white">
+          <main className="w-full h-dvh flex justify-center items-center text-white md:h-screen">
             <div className="flex flex-col items-center gap-6">
               <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
               <span className="font-manrope font-semibold text-3xl">
@@ -274,10 +274,10 @@ export default function Celula() {
       {celula && (
         <>
           <>
-            <main className="max-w-full h-screen flex">
+            <main className="max-w-full h-dvh flex md:h-screen">
               <Navbar />
               <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
-                <header className="w-full flex justify-end pt-6">
+                <header className="w-full flex justify-end px-2 pt-6 md:px-10">
                   <Image
                     className="w-12 h-12 rounded-full border border-white"
                     src={user?.foto || ""}
@@ -290,13 +290,14 @@ export default function Celula() {
 
                 {/* ==================== PAGE CELULA PRINCIPAL ==================== */}
 
-                <section className="w-full">
-                  <h1 className="font-bold text-4xl font-manrope">
+                <section className="w-full mt-6 md:mt-0">
+                  <h1 className="w-full font-bold text-4xl text-center font-manrope flex flex-col  
+                  md:items-end md:flex-row md:gap-1">
                     <span className="text-xl font-manrope font-light">Célula</span>{" "}
                     {celula?.nome}
                   </h1>
 
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 flex gap-2  justify-center md:justify-start">
                     <span className="font-manrope">Tipo de célula:</span>
                     {celula?.genero === "masculino" && (
                       <>
@@ -372,10 +373,13 @@ export default function Celula() {
                     )}
                   </div>
 
-                  <div className="w-full flex justify-between items-end mt-6">
-                    <h1 className="font-bold text-3xl font-manrope">Liderança</h1>
+                  <div className="w-full flex flex-col-reverse justify-between items-center md:items-end mt-16
+                  md:flex-row">
+                    <h1 className="font-normal text-3xl text-center font-manrope mt-16
+                    md:text-3xl md:font-bold md:mt-0">Liderança</h1>
 
-                    <div className="w-max flex gap-4">
+                    <div className="w-full flex gap-4 flex-row
+                    md:w-max">
                       <div className="w-64">
                         {/* Input de busca por nome ligado ao state */}
                         <Input
@@ -401,11 +405,12 @@ export default function Celula() {
 
                   {/* TABELA DE DADOS DA CÉLULA */}
 
-                  <div className="w-full mt-6 overflow-x-auto">
-                    <table className="w-full border-collapse text-white">
+                  <div className="w-full mt-6 overflow-x-auto touch-pan-x hide-scrollbaro">
+                    <table className="min-w-[1200px] border-collapse text-white 
+                    md:w-full md:min-w-full">
                       {/* CABEÇALHO */}
-                      <thead>
-                        <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
+                      <thead className="w-full">
+                        <tr className="w-full bg-zinc-950/90 text-white font-normal font-manrope">
                           <th className="p-3 text-left rounded-tl-xl">Nome</th>
                           <th className="p-3 text-left">Função</th>
                           <th className="p-3 text-left">Telefone</th>
@@ -471,7 +476,7 @@ export default function Celula() {
                           <tr>
                             <td
                               colSpan={5}
-                              className="text-center p-20 text-white font-manrope font-semibold"
+                              className="text-start p-20 text-white font-manrope font-semibold md:text-center"
                             >
                               Nenhum discípulo encontrado
                             </td>
@@ -484,8 +489,9 @@ export default function Celula() {
                   {/* MODAL DE EDIÇÃO DE DISCÍPULOS*/}
 
                   {modalOption && (
-                    <div className="fixed inset-0 bg-black/70 flex justify-center items-start pt-20 z-50">
-                      <div className="bg-black border border-white rounded-xl p-6 w-[500px] h-[500px] overflow-y-auto">
+                    <div className="fixed inset-0 bg-black/70 flex justify-center items-start pt-30 z-50 md:pt-20">
+                      <div className="bg-black border border-white rounded-xl w-[400px] p-6 overflow-y-auto 
+                      md:w-[500px] md:h-[500px]">
                         <div className="flex justify-between items-center pt-4">
                           <div className="w-full flex flex-col">
                             <div className="flex justify-between">
@@ -551,7 +557,7 @@ export default function Celula() {
                                 }
                               />
 
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 mb-8 md:mb-4">
                                 <button 
                                 type="button"
                                 onClick={()=> setModalOption(false)}
@@ -575,8 +581,8 @@ export default function Celula() {
                   )}
 
 
-                  <div className="w-full flex justify-end mt-10">
-                    <div className="w-max">
+                  <div className="w-full flex justify-center md:justify-end mt-10">
+                    <div className="w-full md:w-max">
                       <Link href={"/celula/criar"}>
                         <Button nome="Cadastrar Discípulo" />
                       </Link>

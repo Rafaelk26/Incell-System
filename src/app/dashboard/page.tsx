@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [gdsEvents, setGdsEvents] = useState<Array<{ start: string }>>([]);
   const [gdcEvents, setGdcEvents] = useState<Array<{ start: string }>>([]);
   const [gdEvents, setGdEvents] = useState<Array<{ start: string }>>([]);
+  const [isMobile, setIsMobile] = useState(false);
   
 
   const {
@@ -144,7 +145,6 @@ export default function Dashboard() {
 };
 
 
-
   useEffect(() => {
   async function carregarDiscipulos() {
     try {
@@ -164,7 +164,6 @@ export default function Dashboard() {
 }, []);
 
 
-
 function formatarDataCurta(dataISO: string) {
   const data = new Date(dataISO);
   const dia = data.getDate();
@@ -182,7 +181,6 @@ function formatarHoraBR(dataISO: string) {
     minute: "2-digit",
   });
 }
-
 
 
 useEffect(() => {
@@ -264,8 +262,6 @@ useEffect(() => {
 }, [relatorios]);
 
 
-
-
   useEffect(() => {
   if (!user?.id) return;
 
@@ -319,8 +315,6 @@ useEffect(() => {
 
   carregarDatasReunioes();
 }, [user?.id, user?.cargo]);
-
-
 
 
 async function buscarRelatorios() {
@@ -444,6 +438,17 @@ useEffect(() => {
   buscarRelatorios().then(setRelatorios);
 }, [user?.id]);
 
+useEffect(() => {
+  const checkIsMobile = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
+
+  checkIsMobile();
+  window.addEventListener("resize", checkIsMobile);
+
+  return () => window.removeEventListener("resize", checkIsMobile);
+}, []);
+
 const itensRelatorios = useMemo(() => {
   return relatorios.map(r => {
     const nomeResponsavel =
@@ -556,7 +561,7 @@ const itensRelatorios = useMemo(() => {
   ============================================================ */
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-screen flex flex-col md:flex-row">
         <Navbar />
         <main className="w-full overflow-x-hidden">
           <header className="w-full flex justify-end pe-4 pt-6">
@@ -581,7 +586,7 @@ const itensRelatorios = useMemo(() => {
                 <section
                   ref={scrollRef}
                   className={`w-full mt-5 hide-scrollbar ${
-                    ["supervisor", "coordenador"].includes(user?.cargo)
+                    isMobile || ["supervisor", "coordenador"].includes(user?.cargo)
                       ? "overflow-x-auto touch-pan-x cursor-grab active:cursor-grabbing"
                       : "overflow-visible"
                   }`}
@@ -636,7 +641,8 @@ const itensRelatorios = useMemo(() => {
                     <InfoBox title="Últimos Relatórios" items={itensRelatorios} />
                   </div>
 
-                  <div className="w-full md:w-1/2 flex flex-col bg-[#514F4F]/40 px-6 py-6 rounded-md">
+                  <div className="w-full md:w-1/2 flex flex-col bg-[#514F4F]/40 px-6 py-6 rounded-md mb-16 
+                  md:mb-0">
                     <span className="text-2xl font-manrope font-bold mb-6">Calendário</span>
                     
                     <Link href={`/agenda/${user.id}`}>

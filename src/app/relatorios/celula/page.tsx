@@ -241,7 +241,7 @@ export default function RelatorioCelula() {
       <main className="max-w-full h-screen flex">
         <Navbar />
         <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
-          <header className="w-full flex justify-end px-10 pt-6">
+          <header className="w-full flex justify-end px-6 pt-6 md:px-10">
             <Image
               className="w-12 h-12 rounded-full border border-white"
               width={12}
@@ -251,16 +251,20 @@ export default function RelatorioCelula() {
             />
           </header>
 
-          <section className="max-w-6xl w-full px-10 md:mt-4 md:mb-10">
-            <h1 className="font-bold text-4xl font-manrope">
+          <section className="max-w-6xl w-full px-10 flex flex-col justify-center 
+          md:mt-4 md:mb-10">
+            <h1 className="font-bold text-3xl font-manrope text-center mt-4
+            md:text-4xl md:text-start md:mt-0">
               Relatório de Célula
             </h1>
 
             <form
               onSubmit={handleSubmit(handleSubmitRelatoryCell)}
-              className="mt-10 flex flex-col gap-4"
+              className="mt-10 flex flex-col gap-4 mb-24
+              md:mb-0"
             >
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Input
                   nome="Data da célula"
                   type="date"
@@ -282,7 +286,8 @@ export default function RelatorioCelula() {
               </div>
 
 
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Select nome="Dinâmica"
                 {...register("dinamica", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
@@ -319,7 +324,8 @@ export default function RelatorioCelula() {
               </div>
 
 
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Select nome="Oração do Lanche"
                 {...register("oracaoLanche", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
@@ -352,7 +358,8 @@ export default function RelatorioCelula() {
               </div>
 
 
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Input
                   nome="Reconciliações?"
                   type="number"
@@ -415,7 +422,8 @@ export default function RelatorioCelula() {
 
 
               <button
-              className="w-full p-3 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+              className="w-full p-3 mt-4 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+              md:mt-0
               hover:bg-blue-500 hover:cursor-pointer
               focus:outline-none" 
               type="submit">Registrar</button>

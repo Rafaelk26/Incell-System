@@ -21,7 +21,7 @@ export default function Relatorios(){
     return(
         <>
             <ProtectedLayout>
-                <main className="max-w-full h-screen flex">
+                <main className="max-w-full h-dvh flex md:h-screen">
                     <Navbar />
                     <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
                         <header className="w-full flex justify-end px-10 pt-6">
@@ -34,10 +34,11 @@ export default function Relatorios(){
                             />
                         </header>
 
-                        <section className="w-full md:mt-14 flex flex-col items-center">
-                            <h1 className="font-bold text-4xl font-manrope">Qual o tipo do relatório?</h1>
+                        <section className="w-full mt-16 flex flex-col items-center md:mt-14">
+                            <h1 className="font-bold text-3xl font-manrope md:text-4xl">Qual o tipo do relatório?</h1>
 
-                            <section className="flex gap-6 mt-16">
+                            <section className="flex flex-col gap-8 mt-10
+                            md:flex md:flex-row md:gap-6 md:mt-16">
                                 <Link href={"/relatorios/celula"}>
                                     <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
                                     hover:scale-105">

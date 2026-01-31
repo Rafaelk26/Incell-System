@@ -3,7 +3,8 @@ import logoIncell from "../../../../public/assets/file Incell.png";
 
 export function Spinner() {
   return (
-    <div className="w-full h-screen flex flex-col justify-center items-center">
+    <div className="w-full h-dvh flex flex-col justify-center items-center
+    md:h-screen">
       <Image
         alt="Incell System"
         src={logoIncell}

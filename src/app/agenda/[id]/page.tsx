@@ -55,9 +55,10 @@ export default function Agenda() {
 
   return (
     <ProtectedLayout>
-        <main className="max-w-full h-screen flex">
+        <main className="max-w-full h-dvh flex md:h-screen ">
           <Navbar />
-          <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+          <main className="max-w-[84rem] w-full overflow-x-hidden px-4
+          xl:mx-auto">
 
             <header className="w-full flex justify-end pt-6">
               <Image
@@ -70,50 +71,51 @@ export default function Agenda() {
               />
             </header>
 
-            <h1 className="text-3xl font-manrope font-semibold mb-6">Agenda</h1>
+            <h1 className="mt-8 text-3xl font-manrope font-semibold mb-6 
+            md:mt-0">Agenda</h1>
 
-                <FullCalendar
-                  plugins={[dayGridPlugin, interactionPlugin]}
-                  initialView="dayGridMonth"
-                  locales={[ptBrLocale]}
-                  locale="pt-br"
-                  events={eventos}
-                  displayEventTime={false}
-                  dateClick={(info) => {
-                    const filtrados = eventos.filter((e) =>
-                      e.start.startsWith(info.dateStr)
-                    );
+            <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locales={[ptBrLocale]}
+            locale="pt-br"
+            events={eventos}
+            displayEventTime={false}
+            dateClick={(info) => {
+              const filtrados = eventos.filter((e) =>
+                e.start.startsWith(info.dateStr)
+              );
 
-                  setEventosDoDia(filtrados);
-                  setDataSelecionada(info.dateStr);
-                  setModalDiaAberto(true);
-                }}
-              />
+            setEventosDoDia(filtrados);
+            setDataSelecionada(info.dateStr);
+            setModalDiaAberto(true);
+          }}
+          />
 
-            {modalCriarAberto && (
-              <ModalCriarReuniao
-                data={dataSelecionada}
-                onClose={() => setModalCriarAberto(false)}
-                onCreated={(novoEvento) =>
-                  setEventos((prev) => [...prev, novoEvento])
-                }
-              />
+          {modalCriarAberto && (
+            <ModalCriarReuniao
+              data={dataSelecionada}
+              onClose={() => setModalCriarAberto(false)}
+              onCreated={(novoEvento) =>
+                setEventos((prev) => [...prev, novoEvento])
+              }
+            />
+          )}
+
+          {modalDiaAberto && dataSelecionada && (
+            <ModalReunioesDoDia
+              data={dataSelecionada}
+              eventos={eventosDoDia}
+              onClose={() => setModalDiaAberto(false)}
+              onDeleted={(id) =>
+                setEventos((prev) => prev.filter((e) => e.id !== id))
+              }
+              onCreated={(novoEvento) =>
+                setEventos((prev) => [...prev, novoEvento])
+              }
+            />
             )}
-
-            {modalDiaAberto && dataSelecionada && (
-              <ModalReunioesDoDia
-                data={dataSelecionada}
-                eventos={eventosDoDia}
-                onClose={() => setModalDiaAberto(false)}
-                onDeleted={(id) =>
-                  setEventos((prev) => prev.filter((e) => e.id !== id))
-                }
-                onCreated={(novoEvento) =>
-                  setEventos((prev) => [...prev, novoEvento])
-                }
-              />
-              )}
-          </main>
+        </main>
       </main>
     </ProtectedLayout>
   );

@@ -50,7 +50,8 @@ export default function Home() {
   };
 
   return (
-    <main className="relative w-full h-screen overflow-hidden flex justify-center items-center bg-black">
+    <main className="relative w-full h-dvh overflow-hidden flex justify-center items-center bg-black
+    md:h-screen">
       {/* 🎥 Fundo */}
       <video
         key={videoSrc}
@@ -70,7 +71,8 @@ export default function Home() {
       <div className="absolute top-0 left-0 w-full h-full bg-black/85 z-[1]" />
 
       {/* Conteúdo */}
-      <div className="relative z-[2] text-center text-white px-4 flex flex-col items-center max-w-5xl w-full">
+      <div className="relative z-[2] text-center text-white px-4 flex flex-col items-center max-w-5xl w-full mb-5 
+      md:mb-0">
         {/* Logo */}
         <Image
           className="w-52 mb-8"
@@ -80,7 +82,9 @@ export default function Home() {
         />
 
         {/* Título animado */}
-        <h1 className="text-5xl mb-6 font-manrope font-semibold leading-tight whitespace-pre-line min-h-[7rem] transition-all duration-300">
+        <h1 className="text-4xl mb-6 font-manrope font-semibold leading-tight 
+        whitespace-pre-line min-h-[7rem] transition-all duration-300
+        md:text-5xl">
           {renderColoredText()}
           <span className="animate-pulse text-blue-500">|</span>
         </h1>

@@ -49,7 +49,8 @@ export default function Login() {
   };
 
   return (
-    <main className="w-full h-screen flex flex-col justify-center items-center bg-cover">
+    <main className="w-full h-dvh flex flex-col justify-center items-center bg-cover
+    md:h-screen">
       <Image className="absolute -z-10 opacity-75" src={Planet} alt="Planeta" />
 
       <div className="max-w-sm w-full h-fit bg-[#020202b9] border border-solid rounded-lg flex flex-col justify-center items-center py-8 md:max-w-sm">

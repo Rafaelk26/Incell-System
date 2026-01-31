@@ -102,7 +102,7 @@ export default function CriarDiscipulos() {
 
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
           <header className="w-full flex justify-end pt-6">
@@ -115,16 +115,17 @@ export default function CriarDiscipulos() {
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-14">
-            <h1 className="font-bold text-4xl font-manrope">
+          <section className="max-w-full w-full mt-10 md:mt-14">
+            <h1 className="font-bold text-4xl text-center font-manrope md:text-start">
               Cadastrar Discípulo
             </h1>
 
             <form
               onSubmit={handleSubmit(handleSubmitDiscipulo)}
-              className="mt-10 flex flex-col gap-4"
+              className="mt-2 flex flex-col gap-4 md:mt-10"
             >
-              <div className="w-full flex gap-10">
+              <div className="mt-10 flex flex-col gap-4
+              md:mb-0 md:flex-row md:mt-0">
                 <Input
                   nome="Nome do discípulo"
                   placeholder="Ex: Matheus Santos"
