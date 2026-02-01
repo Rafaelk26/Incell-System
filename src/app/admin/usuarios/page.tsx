@@ -120,10 +120,12 @@ export default function Promover() {
 
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex 
+      md:h-screen">
         <Navbar />
 
-        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto">
+        <main className="max-w-[84rem] w-full overflow-x-hidden 
+        xl:mx-auto">
           <header className="w-full flex justify-end px-10 pt-6">
             <Image
               className="w-12 h-12 rounded-full border border-white"
@@ -134,14 +136,16 @@ export default function Promover() {
             />
           </header>
 
-          <section className="w-full flex flex-col md:mt-14 md:px-6">
-            <div className="flex justify-between">
-                <h1 className="font-bold text-4xl font-manrope mb-6">
+          <section className="w-full flex flex-col mt-10 items-center
+          md:mt-14 md:px-6">
+            <div className="w-96 flex justify-between flex-col 
+            md:flex-row md:w-full">
+                <h1 className="text-center font-bold text-4xl font-manrope mb-6">
                     Usuários
                 </h1>
 
                 {/* SELECT DE FILTRAGEM DOS NOMES E CARGOS */}
-                <div className="flex gap-4 mb-6">
+                <div className="flex flex-col gap-4 mb-6 md:flex-row">
                     
                     {/* FILTRO POR NOME */}
                     <input
@@ -149,14 +153,14 @@ export default function Promover() {
                     placeholder="Buscar por nome..."
                     value={filtroNome}
                     onChange={(e) => setFiltroNome(e.target.value)}
-                    className="w-full max-w-sm px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full max-w-sm px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
 
                     {/* FILTRO POR CARGO */}
                     <select
                     value={filtroCargo}
                     onChange={(e) => setFiltroCargo(e.target.value)}
-                    className="w-full max-w-xs px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full max-w-full px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     >
                     <option value="">Todos os cargos</option>
                     <option value="lider">Líder</option>
@@ -170,8 +174,9 @@ export default function Promover() {
 
 
             {/* TABELA DE LÍDERES */}   
-            <div className="max-h-[420px] overflow-y-auto rounded-xl">
-              <table className="w-full border-collapse text-white">
+            <div className="w-full max-h-[500px] px-4 overflow-y-auto rounded-xl md:px-0">
+              <table className="w-full min-w-[550px] border-collapse text-white 
+              md:w-full">
                 <thead>
                   <tr className="bg-zinc-950/90">
                     <th className="p-3 text-left rounded-tl-xl">

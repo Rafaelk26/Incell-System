@@ -322,10 +322,10 @@ export default function AdminSupervisoes() {
 
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
-        <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
-          <header className="w-full flex justify-end px-10 pt-6">
+        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image
               className="w-12 h-12 rounded-full border border-white"
               src={user?.foto || ""}
@@ -335,9 +335,10 @@ export default function AdminSupervisoes() {
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-14 mb-10">
+          <section className="max-w-full w-full mt-10 md:mt-14 mb-10">
             {/* TÍTULO + PDF */}
-            <div className="flex justify-between">
+            <div className="flex justify-between flex-col items-center gap-4
+            md:flex-row md:gap-0">
               <h1 className="font-bold text-4xl font-manrope"><CountUp duration={3.5} end={supervisoes.length} /> Supervisões</h1>
 
               <ButtonAction
@@ -353,7 +354,8 @@ export default function AdminSupervisoes() {
             </div>
 
             {/* FILTROS */}
-            <div className="mt-6 flex gap-4 justify-between items-center">
+            <div className="w-96 flex flex-col gap-4 justify-between items-center mx-auto mt-10
+            md:flex-row md:w-full md:mx-0 md:mt-6">
               <span className="font-manrope text-xl">Filtrar</span>
 
               <Input 
@@ -385,12 +387,13 @@ export default function AdminSupervisoes() {
 
             {/* TABELA */}
             {loading ? (
-              <p className="text-white mt-16 font-manrope">Carregando...</p>
+              <p className="text-center text-white mt-16 font-manrope">Carregando...</p>
             ) : (
               <div className="w-full mt-10 overflow-x-auto max-h-[20em] overflow-y-scroll">
-                <table className="w-full border-collapse text-white">
-                  <thead>
-                    <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
+                <table className="min-w-[900px] border-collapse text-white 
+                md:w-full">
+                  <thead className="w-full">
+                    <tr className="w-full bg-zinc-950/90 text-white font-normal font-manrope">
                       <th className="p-3 text-left rounded-tl-xl">Nome de Supervisão e Supervisor</th>
                       <th className="p-3 text-left">Tipo</th>
                       <th className="p-3 text-left rounded-tr-xl">Ações</th>
@@ -407,7 +410,7 @@ export default function AdminSupervisoes() {
                         return (
                           <tr
                             key={item.id}
-                            className="odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
+                            className="odd:bg-zinc-900/60 even:bg-zinc-800/10 hover:bg-zinc-800 transition-colors border-b border-zinc-700"
                           >
                             <td className="px-3 py-2 font-manrope">
                               <span className="text-xl font-semibold">{item.nome}</span>

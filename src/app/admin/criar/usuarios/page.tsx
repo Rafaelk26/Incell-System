@@ -86,7 +86,7 @@ export default function CriarUsuarios() {
       <main className="max-w-full h-screen flex">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
-          <header className="w-full flex justify-end px-10 pt-6">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image
               className="w-12 h-12 rounded-full border border-white"
               src={user?.foto || ""}
@@ -96,16 +96,18 @@ export default function CriarUsuarios() {
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-4">
-            <h1 className="font-bold text-4xl font-manrope">
+          <section className="max-w-full w-full mt-10 md:mt-4">
+            <h1 className="text-center font-bold text-4xl font-manrope md:text-start">
               Criar Usuário
             </h1>
 
             <form
               onSubmit={handleSubmit(handleSubmitUser)}
-              className="mt-10 flex flex-col gap-4"
+              className="mt-6 flex flex-col gap-4 mb-24
+              md:mb-0 md:mt-0"
             >
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Input
                   nome="Nome"
                   type="text"
@@ -134,7 +136,8 @@ export default function CriarUsuarios() {
                 />
               </div>
 
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
 
                 <Input
                 nome="Data de Nascimento"
@@ -158,7 +161,8 @@ export default function CriarUsuarios() {
                 
               </div>
 
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
 
                 <Input
                   nome="Foto do usuário"
@@ -169,8 +173,10 @@ export default function CriarUsuarios() {
               </div>
 
               <button
-              className="w-full p-4 bg-blue-600 text-white font-manrope font-bold rounded-lg transition-all
-              hover:hover:bg-blue-500 hover:cursor-pointer" 
+              className="w-full p-3 mt-4 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all
+              md:mt-0
+              hover:bg-blue-500 hover:cursor-pointer
+              focus:outline-none" 
               type="submit">Registrar</button>
 
             </form>

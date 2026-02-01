@@ -54,7 +54,8 @@ export default function ResetPasswordClient() {
   };
 
   return (
-    <main className="w-full h-screen flex flex-col justify-center items-center bg-cover">
+    <main className="w-full h-dvh flex flex-col justify-center items-center bg-cover
+    md:h-screen">
       <div className="max-w-sm w-full h-fit flex flex-col justify-center items-center py-8 md:max-w-md">
         <Link href="/" className="w-fit focus:outline-none">
           <Image src={IncellLogo} alt="Logo Oficial" className="w-54" />

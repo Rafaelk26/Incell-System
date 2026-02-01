@@ -674,7 +674,7 @@ const itensRelatorios = useMemo(() => {
             </section>
             ) : (
             /* ==================== DASHBOARD ADMIN ==================== */
-            <section className="mx-auto flex flex-col 
+            <section className="w-full mx-auto flex flex-col mt-8 px-4
             md:mt-4 md:px-4
             2xl:w-7xl">
               <h1 className="text-left font-bold text-4xl font-manrope">Admin</h1>
@@ -706,7 +706,7 @@ const itensRelatorios = useMemo(() => {
 
               </section>
 
-              <section className="max-w-[81rem] w-full flex gap-12 mt-10 mb-10">
+              <section className="max-w-full w-full flex gap-12 mt-10 mb-10 md:max-w-[81rem]">
                 <div className="max-w-full w-full flex flex-col items-start bg-[#514F4F]/40 px-6 py-6 gap-6 rounded-md">
                   
                   <span className="text-3xl font-manrope font-bold">
@@ -715,7 +715,7 @@ const itensRelatorios = useMemo(() => {
 
                   <div
                     ref={chartAdminRef}
-                    className="w-full h-[360px]"
+                    className="w-full h-[360px] md:w-full"
                   />
                 </div>
               </section>

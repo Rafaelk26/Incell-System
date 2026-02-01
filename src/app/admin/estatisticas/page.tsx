@@ -321,7 +321,7 @@ export default function Estatisticas() {
 
   if (loading || !user) {
     return (
-      <main className="w-full h-screen flex justify-center items-center">
+      <main className="w-full h-screen flex justify-center items-center text-white">
         <Spinner />
       </main>
     );
@@ -331,29 +331,33 @@ export default function Estatisticas() {
 
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
 
-        <main className="max-w-[84rem] w-full xl:mx-auto px-4">
-          <header className="w-full flex justify-end pt-6">
+        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image
               className="w-12 h-12 rounded-full border border-white"
-              width={48}
-              height={48}
+              width={50}
+              height={50}
               src={user.foto || ""}
               alt="Perfil"
             />
           </header>
 
-          <h1 className="text-4xl font-manrope font-bold mb-6">
+          <h1 className="mt-10 text-center text-4xl font-manrope font-bold mb-6
+          md:text-start md:mt-0">
             Estatísticas
           </h1>
 
-          <section className="w-full flex gap-6 h-[500px]">
+          <section className="w-full flex gap-6 flex-col h-min
+          md:flex-row md:h-[500px]">
             {/* ==================== GRÁFICO ==================== */}
-            <section className="w-3/4 bg-zinc-900/40 rounded-2xl p-4">
-            <div className="w-full flex justify-between items-center mb-4 px-2">
-                <h2 className="text-xl font-manrope font-bold mb-4">
+            <section className="w-full bg-zinc-900/40 rounded-2xl p-4 md:w-3/4">
+            <div className="w-full flex flex-col justify-between items-center mb-4 px-2
+            md:flex-row">
+                <h2 className="text-md font-manrope font-bold mb-4
+                md:text-xl">
                     {celulaSelecionada
                     ? `${celulaSelecionada.nome}: ${discipulos.filter((d) => d.celula_id === celulaSelecionada.id).length} discípulos`
                     : `ADAC Church: ${discipulos.length} discípulos`}
@@ -371,7 +375,8 @@ export default function Estatisticas() {
             </section>
 
             {/* ==================== CÉLULAS ==================== */}
-            <article className="w-1/4 h-[500px] overflow-y-auto bg-gray-200/20 rounded-2xl p-4 space-y-4">
+            <article className="w-full h-[400px] overflow-y-auto bg-gray-200/20 rounded-2xl p-4 space-y-4
+            md:w-1/4 md:h-[500px]">
               <h1 className="font-manrope font-bold text-2xl">
                 Células
               </h1>

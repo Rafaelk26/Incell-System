@@ -3,7 +3,6 @@
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { Navbar } from "@/components/all/navBar";
 import Image from "next/image";
-import Perfil from "../../../../../../public/assets/perfil teste.avif";
 import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import { useForm } from "react-hook-form";
@@ -193,10 +192,10 @@ export default function CriarMinisterioSupervisao() {
           <SpinnerLoading />
         </>
       )}
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
-          <header className="w-full flex justify-end px-10 pt-6">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image
               className="w-12 h-12 rounded-full border border-white"
               src={user?.foto || ""}
@@ -206,15 +205,17 @@ export default function CriarMinisterioSupervisao() {
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-4">
-            <h1 className="font-bold text-4xl font-manrope">Criar Supervisão</h1>
+          <section className="max-w-full w-full mt-10 mb-10 md:mt-4">
+            <h1 className="text-center font-bold text-4xl font-manrope 
+            md:text-start">Criar Supervisão</h1>
 
             {/* FORM */}
             <form
               onSubmit={handleSubmit(handleSubmitSupervisao)}
               className="mt-10 flex flex-col gap-4"
             >
-              <div className="w-full flex gap-10">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Input
                   nome="Nome da Supervisão"
                   type="text"
@@ -241,14 +242,16 @@ export default function CriarMinisterioSupervisao() {
               </div>
 
               {supervisores.filter(s => !supervisoresComSupervisao.includes(s.id)).length === 0 && (
-                  <p className="text-yellow-400 mt-2 font-manrope">
+                  <p className="text-center text-yellow-400 mt-2 font-manrope
+                  md:text-start">
                     Todos os supervisores já possuem uma supervisão.
                   </p>
                 )}
 
               {/* TABELA */}
-              <div className="w-full h-[200px] mt-2 overflow-x-auto">
-                <table className="w-full border-collapse text-white">
+              <div className="w-full overflow-x-auto max-h-[300px] overflow-y-scroll">
+                <table className="min-w-max w-full border-collapse text-white 
+                    md:w-full md:min-w-full">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
                       <th className="p-3 text-left rounded-tl-xl">

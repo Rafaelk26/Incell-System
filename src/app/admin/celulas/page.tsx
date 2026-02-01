@@ -259,10 +259,10 @@ const normalize = (value: string) =>
 
   return (
     <ProtectedLayout>
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
-        <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
-          <header className="w-full flex justify-end px-10 pt-6">
+        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image
               className="w-12 h-12 rounded-full border border-white"
               src={user?.foto || ""}
@@ -272,9 +272,10 @@ const normalize = (value: string) =>
             />
           </header>
 
-          <section className="max-w-full w-full md:mt-14 mb-10">
+          <section className="max-w-full w-full mt-10 md:mt-14 mb-10">
             {/* TÍTULO + PDF */}
-            <div className="flex justify-between">
+            <div className="flex justify-between flex-col items-center gap-4
+            md:flex-row md:gap-0">
               <h1 className="font-bold text-4xl font-manrope"><CountUp duration={3.5} end={celulasS.length} /> Células</h1>
 
               <ButtonAction
@@ -290,7 +291,8 @@ const normalize = (value: string) =>
             </div>
 
             {/* FILTROS */}
-            <div className="mt-6 flex gap-4 justify-between items-center">
+            <div className="w-96 flex flex-col gap-4 justify-between items-center mx-auto mt-10
+            md:flex-row md:w-full md:mx-0 md:mt-6">
               <span className="font-manrope text-xl">Filtrar</span>
 
               <Input 
@@ -382,10 +384,11 @@ const normalize = (value: string) =>
 
             {/* TABELA */}
             {loading ? (
-              <p className="text-white mt-16 font-manrope">Carregando...</p>
+              <p className="text-center text-white mt-16 font-manrope md:text-start">Carregando...</p>
             ) : (
               <div className="w-full mt-10 overflow-x-auto max-h-[20em] overflow-y-scroll">
-                <table className="w-full border-collapse text-white">
+                <table className="min-w-[1000px] border-collapse text-white 
+                md:w-full">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
                       <th className="p-3 text-left rounded-tl-xl">Nome de Célula e Líder</th>

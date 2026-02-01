@@ -125,8 +125,8 @@ export default function DetalheSupervisor() {
   if (loading) {
     return (
       <ProtectedLayout>
-        <div className="w-full h-screen flex items-center justify-center text-white">
-          <span className="animate-pulse text-lg font-manrope">
+        <div className="w-full h-dvh flex items-center justify-center text-white md:h-screen">
+          <span className="text-center animate-pulse text-lg font-manrope">
             Carregando informações do supervisor...
           </span>
         </div>
@@ -139,17 +139,17 @@ export default function DetalheSupervisor() {
   if (!supervisao || !supervisor) {
     return (
       <ProtectedLayout>
-        <main className="w-full h-screen flex justify-center items-center text-white">
+        <main className="w-full h-dvh flex justify-center items-center text-white md:h-screen">
           <div className="flex flex-col items-center gap-6">
             <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
-            <span className="text-2xl font-semibold font-manrope">
+            <span className="text-center text-2xl font-semibold font-manrope">
               Supervisão indisponível para visualização
             </span>
             <Link
               className="text-blue-500 underline font-manrope"
-              href="/coordenacao"
+              href="/dashboard"
             >
-              Voltar para coordenação
+              Voltar para dashboard
             </Link>
           </div>
         </main>
@@ -164,7 +164,7 @@ export default function DetalheSupervisor() {
     <ProtectedLayout>
         <>
             <>
-            <main className="max-w-full h-screen flex">
+            <main className="max-w-full h-dvh flex md:h-screen">
                 <Navbar />
                 <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
                 <header className="w-full flex justify-end pt-6">
@@ -178,18 +178,19 @@ export default function DetalheSupervisor() {
                     />
                 </header>
 
-                {/* ==================== PAGE SUPERVISÃO PRINCIPAL ==================== */}
+                {/* ==================== PAGE COORDENAÇÃO PRINCIPAL ==================== */}
 
-                <section className="w-full flex items-center justify-between mt-4">
-                    <div className="w-full flex items-center gap-4 mt-6">
+                <section className="w-full flex flex-col items-center justify-between gap-6 mt-4 md:flex-row md:gap-0">
+                    <div className="w-full flex flex-col items-center gap-6 mt-6 justify-center md:flex-row md:gap-4">
                         <Image
-                        className="w-16 h-16 rounded-full object-cover"
+                        className="w-16 h-16 rounded-full object-cover border border-white"
                         src={supervisor.foto || ""}
                         alt="Foto líder"
                         height={50}
                         width={50}
                         />
-                      <div>
+                      <div className="flex flex-col text-center gap-2
+                        md:w-full md:text-start md:gap-0">
                           <h1 className="font-bold text-4xl font-manrope">{supervisor.nome}</h1>
                           <h2 className="font-light text-xl font-manrope">{supervisao.nome}</h2>
                       </div>
@@ -206,8 +207,10 @@ export default function DetalheSupervisor() {
 
                 {/* HISTÓRICO */}
 
-                <div className="w-full h-[400px] mt-6 overflow-x-auto">
-                    <table className="w-full border-collapse text-white">
+                <div className="w-full h-[300px] overflow-x-auto mt-14
+                md:h-[400px] md:mt-6">
+                    <table className="min-w-[600px] border-collapse text-white
+                    md:w-full md:min-w-full">
                     {/* CABEÇALHO */}
                     <thead>
                         <tr className="bg-zinc-950/90 text-white font-normal font-manrope">

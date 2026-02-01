@@ -231,12 +231,17 @@ useEffect(() => {
   if (!coordenacao) {
     return (
       <ProtectedLayout>
-        <main className="w-full h-screen flex justify-center items-center text-white">
+        <main className="w-full flex h-dvh justify-center items-center text-white md:h-screen">
           <div className="flex flex-col items-center gap-6">
             <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
-            <span className="text-2xl font-semibold font-manrope">
+            <span className="text-center text-2xl font-semibold font-manrope">
               Você não possui uma coordenação cadastrada
             </span>
+            <Link 
+              className="text-xl font-manrope text-center font-light text-blue-400 hover:underline"
+              href={"/dashboard"}>
+                Voltar para dashboard
+            </Link>
           </div>
         </main>
       </ProtectedLayout>
@@ -248,10 +253,10 @@ useEffect(() => {
     <ProtectedLayout>
         <>
           <>
-            <main className="max-w-full h-screen flex">
+            <main className="max-w-full h-dvh flex md:h-screen">
               <Navbar />
               <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
-                <header className="w-full flex justify-end pt-6">
+                <header className="w-full flex justify-end px-2 pt-6 md:px-10">
                   <Image
                     className="w-12 h-12 rounded-full border border-white"
                     width={12}
@@ -264,13 +269,14 @@ useEffect(() => {
 
                 {/* ==================== PAGE SUPERVISÃO PRINCIPAL ==================== */}
 
-                <section className="w-full">
-                  <h1 className="font-bold text-4xl font-manrope">
+                <section className="w-full mt-6 md:mt-0">
+                  <h1 className="w-full font-bold text-4xl text-center font-manrope flex flex-col  
+                  md:items-end md:flex-row md:gap-1">
                     <span className="text-xl font-manrope font-light">Coordenação</span>{" "}
                     {coordenacao?.nome}
                   </h1>
 
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 flex gap-2 justify-center md:justify-start">
                     <span className="font-manrope">Tipo de coordenação:</span>
                     {coordenacao?.genero === "masculina" && (
                       <>
@@ -291,10 +297,13 @@ useEffect(() => {
                     )}
                   </div>
 
-                  <div className="w-full flex justify-between items-end mt-6">
-                    <h1 className="font-bold text-3xl font-manrope">Supervisões</h1>
+                  <div className="w-full flex flex-col-reverse justify-between items-center md:items-end mt-16
+                  md:flex-row">
+                    <h1 className="font-normal text-3xl text-center font-manrope mt-16
+                    md:text-3xl md:font-bold md:mt-0">Supervisões</h1>
 
-                    <div className="w-max flex gap-4">
+                    <div className="w-full flex gap-4 justify-center
+                    md:w-max md:justify-end">
                       <div className="w-64">
                         {/* Input de busca por nome ligado ao state */}
                         <Input
@@ -308,8 +317,9 @@ useEffect(() => {
 
                   {/* TABELA DE DADOS DA CÉLULA */}
 
-                  <div className="w-full h-[380px] mt-6 overflow-x-auto">
-                    <table className="w-full border-collapse text-white">
+                  <div className="w-full mt-6 overflow-x-auto touch-pan-x hide-scrollbaro">
+                    <table className="min-w-[1000px] border-collapse text-white 
+                    md:w-full md:min-w-full">
                       {/* CABEÇALHO */}
                       <thead>
                         <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
@@ -385,7 +395,7 @@ useEffect(() => {
                           <tr>
                             <td
                               colSpan={5}
-                              className="text-center p-20 text-white font-manrope font-semibold"
+                              className="text-start p-20 text-white font-manrope font-semibold md:text-center"
                             >
                               Nenhuma supervisão encontrada
                             </td>

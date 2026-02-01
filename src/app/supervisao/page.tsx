@@ -9,7 +9,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { Spinner } from "@/components/all/spiner";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { Input } from "@/components/inputs";
-import Perfil from "../../../public/assets/perfil teste.avif";
 import Link from "next/link";
 import IncellLogo from "../../../public/assets/file Incell.png";
 
@@ -200,14 +199,14 @@ export default function Supervisoes() {
         <main className="w-full h-dvh flex justify-center items-center text-white md:h-screen">
           <div className="flex flex-col items-center gap-6">
             <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
-            <span className="text-2xl font-semibold font-manrope">
+            <span className="text-center text-2xl font-semibold font-manrope">
               Você não possui uma supervisão cadastrada
             </span>
             <Link 
-              className="text-xl font-manrope font-light text-blue-400 hover:underline"
+              className="text-xl font-manrope text-center font-light text-blue-400 hover:underline"
               href={"/dashboard"}>
                 Voltar para dashboard
-              </Link>
+            </Link>
           </div>
         </main>
       </ProtectedLayout>
@@ -242,7 +241,7 @@ export default function Supervisoes() {
                     {supervisao?.nome}
                   </h1>
 
-                  <div className="mt-2 flex gap-2  justify-center md:justify-start">
+                  <div className="mt-2 flex gap-2 justify-center md:justify-start">
                     <span className="font-manrope">Tipo de supervisão:</span>
                     {supervisao?.genero === "masculina" && (
                       <>
@@ -284,7 +283,7 @@ export default function Supervisoes() {
                   {/* TABELA DE DADOS DA CÉLULA */}
 
                   <div className="w-full mt-6 overflow-x-auto touch-pan-x hide-scrollbaro">
-                    <table className="min-w-[1200px] border-collapse text-white 
+                    <table className="min-w-[1100px] border-collapse text-white 
                     md:w-full md:min-w-full">
                       {/* CABEÇALHO */}
                       <thead>

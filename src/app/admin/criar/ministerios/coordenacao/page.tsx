@@ -209,10 +209,10 @@ export default function CriarMinisterioCoordenacao() {
           <SpinnerLoading />
         </>
       )}
-      <main className="max-w-full h-screen flex">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
         <main className="max-w-full w-full overflow-x-hidden xl:mx-auto px-6">
-          <header className="w-full flex justify-end px-10 pt-6">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image className="w-12 h-12 rounded-full border border-white"
             src={user?.foto || ""}
             alt="Perfil"
@@ -220,11 +220,14 @@ export default function CriarMinisterioCoordenacao() {
             height={12} />
           </header>
 
-          <section className="max-w-full w-full md:mt-4">
-            <h1 className="font-bold text-4xl font-manrope">Criar Coordenação</h1>
+          <section className="max-w-full w-full mt-10 mb-10 md:mt-4">
+            <h1 className="text-center font-bold text-4xl font-manrope 
+            md:text-start">Criar Coordenação</h1>
 
-            <form onSubmit={handleSubmit(handleSubmitCoordenacao)} className="mt-10 flex flex-col gap-4">
-              <div className="w-full flex gap-10">
+            <form onSubmit={handleSubmit(handleSubmitCoordenacao)} 
+            className="mt-10 flex flex-col gap-4">
+              <div className="w-full flex flex-col gap-4
+              md:flex-row md:gap-10">
                 <Input nome="Nome da Coordenação" type="text" {...register("nome", { required: true })} />
 
                 <Select nome="Coord. da Coordenação" {...register("coordenador_id", { required: true })}>
@@ -263,8 +266,9 @@ export default function CriarMinisterioCoordenacao() {
 
 
               {/* TABELA */}
-              <div className="w-full h-[200px] mt-2 overflow-x-auto">
-                <table className="w-full border-collapse text-white">
+              <div className="w-full overflow-x-auto max-h-[300px] overflow-y-scroll">
+                <table className="min-w-max w-full border-collapse text-white 
+                    md:w-full md:min-w-full">
                   <thead>
                     <tr className="bg-zinc-950/90 text-white font-normal font-manrope">
                       <th className="text-left rounded-tl-xl">Supervisões Disponíveis</th>

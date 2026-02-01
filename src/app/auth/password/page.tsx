@@ -48,7 +48,8 @@ export default function Password() {
   };
 
   return (
-    <main className="w-full h-screen flex justify-center items-center">
+    <main className="w-full h-dvh flex justify-center items-center
+    md:h-screen">
       <div className="max-w-sm w-full flex flex-col items-center gap-6">
 
         <Link href="/">

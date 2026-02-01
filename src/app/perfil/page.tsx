@@ -175,40 +175,44 @@ export default function Perfil() {
 
   return (
     <ProtectedLayout>
-      <main className="flex h-screen">
+      <main className="max-w-full h-dvh flex md:h-screen">
         <Navbar />
 
-        <main className="max-w-[84rem] w-full mx-auto px-6">
-          <header className="flex justify-end pt-6">
+        <main className="max-w-[84rem] w-full overflow-x-hidden xl:mx-auto px-4">
+          <header className="w-full flex justify-end px-2 pt-6 md:px-10">
             <Image
               src={resolveFoto(perfil.foto)}
               width={12}
               height={12}
               alt="Perfil"
-              className="rounded-full border h-12 w-12"
+              className="w-12 h-12 rounded-full border border-white"
             />
           </header>
 
-          <section className="mt-10">
-            <h1 className="text-4xl font-bold font-manrope mb-6">Meu perfil</h1>
+          <section className="max-w-full w-full mt-10 md:mt-4 mb-10">
+            <h1 className="text-4xl font-bold font-manrope mb-6 text-center
+            md:text-start">Meu perfil</h1>
 
             <div className="bg-gray-500/40 rounded-md p-6">
-              <div className="flex gap-6 items-center">
+              <div className="flex gap-6 items-center flex-col
+              md:flex-row">
                 <Image
                   src={resolveFoto(perfil.foto)}
                   width={50}
                   height={50}
                   alt="Foto"
-                  className="w-24 h-24 rounded-full border object-cover"
+                  className="w-24 h-24 rounded-full border border-white object-cover"
                 />
 
-                <div>
+                <div className="text-center
+                md:text-start">
                   <p className="text-3xl font-bold font-manrope">{user?.nome}</p>
                   <p className="text-xl capitalize font-manrope">{user?.cargo}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="grid grid-cols-1 gap-4 mt-6 
+              md:grid-cols-3">
                 <Input
                   type="text"
                   nome="Nome"
@@ -259,6 +263,8 @@ export default function Perfil() {
                   <Input
                     type="file"
                     nome="Foto"
+                    width={100}
+                    height={100}
                     onChange={(e) =>
                       setNovaFoto(e.target.files?.[0] || null)
                     }
@@ -270,7 +276,8 @@ export default function Perfil() {
                 {!editando ? (
                   <button
                     onClick={() => setEditando(true)}
-                    className="bg-amber-500 px-6 py-2 rounded text-white font-bold"
+                    className="w-full bg-amber-500 px-6 py-2 rounded text-white font-bold
+                    md:w-max"
                   >
                     Editar
                   </button>
@@ -278,7 +285,8 @@ export default function Perfil() {
                   <button
                     onClick={salvarAlteracoes}
                     disabled={loading}
-                    className="bg-blue-600 px-6 py-2 rounded text-white font-bold"
+                    className="w-full bg-blue-600 px-6 py-2 rounded text-white font-bold
+                    md:w-max"
                   >
                     {loading ? "Salvando..." : "Salvar Alterações"}
                   </button>

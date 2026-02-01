@@ -35,7 +35,7 @@ export default function Relatorios(){
                         </header>
 
                         <section className="w-full mt-16 flex flex-col items-center md:mt-14">
-                            <h1 className="font-bold text-3xl font-manrope md:text-4xl">Qual o tipo do relatório?</h1>
+                            <h1 className="font-bold text-3xl font-manrope text-center md:text-4xl">Qual o tipo do relatório?</h1>
 
                             <section className="flex flex-col gap-8 mt-10
                             md:flex md:flex-row md:gap-6 md:mt-16">

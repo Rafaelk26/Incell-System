@@ -258,7 +258,7 @@ export default function Celula() {
           <main className="w-full h-dvh flex justify-center items-center text-white md:h-screen">
             <div className="flex flex-col items-center gap-6">
               <Image src={IncellLogo} alt="Logo Incell" className="w-64" />
-              <span className="font-manrope font-semibold text-3xl">
+              <span className="text-center font-manrope font-semibold text-3xl">
                 Você não possui uma célula cadastrada
               </span>
               <Link 
