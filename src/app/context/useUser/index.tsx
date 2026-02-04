@@ -24,9 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carrega usuário do sessionStorage ao iniciar
+  // 🔹 Carrega usuário do localStorage
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("userSession");
+    const storedUser = localStorage.getItem("userSession");
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -37,18 +37,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  // Atualiza sessionStorage sempre que o usuário mudar
+  // 🔹 Salva sempre que o usuário mudar
   useEffect(() => {
     if (user) {
-      sessionStorage.setItem("userSession", JSON.stringify(user));
+      localStorage.setItem("userSession", JSON.stringify(user));
     } else {
-      sessionStorage.removeItem("userSession");
+      localStorage.removeItem("userSession");
     }
   }, [user]);
 
   const logout = () => {
     setUser(null);
-    sessionStorage.removeItem("userSession");
+    localStorage.removeItem("userSession");
     window.location.href = "/auth/login";
   };
 
@@ -56,9 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(novoUser);
   };
 
-
   return (
-    <AuthContext.Provider value={{ user, setUser, logout, isLoading, atualizarUsuario }}>
+    <AuthContext.Provider
+      value={{ user, setUser, logout, isLoading, atualizarUsuario }}
+    >
       {children}
     </AuthContext.Provider>
   );
