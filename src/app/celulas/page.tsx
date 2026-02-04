@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/app/context/useUser";
 import CountUp from 'react-countup';
 import { FaRegEye } from "react-icons/fa";
+import { ordenarPorTexto } from "@/functions/formatAZ";
 
 interface CelulaProps {
   id: string;
@@ -174,13 +175,18 @@ async function handleSaveEdit() {
   // MARGEM ANTES DA TABELA
   currentY += 15;
 
+    // ORDENAR CÉLULAS PELO NOME
+  const celulasOrdenadas = [...celulasS].sort((a, b) =>
+    a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+  );
+
   // TABELA
   autoTable(doc, {
     startY: currentY,
     head: [["Célula", "Líder", "Tipo", "Bairro"]],
-    body: celulasS.map((item) => {
+    body: celulasOrdenadas.map((item) => {
       const lider = usuariosS.find(
-        (u) => u.id === item.responsavel_id && u.cargo === "lider"
+        (u) => u.id === item.responsavel_id
       );
 
       return [
@@ -235,7 +241,7 @@ const normalize = (value: string) =>
       );
     }
 
-    return lista;
+    return ordenarPorTexto(lista, "nome");
   }, [celulasS, search, bairro, tipo]);
 
 
@@ -386,7 +392,7 @@ const normalize = (value: string) =>
                     {celulasS.length > 0 ? (
                       dadosFiltrados.map((item) => {
                         const lider = usuariosS.find(
-                          (u) => u.id === item.responsavel_id && u.cargo === "lider"
+                          (u) => u.id === item.responsavel_id
                         );
 
                         return (

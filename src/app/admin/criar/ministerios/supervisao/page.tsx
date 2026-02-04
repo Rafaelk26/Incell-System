@@ -7,7 +7,7 @@ import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
@@ -50,6 +50,7 @@ export default function CriarMinisterioSupervisao() {
   const [ useLoading, setUseLoading ] = useState<boolean>(false)
   const [supervisoresComSupervisao, setSupervisoresComSupervisao] = useState<string[]>([]);
   const [lideresComSupervisao, setLideresComSupervisao] = useState<string[]>([]);
+  const [filtroNome, setFiltroNome] = useState("");
 
 
   // Buscar células + líderes
@@ -148,6 +149,21 @@ export default function CriarMinisterioSupervisao() {
       toast.success("Líder adicionado");
     }
   };
+
+  const lideresFiltrados = useMemo(() => {
+  return celulasComLider
+    .filter(item =>
+      item.lider_cargo?.trim().toLowerCase() === "lider" &&
+      item.lider_id &&
+      !lideresComSupervisao.includes(item.lider_id)
+    )
+    .filter(item =>
+      item.lider_nome
+        .toLowerCase()
+        .includes(filtroNome.toLowerCase())
+    );
+}, [celulasComLider, lideresComSupervisao, filtroNome]);
+
 
   // Enviar para o banco somente ao clicar em Registrar
   const handleSubmitSupervisao = async (data: MinisterioSupervisaoForm) => {
@@ -248,6 +264,19 @@ export default function CriarMinisterioSupervisao() {
                   </p>
                 )}
 
+              <div className="w-full flex flex-col mx-auto justify-end gap-4 mb-6 md:flex-row md:mx-0">
+                {/* FILTRO POR NOME */}
+                  <input
+                  type="text"
+                  placeholder="Buscar por nome..."
+                  value={filtroNome}
+                  onChange={(e) => setFiltroNome(e.target.value)}
+                  className="w-full max-w-full mt-10 px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-400 text-white 
+                  md:max-w-84 md:mt-0
+                  focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+              </div>
+
               {/* TABELA */}
               <div className="w-full overflow-x-auto max-h-[300px] overflow-y-scroll">
                 <table className="min-w-max w-full border-collapse text-white 
@@ -261,59 +290,53 @@ export default function CriarMinisterioSupervisao() {
                     </tr>
                   </thead>
                     <tbody>
-                      {celulasComLider.length > 0 ? (
-                        celulasComLider
-                          .filter(item =>
-                            item.lider_cargo?.trim().toLowerCase() === "lider" &&
-                            item.lider_id &&
-                            !lideresComSupervisao.includes(item.lider_id)
-                          )
-                          .map((item) => {
-                            const isAdded = leadersArray.some(
-                              (l) => l.id === item.lider_id
-                            );
+                      {lideresFiltrados.length > 0 ? (
+                        lideresFiltrados.map((item) => {
+                          const isAdded = leadersArray.some(
+                            (l) => l.id === item.lider_id
+                          );
 
-                            return (
-                              <tr
-                                key={item.id}
-                                className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
-                              >
-                                <td className="flex flex-col px-3 py-2 font-manrope font-light">
-                                  <span className="text-xl font-semibold">
-                                    {item.lider_nome}
-                                  </span>
-                                  <span className="text-gray-300">
-                                    {item.celula_nome}
-                                  </span>
-                                </td>
+                          return (
+                            <tr
+                              key={item.id}
+                              className="flex justify-between odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
+                            >
+                              <td className="flex flex-col px-3 py-2 font-manrope font-light">
+                                <span className="text-xl font-semibold">
+                                  {item.lider_nome}
+                                </span>
+                                <span className="text-gray-300">
+                                  {item.celula_nome}
+                                </span>
+                              </td>
 
-                                <td className="px-3 py-2 flex gap-6 justify-end">
-                                  <ButtonAction
-                                    type="button"
-                                    color={isAdded ? "bg-green-600" : "bg-blue-600"}
-                                    onClick={() =>
-                                      toggleLeader({
-                                        id: item.lider_id!,
-                                        nome: item.lider_nome,
-                                        celula: item.celula_nome,
-                                      })
-                                    }
-                                  >
-                                    <span className="font-manrope text-xl">
-                                      {isAdded ? "Adicionado" : "Adicionar"}
-                                    </span>
-                                  </ButtonAction>
-                                </td>
-                              </tr>
-                            );
-                          })
+                              <td className="px-3 py-2 flex gap-6 justify-end">
+                                <ButtonAction
+                                  type="button"
+                                  color={isAdded ? "bg-green-600" : "bg-blue-600"}
+                                  onClick={() =>
+                                    toggleLeader({
+                                      id: item.lider_id!,
+                                      nome: item.lider_nome,
+                                      celula: item.celula_nome,
+                                    })
+                                  }
+                                >
+                                  <span className="font-manrope text-xl">
+                                    {isAdded ? "Adicionado" : "Adicionar"}
+                                  </span>
+                                </ButtonAction>
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
                           <td
                             colSpan={2}
                             className="text-center p-6 text-white font-manrope font-semibold"
                           >
-                            Nenhuma célula com líder registrada.
+                            Nenhum líder encontrado.
                           </td>
                         </tr>
                       )}

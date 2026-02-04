@@ -10,7 +10,7 @@ import Incell from "../../../public/assets/file Incell black.png";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useMemo, useState } from "react";
 import { ButtonAction } from "@/components/all/buttonAction";
-import { AiOutlineWhatsApp, AiFillFilePdf, AiFillCloseCircle } from "react-icons/ai";
+import { AiOutlineWhatsApp, AiFillFilePdf } from "react-icons/ai";
 
 // jsPDF + AutoTable
 import jsPDF from "jspdf";
@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/app/context/useUser";
 import CountUp from 'react-countup';
 import { FaRegEye } from "react-icons/fa";
+import { ordenarPorTexto } from "@/functions/formatAZ";
 
 interface SupervisaoProps {
   id: string;
@@ -136,11 +137,16 @@ export default function Supervisoes() {
   // MARGEM ANTES DA TABELA
   currentY += 15;
 
+    // ORDENAR CÉLULAS PELO NOME
+    const supervisoesOrdenadas = [...supervisoes].sort((a, b) =>
+      a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+    );
+
   // TABELA
   autoTable(doc, {
     startY: currentY,
     head: [["Supervisão", "Supervisor", "Tipo"]],
-    body: supervisoes.map((item) => {
+    body: supervisoesOrdenadas.map((item) => {
       const lider = usuariosS.find(
         (u) => u.id === item.supervisor_id && u.cargo === "supervisor"
       );
@@ -189,7 +195,7 @@ const normalize = (value: string) =>
       );
     }
 
-    return lista;
+    return ordenarPorTexto(lista, "nome");
   }, [supervisoes, search, tipo]);
 
 
@@ -244,7 +250,6 @@ const normalize = (value: string) =>
                 <option value="" className="font-bold text-black">Tipo da Célula</option>
                 <option value="masculina" className="font-bold text-black">Masculino</option>
                 <option value="feminina" className="font-bold text-black">Feminina</option>
-                <option value="kids" className="font-bold text-black">Kids</option>
               </Select>
 
               <ButtonAction 
@@ -277,7 +282,7 @@ const normalize = (value: string) =>
                     {supervisoes.length > 0 ? (
                       dadosFiltrados.map((item) => {
                         const lider = usuariosS.find(
-                          (u) => u.id === item.supervisor_id && u.cargo === "supervisor"
+                          (u) => u.id === item.supervisor_id
                         );
 
                         return (

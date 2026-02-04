@@ -175,7 +175,8 @@ export default function AdminSupervisoes() {
   const supervisoesDisponiveis = useMemo(() => {
     return todasSupervisoes.filter(
       (s) => !supervisoes.some((sc) => sc.id === s.id)
-    );
+    )
+    .sort((a, b) => a.nome.localeCompare(b.nome, "PT-BR", { sensitivity: "base" }));
   }, [todasSupervisoes, supervisoes]);
 
   /* ================== PDF ================== */
@@ -249,13 +250,18 @@ export default function AdminSupervisoes() {
       // MARGEM ANTES DA TABELA
       currentY += 15;
     
+    // ORDENAR COORDENAÇÕES PELO NOME
+    const coordenacoesOrdenadas = [...coordenacoes].sort((a, b) =>
+      a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+    );
+
       // TABELA
       autoTable(doc, {
         startY: currentY,
         head: [["Coordenação", "Coordenador", "Tipo"]],
-        body: coordenacoes.map((item) => {
+        body: coordenacoesOrdenadas.map((item) => {
           const coordenador = usuarios.find(
-            (u) => u.id === item.coordenador_id && u.cargo === "coordenador",
+            (u) => u.id === item.coordenador_id,
           );
     
           return [
@@ -359,10 +365,14 @@ export default function AdminSupervisoes() {
 
                   <tbody>
                     {coordenacoes.length > 0 ? (
-                      dadosFiltrados.map((item) => {
-                        const coordenador = usuarios.find(
-                          (u) => u.id === item.coordenador_id && u.cargo === "coordenador",
-                        );
+                      [...dadosFiltrados]
+                        .sort((a, b) =>
+                          a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+                        )
+                        .map((item) => {
+                          const coordenador = usuarios.find(
+                            (u) => u.id === item.coordenador_id
+                          );
 
                         return (
                           <tr

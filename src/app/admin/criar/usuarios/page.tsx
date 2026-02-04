@@ -2,7 +2,6 @@
 
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { Navbar } from "@/components/all/navBar";
-import Perfil from "../../../../../public/assets/perfil teste.avif";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
 import Image from "next/image";
 import { Input } from "@/components/inputs";
@@ -65,9 +64,8 @@ export default function CriarUsuarios() {
                 })
                 setUseLoading(false)
                 
-                if(data.cargo.trim() === "lider") router.push("/admin/criar/ministerios/celula")
-                if(data.cargo.trim() === "supervisor") router.push("/admin/criar/ministerios/supervisao")
-                if(data.cargo.trim() === "coordenador") router.push("/admin/criar/ministerios/coordenacao")
+                router.push("/admin/criar/ministerios/celula")
+                
         } catch (err) {
                 console.error(err);
                 toast.error("Erro ao criar usuário!");

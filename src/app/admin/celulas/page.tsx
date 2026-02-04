@@ -190,13 +190,18 @@ async function handleSaveEdit() {
   // MARGEM ANTES DA TABELA
   currentY += 15;
 
+  // ORDENAR CÉLULAS PELO NOME
+  const celulasOrdenadas = [...celulasS].sort((a, b) =>
+    a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+  );
+
   // TABELA
   autoTable(doc, {
     startY: currentY,
     head: [["Célula", "Líder", "Tipo", "Bairro"]],
-    body: celulasS.map((item) => {
+    body: celulasOrdenadas.map((item) => {
       const lider = usuariosS.find(
-        (u) => u.id === item.responsavel_id && u.cargo === "lider"
+        (u) => u.id === item.responsavel_id
       );
 
       return [
@@ -224,16 +229,20 @@ const normalize = (value: string) =>
     .toLowerCase();
 
 
+const sortByNome = (a: CelulaProps, b: CelulaProps) => {
+  return normalize(a.nome).localeCompare(normalize(b.nome));
+};
+
+
   const dadosFiltrados = useMemo(() => {
     let lista = [...(celulasS || [])];
 
-    // 🔎 Busca por nome do líder OU nome da célula
+    // 🔎 Busca por nome da célula
     if (search) {
       const s = normalize(search);
       lista = lista.filter(
         (item) =>
-          normalize(item.nome).includes(s) ||
-          normalize(item.responsavel_id).includes(s)
+          normalize(item.nome).includes(s)
       );
     }
 
@@ -250,6 +259,9 @@ const normalize = (value: string) =>
         (item) => normalize(item.genero) === normalize(tipo)
       );
     }
+
+    // 🔠 ORDENAÇÃO ALFABÉTICA
+    lista.sort(sortByNome);
 
     return lista;
   }, [celulasS, search, bairro, tipo]);
@@ -402,7 +414,7 @@ const normalize = (value: string) =>
                     {celulasS.length > 0 ? (
                       dadosFiltrados.map((item) => {
                         const lider = usuariosS.find(
-                          (u) => u.id === item.responsavel_id && u.cargo === "lider"
+                          (u) => u.id === item.responsavel_id
                         );
 
                         return (
@@ -424,7 +436,13 @@ const normalize = (value: string) =>
                             <td className="px-3 py-2 font-manrope">{item.bairro}</td>
 
                             <td className="px-3 py-3 flex gap-6 justify-end">
-                              <Link href={`https://wa.me/55${lider?.telefone.slice(1).replace(/\D/g, "")}`} target="_blank">
+                              {lider?.telefone && (
+                              <Link
+                                href={`https://wa.me/55${lider.telefone
+                                  .slice(1)
+                                  .replace(/\D/g, "")}`}
+                                target="_blank"
+                              >
                                 <ButtonAction type="button" color={"bg-green-600"}>
                                   <div className="w-full flex gap-2">
                                     <AiOutlineWhatsApp size={24} />
@@ -432,7 +450,7 @@ const normalize = (value: string) =>
                                   </div>
                                 </ButtonAction>
                               </Link>
-                              
+                            )}
 
                               <ButtonAction
                                 type="button"

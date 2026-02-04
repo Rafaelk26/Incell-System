@@ -9,6 +9,7 @@ import { BiTrash } from "react-icons/bi";
 import { FaAnglesUp } from "react-icons/fa6";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { ordenarPorTexto } from "@/functions/formatAZ";
 
 /* ===================== TYPES ===================== */
 
@@ -16,6 +17,7 @@ type Lider = {
   id: string;
   nome: string;
   cargo: string;
+  celula_nome?: string | null;
 };
 
 /* ===================== COMPONENT ===================== */
@@ -37,35 +39,53 @@ export default function Promover() {
   /* ===================== FETCH ===================== */
 
   async function fetchLideres() {
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("id, nome, cargo")
-        .neq("cargo", "admin");
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select(`
+        id,
+        nome,
+        cargo,
+        celulas:celulas (
+          nome
+        )
+      `)
+      .neq("cargo", "admin");
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setLideres(data ?? []);
-    } catch (error) {
-      console.error("Erro ao buscar líderes:", error);
-    }
+    const lideresFormatados: Lider[] = (data ?? []).map((u: any) => ({
+      id: u.id,
+      nome: u.nome,
+      cargo: u.cargo,
+      celula_nome: u.celulas?.[0]?.nome ?? null,
+    }));
+
+    setLideres(lideresFormatados);
+  } catch (error) {
+    console.error("Erro ao buscar líderes:", error);
   }
+}
 
   /* ===================== FILTROS ===================== */
 
-  const lideresFiltrados = useMemo(() => {
-    return lideres.filter((lider) => {
-      const matchNome = lider.nome
-        .toLowerCase()
-        .includes(filtroNome.toLowerCase());
+const lideresFiltrados = useMemo(() => {
+  const filtrados = lideres.filter((lider) => {
+    const matchNome = lider.nome
+      .toLowerCase()
+      .includes(filtroNome.toLowerCase());
 
-      const matchCargo = filtroCargo
-        ? lider.cargo === filtroCargo
-        : true;
+    const matchCargo = filtroCargo
+      ? lider.cargo === filtroCargo
+      : true;
 
-      return matchNome && matchCargo;
-    });
-  }, [lideres, filtroNome, filtroCargo]);
+    return matchNome && matchCargo;
+  });
+
+  // 🔤 Ordenação alfabética pelo nome
+  return ordenarPorTexto(filtrados, "nome");
+}, [lideres, filtroNome, filtroCargo]);
+
 
   /* ===================== PROMOVER ===================== */
 
@@ -197,7 +217,16 @@ export default function Promover() {
                       className="odd:bg-zinc-900/60 even:bg-zinc-800/10 border-b border-zinc-700"
                     >
                       <td className="px-3 py-3 font-semibold font-manrope">
-                        {lider.nome}
+                        <div className="flex flex-col">
+                          <span className="font-manrope text-lg">
+                            {lider.nome}
+                          </span>
+
+                          <span className="font-manrope font-light text-gray-200 text-md">
+                            {lider.celula_nome}
+                          </span>
+                          
+                        </div>
                       </td>
 
                       <td className="px-3 py-3 font-manrope">

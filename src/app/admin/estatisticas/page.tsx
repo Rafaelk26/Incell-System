@@ -8,6 +8,7 @@ import Image from "next/image";
 import Incell from "../../../../public/assets/file Incell black.png";
 import { supabase } from "@/lib/supabaseClient";
 import { Spinner } from "@/components/all/spiner";
+import { ordenarPorTexto } from '@/functions/formatAZ'
 import * as echarts from "echarts";
 import jsPDF from "jspdf";
 
@@ -200,6 +201,10 @@ export default function Estatisticas() {
 
 
 
+    const celulasOrdenadas = useMemo(() => {
+      return ordenarPorTexto(celulas, "nome");
+    }, [celulas]);
+
 
   /* ===================== FETCH DATA ===================== */
 
@@ -381,7 +386,7 @@ export default function Estatisticas() {
                 Células
               </h1>
 
-              {celulas.map((c) => (
+              {celulasOrdenadas.map((c) => (
                 <button
                   key={c.id}
                   onClick={() =>

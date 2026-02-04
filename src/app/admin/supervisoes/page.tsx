@@ -247,14 +247,19 @@ export default function AdminSupervisoes() {
   
     // MARGEM ANTES DA TABELA
     currentY += 15;
+
+    // ORDENAR SUPERVISÕES PELO NOME
+    const supervisoesOrdenadas = [...supervisoes].sort((a, b) =>
+      a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+    );
   
     // TABELA
     autoTable(doc, {
       startY: currentY,
       head: [["Supervisão", "Supervisor", "Tipo"]],
-      body: supervisoes.map((item) => {
+      body: supervisoesOrdenadas.map((item) => {
         const supervisor = usuarios.find(
-          (u) => u.id === item.supervisor_id && u.cargo === "supervisor",
+          (u) => u.id === item.supervisor_id,
         );
   
         return [
@@ -277,11 +282,15 @@ export default function AdminSupervisoes() {
   /* ================== FILTROS ================== */
  
   const lideresDisponiveis = useMemo(() => {
-    return usuarios.filter(
-      (u) =>
-        u.cargo === "lider" &&
-        !lideresEmSupervisao.includes(u.id)
-    );
+    return usuarios
+      .filter(
+        (u) =>
+          u.cargo === "lider" &&
+          !lideresEmSupervisao.includes(u.id)
+      )
+      .sort((a, b) =>
+        a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+      );
   }, [usuarios, lideresEmSupervisao]);
 
 
@@ -290,6 +299,11 @@ export default function AdminSupervisoes() {
     ?.normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+
+const sortByNome = (a: SupervisorProps, b: SupervisorProps) => {
+  return normalize(a.nome).localeCompare(normalize(b.nome));
+};
+
 
 
   const dadosFiltrados = useMemo(() => {
@@ -311,6 +325,9 @@ export default function AdminSupervisoes() {
         (item) => normalize(item.genero) === normalize(tipo)
       );
     }
+
+    // 🔠 ORDENAÇÃO ALFABÉTICA
+    lista.sort(sortByNome);
 
     return lista;
   }, [supervisoes, search, tipo]);
@@ -404,7 +421,7 @@ export default function AdminSupervisoes() {
                     {supervisoes.length > 0 ? (
                       dadosFiltrados.map((item) => {
                         const supervisor = usuarios.find(
-                          (u) => u.id === item.supervisor_id && u.cargo === "supervisor"
+                          (u) => u.id === item.supervisor_id
                         );
 
                         return (

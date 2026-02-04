@@ -1,4 +1,3 @@
-// app/admin/celulas/page.tsx
 "use client";
 
 import ProtectedLayout from "@/app/middleware/protectedLayout";
@@ -19,6 +18,7 @@ import Link from "next/link";
 import { useAuth } from "@/app/context/useUser";
 import CountUp from 'react-countup';
 import { FaRegEye } from "react-icons/fa";
+import { ordenarPorTexto } from "@/functions/formatAZ";
 
 interface CoordenacaoProps {
   id: string;
@@ -135,11 +135,16 @@ export default function Coordenacoes() {
   // MARGEM ANTES DA TABELA
   currentY += 15;
 
+  // ORDENAR COORDENAÇÕES PELO NOME
+  const celulasOrdenadas = [...coordenacoes].sort((a, b) =>
+    a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+  );
+
   // TABELA
   autoTable(doc, {
     startY: currentY,
     head: [["Coordenação", "Coordenador", "Tipo"]],
-    body: coordenacoes.map((item) => {
+    body: celulasOrdenadas.map((item) => {
       const lider = usuariosS.find(
         (u) => u.id === item.coordenador_id && u.cargo === "coordenador"
       );
@@ -188,7 +193,7 @@ const normalize = (value: string) =>
       );
     }
 
-    return lista;
+    return ordenarPorTexto(lista, "nome");
   }, [coordenacoes, search, tipo]);
 
 
@@ -275,7 +280,7 @@ const normalize = (value: string) =>
                     {coordenacoes.length > 0 ? (
                       dadosFiltrados.map((item) => {
                         const lider = usuariosS.find(
-                          (u) => u.id === item.coordenador_id && u.cargo === "coordenador"
+                          (u) => u.id === item.coordenador_id
                         );
 
                         return (

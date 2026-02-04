@@ -3,7 +3,6 @@
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { Navbar } from "@/components/all/navBar";
 import { formatFirstLetter } from "@/functions/formatFirstLetter";
-import Perfil from "../../../../../../public/assets/perfil teste.avif";
 import Image from "next/image";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
@@ -13,6 +12,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
 import { useAuth } from "@/app/context/useUser";
+import { useRouter } from "next/navigation";
 
 type MinisterioCelulaForm = {
   nome: string;
@@ -36,6 +36,7 @@ interface UserSupabase {
 
 export default function CriarMinisterioCelula() {
   const { user } = useAuth();
+    const router = useRouter();
 
   const { register, handleSubmit, reset } = useForm<MinisterioCelulaForm>(); // hook também no topo
   const [ dataUsers, setDataUsers ] = useState<UserSupabase[]>([])
@@ -88,48 +89,45 @@ export default function CriarMinisterioCelula() {
 
 
   const handleSubmitCelula = async (data: MinisterioCelulaForm) => {
-      setUseLoading(true)
-        try {
-                const formData = new FormData();
-                formData.append("nome", data.nome);
-                formData.append("responsavel_id", data.responsavel_id);
-                formData.append("rua", data.rua);
-                formData.append("numero", data.numero);
-                formData.append("bairro", data.bairro);
-                formData.append("dia_semana", data.dia_semana);
-                formData.append("horario", data.horario);
-                formData.append("genero", data.genero);
-                formData.append("idade", data.idade);
+    setUseLoading(true);
 
+    try {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) =>
+        formData.append(key, value)
+      );
 
-                const res = await fetch("/api/ministerios/criar/celula", {
-                method: "POST",
-                body: formData,
-                });
+      const res = await fetch("/api/ministerios/criar/celula", {
+        method: "POST",
+        body: formData,
+      });
 
-                const result = await res.json();
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error);
 
-                if (!res.ok) throw new Error(result.error || "Erro ao cadastrar nova célula");
+      toast.success("Nova célula criada com sucesso!");
+      reset();
 
-                setUseLoading(false)
-                toast.success("Nova célula criada com sucesso!");
-                reset({
-                  nome: "",
-                  responsavel_id: "",
-                  genero: "",
-                  rua: "",
-                  numero: "",
-                  bairro: "",
-                  dia_semana: "",
-                  horario: "",
-                  idade: ""
-                })
-        } catch (err) {
-          setUseLoading(false)
-                toast.error("Erro ao criar nova célula!") 
-                console.error(err);
-        }
-    };
+      // ✅ DESCOBRIR CARGO DO RESPONSÁVEL
+      const responsavel = dataUsers.find(
+        (u) => u.id === data.responsavel_id
+      );
+
+      if (responsavel?.cargo === "supervisor") {
+        router.push("/admin/criar/ministerios/supervisao");
+      }
+
+      if (responsavel?.cargo === "coordenador") {
+        router.push("/admin/criar/ministerios/coordenacao");
+      }
+
+    } catch (err) {
+      toast.error("Erro ao criar nova célula!");
+      console.error(err);
+    } finally {
+      setUseLoading(false);
+    }
+  };
 
 
   return (

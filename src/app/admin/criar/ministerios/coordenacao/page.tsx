@@ -8,7 +8,7 @@ import { Input } from "@/components/inputs";
 import { Select } from "@/components/select";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
 import { SpinnerLoading } from "@/components/all/spinnerLoading";
@@ -52,6 +52,7 @@ export default function CriarMinisterioCoordenacao() {
   const [ useLoading, setUseLoading ] = useState<boolean>(false)
   const [coordenadoresComCoordenacao, setCoordenadoresComCoordenacao] = useState<string[]>([]);
   const [supervisoesComCoordenacao, setSupervisoesComCoordenacao] = useState<string[]>([]);
+  const [filtroNome, setFiltroNome] = useState("");
 
 
   useEffect(() => {
@@ -165,6 +166,25 @@ export default function CriarMinisterioCoordenacao() {
 };
 
 
+  const supervisoresFiltrados = useMemo(() => {
+  return celulasComLider
+    .filter(item =>
+      item.super_cargo?.trim().toLowerCase() === "supervisor" &&
+      item.supervisao_id &&
+      !supervisoesComCoordenacao.includes(item.supervisao_id)
+    )
+    .filter(item =>
+      item.super_nome
+        ?.toLowerCase()
+        .includes(filtroNome.toLowerCase())
+    )
+    .sort((a, b) =>
+      (a.super_nome ?? "").localeCompare(b.super_nome ?? "", "pt-BR")
+    );
+}, [celulasComLider, supervisoesComCoordenacao, filtroNome]);
+
+
+
   // enviar tudo ao backend somente quando o usuário clicar "Registrar"
   const handleSubmitCoordenacao = async (data: MinisterioCoordenacaoForm) => {
     setUseLoading(true)
@@ -265,6 +285,20 @@ export default function CriarMinisterioCoordenacao() {
               )}
 
 
+              <div className="w-full flex flex-col mx-auto justify-end gap-4 mb-6 md:flex-row md:mx-0">
+                {/* FILTRO POR NOME */}
+                  <input
+                  type="text"
+                  placeholder="Buscar por nome..."
+                  value={filtroNome}
+                  onChange={(e) => setFiltroNome(e.target.value)}
+                  className="w-full max-w-full mt-10 px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-400 text-white 
+                  md:max-w-84 md:mt-0
+                  focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+              </div>
+
+
               {/* TABELA */}
               <div className="w-full overflow-x-auto max-h-[300px] overflow-y-scroll">
                 <table className="min-w-max w-full border-collapse text-white 
@@ -276,12 +310,12 @@ export default function CriarMinisterioCoordenacao() {
                     </tr>
                   </thead>
                   <tbody>
-                  {celulasComLider
+                  {supervisoresFiltrados
                     .filter(item => item.super_cargo?.trim().toLowerCase() === "supervisor")
                     .filter(item => !supervisoesComCoordenacao.includes(item.supervisao_id))
                     .length > 0 ? (
 
-                    celulasComLider
+                    supervisoresFiltrados
                       .filter(item => item.super_cargo?.trim().toLowerCase() === "supervisor")
                       .filter(item => !supervisoesComCoordenacao.includes(item.supervisao_id))
                       .map((item) => {
