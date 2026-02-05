@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import ModalCriarReuniao from "./ModalCriarReuniao";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/useUser";
 
 
 type Evento = {
@@ -35,15 +33,7 @@ export default function ModalReunioesDoDia({
   onDeleted,
   onCreated,
 }: ModalReuniaoProps) {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [eventosDoDia, setEventosDoDia] = useState<Evento[]>([]);
   const [modalCriarAberto, setModalCriarAberto] = useState(false);
-
-  useEffect(() => {
-    setEventosDoDia(eventos);
-
-  }, [eventos]);
 
 
   function renderDescricao(e: Evento) {
@@ -87,20 +77,16 @@ export default function ModalReunioesDoDia({
 
     toast.success("Reunião excluída");
 
-    setEventosDoDia((prev) => prev.filter((e) => e.id !== id));
-    
     onDeleted(id);
   }
 
 
-  function handleCreated(evento: Evento) {
-    let link = `/agenda/${user?.id}`
 
-    setEventosDoDia((prev) => [...prev, evento]);
+  function handleCreated(evento: Evento) {
+    onCreated(evento); 
     setModalCriarAberto(false);
-    router.push(link);
-    onCreated(evento);
   }
+
 
   return (
     <>
@@ -117,13 +103,13 @@ export default function ModalReunioesDoDia({
             {data.split("-").reverse().join("/")}
           </span>
 
-          {eventosDoDia.length === 0 && (
+          {eventos.length === 0 && (
             <p className="text-sm text-gray-400 mt-4">
               Nenhuma reunião neste dia
             </p>
           )}
 
-          {eventosDoDia.map((e) => (
+          {eventos.map((e) => (
             <div key={e.id} className="border-b py-2 mt-2 flex justify-between">
               <div>
                 <strong>{e.title}</strong>

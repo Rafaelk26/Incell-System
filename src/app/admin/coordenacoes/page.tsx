@@ -41,6 +41,10 @@ interface Usuario {
 interface Supervisao {
   id: string;
   nome: string;
+  supervisor?: {
+    id: string;
+    nome: string;
+  };
 }
 
 /* ================== COMPONENTE ================== */
@@ -52,6 +56,7 @@ export default function AdminSupervisoes() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [supervisoes, setSupervisoes] = useState<Supervisao[]>([]);
   const [todasSupervisoes, setTodasSupervisoes] = useState<Supervisao[]>([]);
+  const [supervisoesVinculadas, setSupervisoesVinculadas] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -67,7 +72,9 @@ export default function AdminSupervisoes() {
     buscarCoordenacoes();
     buscarUsuarios();
     buscarTodasSupervisoes();
+    buscarSupervisoesVinculadas();
   }, []);
+
 
   async function buscarCoordenacoes() {
     const { data } = await supabase
@@ -87,17 +94,45 @@ export default function AdminSupervisoes() {
   }
 
   async function buscarTodasSupervisoes() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("supervisoes")
-      .select("id, nome");
+      .select(`
+        id,
+        nome,
+        users:supervisor_id (
+          id,
+          nome
+        )
+      `);
 
-    setTodasSupervisoes(data || []);
+    if (error) {
+      toast.error("Erro ao buscar supervisões");
+      return;
+    }
+
+    const formatado = data.map((s: any) => ({
+      id: s.id,
+      nome: s.nome,
+      supervisor: s.users,
+    }));
+
+    setTodasSupervisoes(formatado);
   }
+
 
   async function buscarSupervisoesDaCoordenacao(coordenacaoId: string) {
     const { data, error } = await supabase
       .from("coordenacao_supervisoes")
-      .select("supervisoes ( id, nome )")
+      .select(`
+        supervisoes (
+          id,
+          nome,
+          users:supervisor_id (
+            id,
+            nome
+          )
+        )
+      `)
       .eq("coordenacao_id", coordenacaoId);
 
     if (error) {
@@ -108,10 +143,26 @@ export default function AdminSupervisoes() {
     const formatado = data.map((item: any) => ({
       id: item.supervisoes.id,
       nome: item.supervisoes.nome,
+      supervisor: item.supervisoes.users,
     }));
 
     setSupervisoes(formatado);
   }
+
+  async function buscarSupervisoesVinculadas() {
+    const { data, error } = await supabase
+      .from("coordenacao_supervisoes")
+      .select("supervisao_id");
+
+    if (error) {
+      toast.error("Erro ao buscar vínculos");
+      return;
+    }
+
+    setSupervisoesVinculadas(data.map((i) => i.supervisao_id));
+  }
+
+
 
   /* ================== AÇÕES ================== */
 
@@ -137,8 +188,11 @@ export default function AdminSupervisoes() {
     }
 
     toast.success("Supervisão adicionada");
-    buscarSupervisoesDaCoordenacao(coordenacaoSelecionada.id);
+
+    await buscarSupervisoesDaCoordenacao(coordenacaoSelecionada.id);
+    await buscarSupervisoesVinculadas();
   }
+
 
   async function handleDeleteSupervisao(supervisaoId: string) {
     if (!coordenacaoSelecionada) return;
@@ -173,11 +227,19 @@ export default function AdminSupervisoes() {
   }, [coordenacoes, search, tipo]);
 
   const supervisoesDisponiveis = useMemo(() => {
-    return todasSupervisoes.filter(
-      (s) => !supervisoes.some((sc) => sc.id === s.id)
-    )
-    .sort((a, b) => a.nome.localeCompare(b.nome, "PT-BR", { sensitivity: "base" }));
-  }, [todasSupervisoes, supervisoes]);
+    return todasSupervisoes
+      .filter(
+        (s) =>
+          !supervisoes.some((sc) => sc.id === s.id) && 
+          !supervisoesVinculadas.includes(s.id)        
+      )
+      .sort((a, b) =>
+        a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" })
+      );
+  }, [todasSupervisoes, supervisoes, supervisoesVinculadas]);
+
+
+  
 
   /* ================== PDF ================== */
 
@@ -469,7 +531,13 @@ export default function AdminSupervisoes() {
                     {supervisoes.length > 0 ? (
                       supervisoes.map((s) => (
                         <tr key={s.id}>
-                          <td className="py-2 font-semibold font-manrope">{s.nome}</td>
+                          <td className="py-2 font-manrope">
+                            <div className="font-semibold">{s.nome}</div>
+                            <div className="text-sm text-gray-400">
+                              {s.supervisor?.nome || "Sem supervisor"}
+                            </div>
+                          </td>
+
                           <td className="py-2 text-right">
                             <ButtonAction
                             className="hover:bg-red-100"
@@ -502,9 +570,13 @@ export default function AdminSupervisoes() {
                   {supervisoesDisponiveis.length > 0 ? (
                     supervisoesDisponiveis.map((s) => (
                       <tr key={s.id}>
-                        <td className="py-2 font-semibold font-manrope">
-                          {s.nome}
+                        <td className="py-2 font-manrope">
+                          <div className="font-semibold">{s.nome}</div>
+                          <div className="text-sm text-gray-400">
+                            {s.supervisor?.nome || "Sem supervisor"}
+                          </div>
                         </td>
+
                         <td className="py-2 text-right">
                           <ButtonAction
                             type="button"

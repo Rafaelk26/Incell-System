@@ -33,12 +33,15 @@ interface UsuarioProps {
   nome: string;
   cargo: string;
   telefone: string;
+  celula_nome?: string | null;
 }
 
 interface LideresProps {
   id: string;
   nome: string;
+  celula_nome?: string | null;
 }
+
 
 /* ================== COMPONENTE ================== */
 
@@ -75,25 +78,50 @@ export default function AdminSupervisoes() {
   }
 
   async function buscarUsuarios() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("users")
-      .select("id, nome, cargo, telefone");
+      .select(`
+        id,
+        nome,
+        cargo,
+        telefone,
+        celulas:celulas!responsavel_id(
+          nome
+        )
+      `);
 
-    if (data) setUsuarios(data);
+    if (error) {
+      toast.error("Erro ao buscar usuários");
+      return;
+    }
+
+    const formatado = data.map((u: any) => ({
+      id: u.id,
+      nome: u.nome,
+      cargo: u.cargo,
+      telefone: u.telefone,
+      celula_nome: u.celulas?.[0]?.nome ?? null,
+    }));
+
+    console.log("Dados dos usuários", formatado)
+
+    setUsuarios(formatado);
   }
+
 
   async function buscarLideresDaSupervisao(supervisaoId: string) {
     const { data, error } = await supabase
       .from("supervisao_lideres")
-      .select(
-        `
+      .select(`
         lider_id,
         users:lider_id (
           id,
-          nome
+          nome,
+          celulas:celulas!responsavel_id (
+            nome
+          )
         )
-      `
-      )
+      `)
       .eq("supervisao_id", supervisaoId);
 
     if (error) {
@@ -104,10 +132,12 @@ export default function AdminSupervisoes() {
     const formatado = data.map((item: any) => ({
       id: item.users.id,
       nome: item.users.nome,
+      celula_nome: item.users.celulas?.[0]?.nome || "Sem célula",
     }));
 
     setLideres(formatado);
   }
+
 
 
 
@@ -515,7 +545,13 @@ const sortByNome = (a: SupervisorProps, b: SupervisorProps) => {
                     {lideres.length > 0 ? (
                       lideres.map((lider) => (
                         <tr key={lider.id}>
-                          <td className="py-2 font-semibold font-manrope">{lider.nome}</td>
+                          <td className="py-2 font-manrope">
+                            <div className="font-semibold">{lider.nome}</div>
+                            <div className="text-sm text-gray-400">
+                              {lider.celula_nome ? `${lider.celula_nome}` : "Sem célula"}
+                            </div>
+                          </td>
+
                           <td className="py-2 text-right">
                             <ButtonAction
                             className="hover:bg-red-100"
@@ -548,9 +584,13 @@ const sortByNome = (a: SupervisorProps, b: SupervisorProps) => {
                   {lideresDisponiveis.length > 0 ? (
                     lideresDisponiveis.map((usuario) => (
                       <tr key={usuario.id}>
-                        <td className="py-2 font-semibold font-manrope">
-                          {usuario.nome}
+                        <td className="py-2 font-manrope">
+                          <div className="font-semibold">{usuario.nome}</div>
+                          <div className="text-sm text-gray-400">
+                            {usuario.celula_nome ? `${usuario.celula_nome}` : "Sem célula"}
+                          </div>
                         </td>
+
                         <td className="py-2 text-right">
                           <ButtonAction
                             type="button"

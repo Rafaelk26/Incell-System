@@ -44,8 +44,6 @@ body {
 }
 
 
-
-
 .hide-scrollbar {
   -ms-overflow-style: none; /* IE e Edge */
   scrollbar-width: none; /* Firefox */
@@ -54,5 +52,12 @@ body {
   display: none; /* Chrome, Safari e Opera */
 }
 
+
+
+/* Barra dos dias da semana */
+.fc-col-header-cell {
+  background-color: #090909;
+  color: #fff;
+}
 
 
