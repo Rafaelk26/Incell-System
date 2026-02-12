@@ -68,7 +68,6 @@ input,
 button,
 select,
 textarea,
-option,
 label {
   color: #ffffff;
 }
@@ -76,6 +75,7 @@ label {
 input::placeholder,
 textarea::placeholder {
   color: #ededed;
+  opacity: 0.6;
 }
 
 
