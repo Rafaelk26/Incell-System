@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     if (uploadError) throw uploadError;
 
     /* ================= URL ASSINADA (24h) ================= */
-    const EXPIRES_IN = 24 * 60 * 60; // 86400 segundos = 24h
+    const EXPIRES_IN = 60;
 
     const { data: signed, error: signedError } =
       await supabase.storage

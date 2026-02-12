@@ -48,35 +48,37 @@ export async function POST(req: Request) {
 
     // 📧 Transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
+  await transporter.sendMail({
+    from: `"Incell" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: "Recuperação de senha",
+    html: `
+      <p>Olá, ${user.nome}</p>
+      <p>Clique no botão abaixo para redefinir sua senha:</p>
+      <a href="${resetLink}"
+        style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
+        Redefinir senha
+      </a>
+      <p>Este link expira em 30 minutos.</p>
+    `,
+  });
 
-    await transporter.sendMail({
-      from: `"Incell" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "Recuperação de senha",
-      html: `
-        <p>Olá, ${user.nome}</p>
-        <p>Clique no botão abaixo para redefinir sua senha:</p>
-        <a href="${resetLink}" 
-           style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
-           Redefinir senha
-        </a>
-        <p>Este link expira em 30 minutos.</p>
-      `,
-    });
 
     return NextResponse.json({ success: true });
 
   } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { success: false, message: "Erro interno" }, //Erro aqui
+      { success: false, message: "Erro interno no servidor" },
       { status: 500 }
     );
   }
