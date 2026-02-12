@@ -156,11 +156,20 @@ export default function ModalCriarReuniao({
     onClose();
   }
 
+  
+  function closeWindow(){
+    onClose()
+  }
+
   // ================= JSX =================
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-black rounded-xl p-6 w-full max-w-sm">
+    <div 
+    onClick={closeWindow}
+    className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div 
+      onClick={(e)=> e.stopPropagation()}
+      className="bg-black rounded-xl p-6 w-full max-w-sm">
 
         <Image
           className="mx-auto"
@@ -243,14 +252,16 @@ export default function ModalCriarReuniao({
           <div className="flex gap-3 mt-4">
             <button
               onClick={onClose}
-              className="w-full border rounded-md py-2"
+              className="w-full border rounded-md py-2 transition-all
+              hover:cursor-pointer hover:scale-105"
             >
               Cancelar
             </button>
 
             <button
               onClick={salvar}
-              className="w-full bg-blue-500 text-white rounded-md py-2"
+              className="w-full bg-blue-500 text-white rounded-md py-2 transition-all
+              hover:cursor-pointer hover:scale-105"
             >
               Salvar
             </button>

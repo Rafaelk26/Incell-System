@@ -11,6 +11,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/useUser";
 import { handleLogin, LoginResult } from "@/functions/handleLogin";
+import { formatarNome } from "@/functions/formatName";
 
 export default function Login() {
 
@@ -27,7 +28,10 @@ export default function Login() {
     });
 
     try {
-      const result: LoginResult = await handleLogin(userInput, senha);
+
+      const formatName = formatarNome(userInput)
+
+      const result: LoginResult = await handleLogin(formatName, senha);
 
       toast.dismiss(loadingToast);
 

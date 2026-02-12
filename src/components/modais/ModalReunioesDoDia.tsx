@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { IoMdClose } from "react-icons/io";
 import ModalCriarReuniao from "./ModalCriarReuniao";
@@ -87,14 +87,23 @@ export default function ModalReunioesDoDia({
     setModalCriarAberto(false);
   }
 
+  function closeWindow(){
+    setModalCriarAberto(false);
+    onClose()
+  }
+
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-black rounded-xl p-6 w-full max-w-sm">
+      <div 
+      onClick={closeWindow}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+         onClick={(e)=> e.stopPropagation()}
+         className="bg-black rounded-xl p-6 w-full max-w-sm">
           <div className="flex justify-between items-center">
             <h2 className="text-xl">Reuniões</h2>
-            <button onClick={onClose}>
+            <button onClick={onClose} className="hover:cursor-pointer">
               <IoMdClose size={22} />
             </button>
           </div>
@@ -130,7 +139,8 @@ export default function ModalReunioesDoDia({
                 {e.editable && (
                   <button
                     onClick={() => excluirEvento(e.id)}
-                    className="mt-2 bg-red-500 px-2 py-1 rounded text-sm"
+                    className="mt-2 bg-red-500 px-2 py-1 rounded text-sm  
+                    hover:cursor-pointer"
                   >
                     Excluir
                   </button>
@@ -141,7 +151,8 @@ export default function ModalReunioesDoDia({
 
           <button
             onClick={() => setModalCriarAberto(true)}
-            className="mt-4 w-full px-4 py-2 rounded-md bg-blue-500 text-white font-bold"
+            className="mt-4 w-full px-4 py-2 rounded-md bg-blue-500 text-white font-bold transition-all
+              hover:cursor-pointer hover:scale-105"
           >
             + Nova reunião
           </button>

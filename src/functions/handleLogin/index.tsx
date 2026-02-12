@@ -18,6 +18,7 @@ export type LoginResult = {
 
 export async function handleLogin(user: string, senha: string): Promise<LoginResult> {
   try {
+
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -28,7 +29,7 @@ export async function handleLogin(user: string, senha: string): Promise<LoginRes
 
     // Mapear a resposta para ter a propriedade correta
     return {
-      success: data.sucess ?? false, // garante que é booleano
+      success: data.success ?? false,
       message: data.message ?? "Erro no login",
       user: data.user ?? undefined,
     };

@@ -62,14 +62,16 @@ export default function RelatorioGDL() {
     const { data, error } = await supabase
       .from("supervisoes")
       .select("id, nome")
-      .limit(1);
+      .eq("supervisor_id", user.id)
+      .limit(1)
+      .single();
 
-    if (error || !data || data.length === 0) {
+    if (error || !data) {
       console.error("Supervisão não encontrada");
       return;
     }
 
-    setSupervisao(data[0]);
+    setSupervisao(data);
   }, [user?.id]);
 
 
@@ -109,7 +111,7 @@ const requestLideres = useCallback(async () => {
     .filter((item: any) => item.lider?.cargo?.toLowerCase() === "lider")
     .map((item: any) => ({
       id: item.id,
-      celula_nome: "—", // ⚠️ não existe célula nesse modelo
+      celula_nome: "—",
       lider_nome: item.lider.nome,
       lider_id: item.lider.id,
       lider_cargo: item.lider.cargo,
