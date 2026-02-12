@@ -26,9 +26,12 @@ body {
   background-blend-mode: overlay;
   background-size: cover;
   background-position: center;
-  color: var(--foreground);
+  color: #ededed;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+
 
 
 @layer utilities {
@@ -59,5 +62,35 @@ body {
   background-color: #090909;
   color: #fff;
 }
+
+
+input,
+button,
+select,
+textarea,
+option,
+label {
+  color: #ffffff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #ededed;
+}
+
+
+
+.fc,
+.fc * {
+  color: #ededed !important;
+}
+
+
+.fc-event-title,
+.fc-event-time {
+  color: #ededed !important;
+}
+
+
 
 
