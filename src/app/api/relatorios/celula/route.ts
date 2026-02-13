@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const base64 = pdfBase64.split(",")[1];
     const buffer = Buffer.from(base64, "base64");
 
-     const EXPIRES_IN = 60;
+     const EXPIRES_IN = 604800;
 
     const filePath = `${celula_id}/relatorio-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage

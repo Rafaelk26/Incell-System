@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     /* ---------------------------
       URL ASSINADA (TEMPORÁRIA)
     ---------------------------- */
-     const EXPIRES_IN = 60;
+     const EXPIRES_IN = 604800;
 
     const { data: signed, error: signedError } =
       await supabase.storage

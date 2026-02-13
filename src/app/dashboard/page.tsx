@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useDashboardData } from "../hook/dashboard";
 import { useHorizontalDragScroll } from "../hook/useHorizontalDragScroll";
 import { Spinner } from "@/components/all/spiner";
+import PaymentModal from "@/components/modais/modalPagamentoGD";
 import { supabase } from "@/lib/supabaseClient";
 import CountUp from 'react-countup';
 import FullCalendar from "@fullcalendar/react";
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const [gdcEvents, setGdcEvents] = useState<Array<{ start: string }>>([]);
   const [gdEvents, setGdEvents] = useState<Array<{ start: string }>>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   
 
   const {
@@ -629,7 +631,22 @@ const itensRelatorios = useMemo(() => {
                       <MeetingCard title="Reunião GDC" date={gdcEvents[0]?.start || "S/D"} />
                     )}
 
-                    {user && <MeetingCard title="Reunião GD" date={gdEvents[0]?.start || "S/D"} />}
+                    {user && (
+                      <>
+                        <MeetingCard 
+                          title="Reunião GD" 
+                          date={gdEvents[0]?.start || "S/D"} 
+                          onClick={()=> setOpenModal(true)} 
+                        />
+
+                        <PaymentModal
+                          open={openModal}
+                          onClose={() => setOpenModal(false)}
+                          responsavelId={user.id}
+                        />
+                      </>
+                    )}
+
                   </div>
                 </section>
 
@@ -741,14 +758,18 @@ const Card = ({ title, value }: { title: string; value: ReactNode }) => (
   </div>
 );
 
-const MeetingCard = ({ title, date }: { title: string; date: string }) => (
-  <div className="w-72 shrink-0 flex flex-col items-start bg-blue-500/60 px-6 py-8 gap-4 rounded-md">
+const MeetingCard = ({title, date, onClick,}: { title: string; date: string; onClick?: () => void;}) => (
+  <div
+    onClick={onClick}
+    className="w-72 shrink-0 flex flex-col items-start bg-blue-500/60 px-6 py-8 gap-4 rounded-md cursor-pointer"
+  >
     <span className="text-lg font-manrope font-semibold">{title}</span>
-    <span className="text-6xl font-manrope font-bold">
-      <span className="text-5xl font-extralight">{date}</span>
+    <span className="text-5xl font-manrope font-extralight">
+      {date}
     </span>
   </div>
 );
+
 
 const InfoBox = ({ title, items }: { title: string; items: ReactNode[] }) => (
   <div className="max-w-full w-full h-full flex flex-col items-start bg-[#514F4F]/40 px-6 py-6 gap-8 rounded-md">
