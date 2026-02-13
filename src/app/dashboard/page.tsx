@@ -48,6 +48,9 @@ export default function Dashboard() {
   const [gdEvents, setGdEvents] = useState<Array<{ start: string }>>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [jaPagouGD, setJaPagouGD] = useState(false);
+  const [jaPagou, setJaPagou] = useState(false);
+
   
 
   const {
@@ -131,6 +134,14 @@ export default function Dashboard() {
   }, [user]);
 
 
+useEffect(() => {
+  if (!user?.id) return;
+  verificarPagamentoGD();
+}, [user?.id]);
+
+
+
+
   const agruparPorMes = (dados: { criado_em: string }[]) => {
   const map = new Map<string, number>();
 
@@ -145,6 +156,29 @@ export default function Dashboard() {
     total,
   }));
 };
+
+
+
+
+async function verificarPagamentoGD() {
+  if (!user?.id) return;
+
+  const { data, error } = await supabase
+    .from("pagamentos")
+    .select("id")
+    .eq("responsavel_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Erro ao verificar pagamento:", error);
+    return;
+  }
+
+  setJaPagou(!!data);
+}
+
+
 
 
   useEffect(() => {
@@ -633,17 +667,27 @@ const itensRelatorios = useMemo(() => {
 
                     {user && (
                       <>
-                        <MeetingCard 
-                          title="Reunião GD" 
-                          date={gdEvents[0]?.start || "S/D"} 
-                          onClick={()=> setOpenModal(true)} 
+                        <MeetingCard
+                          title="Reunião GD"
+                          date={gdEvents[0]?.start || "S/D"}
+                          onClick={async () => {
+                            await verificarPagamentoGD();
+                            setOpenModal(true);
+                          }}
                         />
+
+
 
                         <PaymentModal
                           open={openModal}
                           onClose={() => setOpenModal(false)}
                           responsavelId={user.id}
+                          jaPagou={jaPagou}
+                          onSuccess={() => setJaPagou(true)}
                         />
+
+
+
                       </>
                     )}
 
