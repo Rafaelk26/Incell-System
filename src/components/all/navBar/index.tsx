@@ -9,6 +9,7 @@ import { LuLayoutDashboard } from "react-icons/lu";
 import { FaClipboardList, FaUserAlt } from "react-icons/fa";
 import { FiUsers } from "react-icons/fi";
 import { MdSettingsSuggest } from "react-icons/md";
+import { MdAttachMoney } from "react-icons/md";
 import { IoClose, IoMenu } from "react-icons/io5"
 import { useState } from "react";
 
@@ -104,6 +105,20 @@ export function Navbar(){
                                     </>
                                 )}
 
+
+                                {user?.cargo === "admin" && (
+                                    <>
+                                        <li>
+                                            <Link href={"/admin/pagamentos"}>
+                                                <div className="flex items-center gap-2 transition-all
+                                                hover:scale-110">
+                                                    <MdAttachMoney size={20} color="#fff"/> 
+                                                    <span className="font-manrope font-medium text-white">Pagamentos</span> 
+                                                </div>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
 
                                 {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                     <>
@@ -400,6 +415,20 @@ export function Navbar(){
                                                 hover:scale-110">
                                                     <FaPeopleGroup size={20} color="#fff"/> 
                                                     <span className="font-manrope text-xl text-white">Criar Ministério</span> 
+                                                </div>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
+
+                                {user?.cargo === "admin" && (
+                                    <>
+                                        <li>
+                                            <Link href={"/admin/pagamentos"}>
+                                                <div className="flex items-center gap-2 transition-all
+                                                hover:scale-110">
+                                                    <MdAttachMoney size={20} color="#fff"/> 
+                                                    <span className="font-manrope text-xl text-white">Pagamentos</span> 
                                                 </div>
                                             </Link>
                                         </li>

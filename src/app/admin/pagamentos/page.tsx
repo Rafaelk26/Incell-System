@@ -208,7 +208,7 @@ function getPagamentoDoLider(liderId: string) {
             />
           </header>
 
-          <section className="w-full flex flex-col mt-10 items-center
+          <section className="w-full flex flex-col mt-6 items-center
           md:mt-14 md:px-6">
             <div className="w-96 flex justify-between flex-col items-center
             md:flex-row md:w-full">
@@ -274,7 +274,8 @@ function getPagamentoDoLider(liderId: string) {
                 </div>
             </div>
 
-            <div className="w-full mb-4">
+            <div className="w-96 mb-4
+            md:w-full">
               <div className="w-full rounded-full bg-zinc-700">
                 <div
                   className="rounded-full p-1 bg-blue-500 transition-all"
