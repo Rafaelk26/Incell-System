@@ -61,7 +61,7 @@ export function Navbar(){
                                     </li>
                                 </>
 
-                                {user?.cargo === "admin" || user?.nome === "Ronaldo Natalino" && (
+                                {user?.cargo === "admin" || user?.nome === "Ronaldo Natalino" || user?.nome === "Naira Gomez" && (
                                     <>
                                         <li>
                                             <Link href={"/admin/estatisticas"}>
@@ -120,7 +120,7 @@ export function Navbar(){
                                     </>
                                 )}
 
-                                {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
+                                {user?.nome !== "Naira Gomez" && user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                     <>
                                         <li>
                                             <Link href={"/relatorios"}>
@@ -377,7 +377,7 @@ export function Navbar(){
                                     </li>
                                 </>
 
-                                {user?.cargo === "admin" || user?.nome === "Ronaldo Natalino" && (
+                                {user?.cargo === "admin" || user?.nome === "Ronaldo Natalino" || user?.nome === "Naira Gomez" && (
                                     <>
                                         <li>
                                             <Link href={"/admin/estatisticas"}>
@@ -436,7 +436,7 @@ export function Navbar(){
                                 )}
 
 
-                                {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
+                                {user?.nome !== "Naira Gomez" && user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                     <>
                                         <li>
                                             <Link href={"/relatorios"}>
@@ -473,7 +473,7 @@ export function Navbar(){
                                     <span className="font-manrope text-2xl text-[#cfcfcfc2]">Gestão</span> 
                                 </div>
                                 <li>
-                                    {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
+                                    {user?.nome !== "Naira Gomez" && user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                         <>
                                             <Link href={"/celula"}>
                                                 <div className="flex items-center gap-2 transition-all
