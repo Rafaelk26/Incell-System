@@ -531,6 +531,7 @@ export default function Celula() {
                                   <option value="" className="text-black font-bold">Selecione...</option>
                                   <option value="LT" className="text-black font-bold">LT</option>
                                   <option value="Anfitrião" className="text-black font-bold">Anfitrião</option>
+                                  <option value="Secretário" className="text-black font-bold">Secretário</option>
                                   <option value="Discípulo" className="text-black font-bold">Discípulo</option>
                                 </>
                               </Select>

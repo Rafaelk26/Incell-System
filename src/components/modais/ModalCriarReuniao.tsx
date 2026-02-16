@@ -74,23 +74,26 @@ export default function ModalCriarReuniao({
 
   // ===== BUSCAR DISCÍPULOS DA CÉLULA =====
   useEffect(() => {
-      async function carregarDiscipulos() {
-      const res = await fetch(
-        `/api/discipulos?celula=true&liderId=${user?.id}`
-      );
+  if (!user?.id || !user?.cargo) return;
 
-      const json = await res.json();
+  async function carregarDiscipulos() {
+    const res = await fetch(
+      `/api/discipulos?liderId=${user?.id}&cargo=${user?.cargo}`
+    );
 
-      if (!res.ok) {
-        toast.error("Erro ao carregar discípulos");
-        return;
-      }
+    const json = await res.json();
 
-      setDiscipulos(json.discipulos);
+    if (!res.ok) {
+      toast.error("Erro ao carregar discípulos");
+      return;
     }
 
-    carregarDiscipulos();
-  }, [user?.id]);
+    setDiscipulos(json.discipulos);
+  }
+
+  carregarDiscipulos();
+}, [user?.id, user?.cargo]);
+
 
 
   // ===== SALVAR =====

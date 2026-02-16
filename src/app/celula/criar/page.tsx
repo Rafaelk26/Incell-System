@@ -2,7 +2,6 @@
 
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { Navbar } from "@/components/all/navBar";
-import Perfil from "../../../../public/assets/perfil teste.avif";
 import Image from "next/image";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
@@ -138,6 +137,7 @@ export default function CriarDiscipulos() {
                   <option value={""} className="text-black font-semibold">Selecione</option>
                   <option value={"Anfitrião"} className="text-black font-semibold">Anfitrião</option>
                   <option value={"LT"} className="text-black font-semibold">LT</option>
+                  <option value={"Secretário"} className="text-black font-semibold">Secretário</option>
                   <option value={"Discípulo"} className="text-black font-semibold">Discípulo</option>
                 </Select>
 
