@@ -24,7 +24,7 @@ export default function ProtectedLayout({ children }: Props) {
     }
 
     // 3️⃣ Se o caminho for /admin e o cargo não for admin, redireciona para o dashboard
-    if (pathname.startsWith("/admin") && user.cargo !== "admin" && user.nome !== "Ronaldo Natalino") {
+    if (pathname.startsWith("/admin") && user.cargo !== "admin" && user.nome !== "Ronaldo Natalino" && user.nome !== "Naira Gomez") {
       window.location.href = "/dashboard";
     }
   }, [isLoading, user, pathname]);
