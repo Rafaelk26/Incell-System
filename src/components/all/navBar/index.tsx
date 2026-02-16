@@ -157,7 +157,7 @@ export function Navbar(){
                                     <span className="font-manrope font-medium text-[#cfcfcfc2]">Gestão</span> 
                                 </div>
                                 <li>
-                                    {user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
+                                    {user?.nome !== "Naira Gomez" && user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                         <>
                                             <Link href={"/celula"}>
                                                 <div className="flex items-center gap-2 transition-all
