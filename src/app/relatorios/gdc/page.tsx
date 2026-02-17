@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
+import * as exifr from "exifr";
 
 /* ==================== TIPOS ==================== */
 
@@ -97,6 +98,100 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
 
   /* ==================== GERAR PDF ==================== */
 
+  function adicionarTextoQuebrado(
+    doc: jsPDF,
+    texto: string,
+    x: number,
+    yInicial: number,
+    larguraMax: number,
+    margemInferior = 20
+  ) {
+    const linhas = doc.splitTextToSize(texto, larguraMax);
+    const alturaLinha = 6;
+    const alturaPagina = doc.internal.pageSize.height;
+
+    let y = yInicial;
+
+    linhas.forEach((linha: string) => {
+      if (y + alturaLinha > alturaPagina - margemInferior) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(linha, x, y);
+      y += alturaLinha;
+    });
+
+    return y;
+  }
+
+
+  const compressImage = async (
+    file: File,
+    maxWidth = 1280,
+    quality = 0.7
+  ): Promise<string> => {
+    const orientation = await exifr.orientation(file).catch(() => 1);
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const img = document.createElement("img");
+
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject("Erro ao criar canvas");
+
+          // Ajusta canvas conforme rotação
+          if (orientation === 6 || orientation === 8) {
+            canvas.width = height;
+            canvas.height = width;
+          } else {
+            canvas.width = width;
+            canvas.height = height;
+          }
+
+          // Corrige orientação
+          switch (orientation) {
+            case 3:
+              ctx.translate(canvas.width, canvas.height);
+              ctx.rotate(Math.PI);
+              break;
+            case 6:
+              ctx.translate(canvas.width, 0);
+              ctx.rotate(Math.PI / 2);
+              break;
+            case 8:
+              ctx.translate(0, canvas.height);
+              ctx.rotate(-Math.PI / 2);
+              break;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const base64 = canvas.toDataURL("image/jpeg", quality);
+          resolve(base64);
+        };
+
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+
   async function gerarPdf(dados: RelatorioForm): Promise<string> {
     const doc = new jsPDF();
     let currentY = 10;
@@ -117,7 +212,7 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
 
     currentY += 10;
 
-    const fotoBase64 = await fileToBase64(dados.fotoGDC[0]);
+    const fotoBase64 = await compressImage(dados.fotoGDC[0], 1280, 0.7);
     doc.addImage(fotoBase64, "JPEG", 25, currentY, 160, 80);
 
     currentY += 90;
@@ -154,9 +249,22 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
     y += listaAusentes.length * 6 + 20;
 
     doc.setFont("Helvetica", "bold");
+    doc.setFontSize(14);
     doc.text("Observações", 14, y);
+
+    y += 8;
+
     doc.setFont("Helvetica", "normal");
-    doc.text(dados.observacoes, 14, y + 6, { maxWidth: 180 });
+    doc.setFontSize(11);
+
+    y = adicionarTextoQuebrado(
+      doc,
+      dados.observacoes,
+      14,
+      y,
+      180
+    );
+
 
     return doc.output("datauristring");
   }

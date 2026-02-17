@@ -13,7 +13,7 @@ import autoTable from "jspdf-autotable";
 import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import Image from "next/image";
- import * as exifr from "exifr";
+import * as exifr from "exifr";
 
 /* =========================
    TYPES
@@ -288,29 +288,27 @@ export default function RelatorioCelula() {
 
   async function gerarPdf(dados: RelatorioForm): Promise<string> {
     const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    const marginBottom = 20;
+
     let currentY = 10;
 
     const logoBase64 = await urlToBase64(Incell.src);
     doc.addImage(logoBase64, "PNG", 85, currentY, 40, 20);
-
     currentY += 30;
 
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(20);
     doc.text("Relatório de Célula", 105, currentY, { align: "center" });
-
     currentY += 10;
 
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(14);
     doc.text(`Célula: ${celula?.nome}`, 105, currentY, { align: "center" });
-
     currentY += 10;
 
     const fotoBase64 = await compressImage(dados.fotoCelula[0], 1280, 0.7);
     doc.addImage(fotoBase64, "JPEG", 25, currentY, 160, 80);
-
-
     currentY += 90;
 
     autoTable(doc, {
@@ -343,16 +341,31 @@ export default function RelatorioCelula() {
       },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    let y = (doc as any).lastAutoTable.finalY + 10;
 
+    // ===== OBSERVAÇÕES DINÂMICAS =====
     doc.setFont("Helvetica", "bold");
-    doc.text("Observações", 14, finalY);
+    doc.setFontSize(14);
+    doc.text("Observações", 14, y);
+    y += 6;
 
     doc.setFont("Helvetica", "normal");
-    doc.text(dados.observacoes, 14, finalY + 6, { maxWidth: 180 });
+    doc.setFontSize(11);
+
+    const linhas = doc.splitTextToSize(dados.observacoes, 180);
+
+    for (let i = 0; i < linhas.length; i++) {
+      if (y > pageHeight - marginBottom) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(linhas[i], 14, y);
+      y += 6;
+    }
 
     return doc.output("datauristring");
   }
+
 
 
   const handleSubmitRelatoryCell = async (data: RelatorioForm) => {
