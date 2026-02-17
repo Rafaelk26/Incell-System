@@ -14,6 +14,7 @@ import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import { ButtonAction } from "@/components/all/buttonAction";
 import * as exifr from "exifr";
+import heic2any from "heic2any";
 
 
 type RelatorioForm = {
@@ -199,7 +200,29 @@ useEffect(() => {
     maxWidth = 1280,
     maxSizeKB = 500
   ): Promise<string> => {
-    const orientation = await exifr.orientation(file).catch(() => 1);
+    let fileToProcess = file;
+
+    /* =========================
+      HEIC → JPEG
+    ========================= */
+    if (
+      file.type === "image/heic" ||
+      file.name.toLowerCase().endsWith(".heic")
+    ) {
+      const convertedBlob = (await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.9,
+      })) as Blob;
+
+      fileToProcess = new File(
+        [convertedBlob],
+        file.name.replace(/\.heic$/i, ".jpg"),
+        { type: "image/jpeg" }
+      );
+    }
+
+    const orientation = await exifr.orientation(fileToProcess).catch(() => 1);
 
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -245,7 +268,7 @@ useEffect(() => {
 
           ctx.drawImage(img, 0, 0, width, height);
 
-          let quality = 0.7;
+          let quality = 0.8;
           let base64 = canvas.toDataURL("image/jpeg", quality);
 
           while (
@@ -264,7 +287,7 @@ useEffect(() => {
       };
 
       reader.onerror = reject;
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(fileToProcess);
     });
   };
 
