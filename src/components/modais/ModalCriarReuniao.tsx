@@ -98,16 +98,21 @@ export default function ModalCriarReuniao({
 
   // ===== SALVAR =====
   async function salvar() {
-    if (!user?.id) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
+  if (!user?.id) {
+    toast.error("Usuário não autenticado");
+    return;
+  }
 
-    if (!dataSelecionada || !hora || !discipuloSelecionado) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
+  if (!dataSelecionada || !hora) {
+    toast.error("Preencha data e hora");
+    return;
+  }
 
+  let discipulado_tipo: "DISCIPULO" | "LIDER" | null = null;
+  let discipulado_id: string | null = null;
+
+  // 👉 Só entra aqui se um discípulo foi selecionado
+  if (discipuloSelecionado) {
     const pessoaSelecionada = discipulos.find(
       (p) => p.id === discipuloSelecionado
     );
@@ -117,48 +122,51 @@ export default function ModalCriarReuniao({
       return;
     }
 
-    const discipulado_tipo =
-      pessoaSelecionada.cargo === "LT" || 
-      pessoaSelecionada.cargo === "Anfitrião" || 
-      pessoaSelecionada.cargo === "Secretário" || 
-      pessoaSelecionada.cargo ===  "Discípulo"
+    discipulado_id = pessoaSelecionada.id;
+
+    discipulado_tipo =
+      pessoaSelecionada.cargo === "LT" ||
+      pessoaSelecionada.cargo === "Anfitrião" ||
+      pessoaSelecionada.cargo === "Secretário" ||
+      pessoaSelecionada.cargo === "Discípulo"
         ? "DISCIPULO"
         : "LIDER";
-
-    const res = await fetch("/api/reunioes", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tipo,
-        data: dataSelecionada,
-        hora,
-        criado_por: user.id,
-        discipulado_id: discipuloSelecionado,
-        discipulado_tipo,
-        cargo: user.cargo,
-      }),
-    });
-
-    console.log(res)
-
-    if (!res.ok) {
-      toast.error("Erro ao criar reunião");
-      return;
-    }
-
-    const eventoCriado = await res.json();
-
-    toast.success("Reunião criada!");
-    onCreated({
-      id: eventoCriado.id,
-      title: eventoCriado.title,
-      start: eventoCriado.start,
-      editable: true,
-      extendedProps: eventoCriado.extendedProps,
-    });
-
-    onClose();
   }
+
+  const res = await fetch("/api/reunioes", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      tipo,
+      data: dataSelecionada,
+      hora,
+      criado_por: user.id,
+      discipulado_id,      // pode ser null
+      discipulado_tipo,    // pode ser null
+      cargo: user.cargo,
+    }),
+  });
+
+  if (!res.ok) {
+    toast.error("Erro ao criar reunião");
+    return;
+  }
+
+  const eventoCriado = await res.json();
+
+  toast.success("Reunião criada!");
+
+  onCreated({
+    id: eventoCriado.id,
+    title: eventoCriado.title,
+    start: eventoCriado.start,
+    editable: true,
+    extendedProps: eventoCriado.extendedProps,
+  });
+
+  onClose();
+}
+
 
 
 
