@@ -1,5 +1,8 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
+
 import ProtectedLayout from "@/app/middleware/protectedLayout";
 import { useAuth } from "../../context/useUser";
 import { Navbar } from "@/components/all/navBar";
