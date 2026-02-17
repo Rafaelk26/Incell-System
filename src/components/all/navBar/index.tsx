@@ -30,7 +30,7 @@ export function Navbar(){
                         <li>
                             <Link href={"/dashboard"}>
                                 <Image 
-                                className="w-44"
+                                className="w-40"
                                 src={IncellLogo} 
                                 alt="Logo Incell Oficial" />
                             </Link>
