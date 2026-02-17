@@ -373,35 +373,50 @@ export default function Celula() {
                     )}
                   </div>
 
-                  <div className="w-full flex flex-col-reverse justify-between items-center md:items-end mt-16
+                  <div className="w-full flex flex-col-reverse justify-between items-center md:items-end mt-8
                   md:flex-row">
-                    <h1 className="font-normal text-3xl text-center font-manrope mt-16
-                    md:text-3xl md:font-bold md:mt-0">Liderança</h1>
 
-                    <div className="w-full flex gap-4 flex-row
-                    md:w-max">
-                      <div className="w-64">
-                        {/* Input de busca por nome ligado ao state */}
-                        <Input
-                          placeholder="Buscar discípulo por nome"
-                          value={searchName}
-                          onChange={(e: any) => setSearchName(e.target.value)}
-                        />
+                    <div className="w-full flex gap-2 flex-col-reverse
+                    md:w-full md:justify-between md:flex-row">
+
+                      <div className="w-full flex justify-center
+                      md:justify-start">
+                        <div className="w-full md:w-max">
+                          <Link href={"/celula/criar"}>
+                            <Button nome="Cadastrar Discípulo" />
+                          </Link>
+                        </div>
                       </div>
 
-                      <select
-                        name="funcao"
-                        value={filterCargo}
-                        onChange={(e) => setFilterCargo(e.target.value)}
-                        className="bg-[#514F4F]/10 p-3 pr-10 rounded-lg border border-white font-manrope hover:border-blue-400 focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
-                      >
-                        <option value="" className="text-black font-semibold">Filtrar cargo</option>
-                        <option value="Anfitrião" className="text-black font-semibold">Anfitrião</option>
-                        <option value="LT" className="text-black font-semibold">LT</option>
-                        <option value="Discípulo" className="text-black font-semibold">Discípulo</option>
-                      </select>
+                      <div className="w-full flex items-center gap-2
+                      md:justify-end">
+                        <div className="w-64">
+                          {/* Input de busca por nome ligado ao state */}
+                          <Input
+                            placeholder="Buscar discípulo por nome"
+                            value={searchName}
+                            onChange={(e: any) => setSearchName(e.target.value)}
+                          />
+                        </div>
+
+                        <select
+                          name="funcao"
+                          value={filterCargo}
+                          onChange={(e) => setFilterCargo(e.target.value)}
+                          className="bg-[#514F4F]/10 p-3 pr-10 rounded-lg border border-white font-manrope hover:border-blue-400 focus:border-blue-500 focus:ring-blue-400 focus:outline-none"
+                        >
+                          <option value="" className="text-black font-semibold">Filtrar cargo</option>
+                          <option value="Anfitrião" className="text-black font-semibold">Anfitrião</option>
+                          <option value="LT" className="text-black font-semibold">LT</option>
+                          <option value="Secretário" className="text-black font-semibold">Secretário</option>
+                          <option value="Discípulo" className="text-black font-semibold">Discípulo</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
+
+                  <h1 className="font-normal text-3xl text-center font-manrope mt-16
+                  md:text-3xl md:font-bold md:mt-8 md:text-start">Liderança</h1>
 
                   {/* TABELA DE DADOS DA CÉLULA */}
 
@@ -580,15 +595,6 @@ export default function Celula() {
                       </div>
                     </div>
                   )}
-
-
-                  <div className="w-full flex justify-center md:justify-end mt-10">
-                    <div className="w-full md:w-max">
-                      <Link href={"/celula/criar"}>
-                        <Button nome="Cadastrar Discípulo" />
-                      </Link>
-                    </div>
-                  </div>
                 </section>
               </main>
             </main>

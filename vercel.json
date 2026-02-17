@@ -3,6 +3,10 @@
     {
       "path": "/api/pagamentos/limpar",
       "schedule": "0 3 * * *"
+    }, 
+    {
+      "path": "/api/cron/limpar-relatorios",
+      "schedule": "0 3 * * *"
     }
   ]
 }

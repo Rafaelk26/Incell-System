@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import Incell from "../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import Image from "next/image";
+ import * as exifr from "exifr";
 
 /* =========================
    TYPES
@@ -45,6 +46,13 @@ type CelulaType = {
   id: string;
   nome: string;
 };
+
+type PessoaRelatorio = {
+  id: string;
+  nome: string;
+  cargo: string;
+};
+
 
 /* =========================
    COMPONENT
@@ -92,18 +100,170 @@ export default function RelatorioCelula() {
     setCelula(data);
   }, [user?.id]);
 
+  const requestCelulaPrincipal = useCallback(async () => {
+    if (!user?.id) return;
+
+    const { data, error } = await supabase
+      .from("celulas")
+      .select("id, nome")
+      .eq("responsavel_id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Erro ao buscar célula principal:", error);
+      return;
+    }
+
+    setCelula(data);
+  }, [user?.id]);
+
+
+  const requestCelulasRelacionadas = useCallback(async () => {
+    if (!celula?.id) return [];
+
+    const { data, error } = await supabase
+      .from("vinculos")
+      .select(`
+        celula_principal_id,
+        celula_vinculada_id
+      `)
+      .or(
+        `celula_principal_id.eq.${celula.id},celula_vinculada_id.eq.${celula.id}`
+      );
+
+    if (error) {
+      console.error("Erro ao buscar vínculos:", error);
+      return [celula.id];
+    }
+
+    const ids = new Set<string>();
+    ids.add(celula.id);
+
+    data.forEach(v => {
+      ids.add(v.celula_principal_id);
+      ids.add(v.celula_vinculada_id);
+    });
+
+    return Array.from(ids);
+  }, [celula?.id]);
+
+
+  const requestPessoasRelatorio = useCallback(async () => {
+    if (!celula?.id) return;
+
+    const celulasIds = await requestCelulasRelacionadas();
+
+    // 🔹 Discípulos
+    const { data: discipulosData } = await supabase
+      .from("discipulos")
+      .select("id, nome, cargo")
+      .in("celula_id", celulasIds);
+
+    // 🔹 Líderes das células
+    const { data: lideresData } = await supabase
+      .from("celulas")
+      .select(`
+        responsavel:responsavel_id (
+          id,
+          nome,
+          cargo
+        )
+      `)
+      .in("id", celulasIds);
+
+    const lideresFormatados =
+      lideresData
+        ?.map((c: any) => c.responsavel)
+        .filter(Boolean) ?? [];
+
+    const listaFinal = [
+      ...(lideresFormatados ?? []),
+      ...(discipulosData ?? []),
+    ];
+
+    setDiscipulos(listaFinal);
+  }, [celula?.id, requestCelulasRelacionadas]);
+
+
 
   useEffect(() => {
     if (!user) return;
-    requestCelulas();
-  }, [user, requestCelulas]);
+    requestCelulaPrincipal();
+  }, [user, requestCelulaPrincipal]);
 
   useEffect(() => {
     if (!celula) return;
-    requestDiscipulos();
-  }, [celula, requestDiscipulos]);
+    requestPessoasRelatorio();
+  }, [celula, requestPessoasRelatorio]);
 
 
+
+
+  const compressImage = async (
+    file: File,
+    maxWidth = 1280,
+    quality = 0.7
+  ): Promise<string> => {
+    const orientation = await exifr.orientation(file).catch(() => 1);
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const img = document.createElement("img");
+
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject("Erro ao criar canvas");
+
+          // Ajusta canvas conforme rotação
+          if (orientation === 6 || orientation === 8) {
+            canvas.width = height;
+            canvas.height = width;
+          } else {
+            canvas.width = width;
+            canvas.height = height;
+          }
+
+          // Corrige orientação
+          switch (orientation) {
+            case 3:
+              ctx.translate(canvas.width, canvas.height);
+              ctx.rotate(Math.PI);
+              break;
+            case 6:
+              ctx.translate(canvas.width, 0);
+              ctx.rotate(Math.PI / 2);
+              break;
+            case 8:
+              ctx.translate(0, canvas.height);
+              ctx.rotate(-Math.PI / 2);
+              break;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const base64 = canvas.toDataURL("image/jpeg", quality);
+          resolve(base64);
+        };
+
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
 
   const fileToBase64 = (file: File) =>
@@ -147,8 +307,9 @@ export default function RelatorioCelula() {
 
     currentY += 10;
 
-    const fotoBase64 = await fileToBase64(dados.fotoCelula[0]);
+    const fotoBase64 = await compressImage(dados.fotoCelula[0], 1280, 0.7);
     doc.addImage(fotoBase64, "JPEG", 25, currentY, 160, 80);
+
 
     currentY += 90;
 
@@ -291,7 +452,6 @@ export default function RelatorioCelula() {
                 <Select nome="Dinâmica"
                 {...register("dinamica", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
                   {discipulos.map((d)=> (
                     <>
                       <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
@@ -303,7 +463,6 @@ export default function RelatorioCelula() {
                 <Select nome="Ministração"
                 {...register("ministracao", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
                   {discipulos.map((d)=> (
                     <>
                       <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
@@ -314,7 +473,6 @@ export default function RelatorioCelula() {
                 <Select nome="Oração Início"
                 {...register("oracaoInicio", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
                   {discipulos.map((d)=> (
                     <>
                       <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
@@ -329,7 +487,6 @@ export default function RelatorioCelula() {
                 <Select nome="Oração do Lanche"
                 {...register("oracaoLanche", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
                   {discipulos.map((d)=> (
                     <>
                       <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>
@@ -341,7 +498,6 @@ export default function RelatorioCelula() {
                 <Select nome="Oração Final"
                 {...register("oracaoFinal", { required: true })}>
                   <option value={""} className="text-black">Selecione</option>
-                  <option value={user?.nome} key={user?.id} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
                   {discipulos.map((d)=> (
                     <>
                       <option value={d.nome} key={d.id} className="text-black font-bold">{d.nome} - {d.cargo}</option>

@@ -10,6 +10,7 @@ import { FaClipboardList, FaUserAlt } from "react-icons/fa";
 import { FiUsers } from "react-icons/fi";
 import { MdSettingsSuggest } from "react-icons/md";
 import { MdAttachMoney } from "react-icons/md";
+import { FaArrowsRotate } from "react-icons/fa6";
 import { IoClose, IoMenu } from "react-icons/io5"
 import { useState } from "react";
 
@@ -120,6 +121,22 @@ export function Navbar(){
                                     </>
                                 )}
 
+
+                                {user?.cargo === "admin" && (
+                                    <>
+                                        <li>
+                                            <Link href={"/admin/vinculos"}>
+                                                <div className="flex items-center gap-2 transition-all
+                                                hover:scale-110">
+                                                    <FaArrowsRotate size={20} color="#fff"/> 
+                                                    <span className="font-manrope font-medium text-white">Vinculos</span> 
+                                                </div>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
+
+
                                 {user?.nome !== "Naira Gomez" && user?.nome !== "Ronaldo Natalino" && user?.cargo !== "admin" && (
                                     <>
                                         <li>
@@ -151,7 +168,7 @@ export function Navbar(){
                             </div>
                             
                             
-                            <div className="flex flex-col mt-12 gap-2"> 
+                            <div className="flex flex-col mt-4 gap-2"> 
                                 <div className="flex items-center mb-1 gap-2">
                                     <MdSettingsSuggest size={26} color="#f9f9f9a9"/> 
                                     <span className="font-manrope font-medium text-[#cfcfcfc2]">Gestão</span> 
@@ -429,6 +446,21 @@ export function Navbar(){
                                                 hover:scale-110">
                                                     <MdAttachMoney size={20} color="#fff"/> 
                                                     <span className="font-manrope text-xl text-white">Pagamentos</span> 
+                                                </div>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
+
+
+                                {user?.cargo === "admin" && (
+                                    <>
+                                        <li>
+                                            <Link href={"/admin/vinculos"}>
+                                                <div className="flex items-center gap-2 transition-all
+                                                hover:scale-110">
+                                                    <FaArrowsRotate size={20} color="#fff"/> 
+                                                    <span className="font-manrope font-medium text-white">Vinculos</span> 
                                                 </div>
                                             </Link>
                                         </li>

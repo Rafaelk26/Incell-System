@@ -34,7 +34,12 @@ export async function POST(req: Request) {
     hora,
     criado_por,
     discipulado_com,
-    discipulos:discipulado_com (
+    discipulado_com_lideres,
+    discipulo:discipulado_com (
+      nome,
+      cargo
+    ),
+    lider:discipulado_com_lideres (
       nome,
       cargo
     ),
@@ -44,11 +49,10 @@ export async function POST(req: Request) {
       coordenacao_id,
       pastoreio_id,
       user_id,
-      supervisoes:supervisao_id (
-        nome
-      )
+      supervisoes:supervisao_id ( nome )
     )
-  `);
+  `)
+
 
 
   if (error) {
@@ -187,12 +191,12 @@ export async function POST(req: Request) {
   const eventos = eventosFiltrados.map((r: any) => {
   const escopo = r.reuniao_escopo?.[0] ?? null;
   const discipulo = r.discipulos ?? null;
-    let descricao: string | null = null;
+  let descricao: string | null = null;
 
-    // 🔹 DISCIPULADO → nome do discípulo
-    if (r.tipo === "DISCIPULADO" && discipulo) {
-      descricao = discipulo.nome;
-    }
+  if (r.tipo === "DISCIPULADO") {
+    descricao = r.discipulo?.nome || r.lider?.nome || null;
+  }
+
 
     // 🔹 GDL → nome da supervisão
     if (r.tipo === "GDL" && escopo?.supervisoes?.nome) {
@@ -225,81 +229,90 @@ export async function POST(req: Request) {
    PUT → CRIAR REUNIÃO + ESCOPO
 ===================================================== */
   export async function PUT(req: Request) {
-    const { tipo, data, hora, discipulado_com, criado_por } =
-      await req.json();
+    const {
+      tipo,
+      data,
+      hora,
+      criado_por,
+      discipulado_id,
+      discipulado_tipo,
+      cargo,
+    } = await req.json();
 
-    if (!criado_por) {
-      return NextResponse.json(
-        { error: "Usuário não autenticado" },
-        { status: 401 }
-      );
+    const payload: any = {
+      tipo,
+      data,
+      hora,
+      criado_em: new Date(),
+      criado_por,
+    };
+
+    if (tipo === "DISCIPULADO") {
+      if (!discipulado_id || !discipulado_tipo) {
+        return NextResponse.json(
+          { error: "Discipulado inválido" },
+          { status: 400 }
+        );
+      }
+
+      // 👤 DISCIPULANDO MEMBRO DA CÉLULA
+      if (discipulado_tipo === "DISCIPULO") {
+        payload.discipulado_com = discipulado_id;
+        payload.discipulado_com_lideres = null;
+      }
+
+      // 👤 DISCIPULANDO LÍDER / SUPERVISOR / COORDENADOR
+      if (discipulado_tipo === "LIDER") {
+        if (cargo === "lider") {
+          return NextResponse.json(
+            { error: "Líder não pode discipular líderes" },
+            { status: 403 }
+          );
+        }
+        payload.discipulado_com_lideres = discipulado_id;
+        payload.discipulado_com = null;
+      }
     }
 
-    /* 1️⃣ CRIAR REUNIÃO */
+
     const { data: reuniao, error: reuniaoError } = await supabase
       .from("reunioes")
-      .insert({
-        tipo,
-        data,
-        hora,
-        criado_em: new Date(),
-        discipulado_com: discipulado_com || null,
-        criado_por,
-      })
+      .insert(payload)
       .select("id")
       .single();
 
-    if (reuniaoError || !reuniao) {
+    if (reuniaoError) {
       return NextResponse.json({ error: reuniaoError }, { status: 500 });
     }
 
-    /* 2️⃣ RESOLVER ESCOPO */
+    // 🔹 ESCOPO
     const escopo: any = {
       reuniao_id: reuniao.id,
       tipo_escopo: tipo,
     };
 
-    // DISCIPULADO → individual
     if (tipo === "DISCIPULADO") {
       escopo.user_id = criado_por;
     }
 
-    // GDL → supervisão
     if (tipo === "GDL") {
-      const { data: supervisao } = await supabase
+      const { data } = await supabase
         .from("supervisoes")
         .select("id")
         .eq("supervisor_id", criado_por)
         .single();
-
-      escopo.supervisao_id = supervisao?.id ?? null;
+      escopo.supervisao_id = data?.id ?? null;
     }
 
-    // GDS → coordenação (🔥 CORRIGIDO)
     if (tipo === "GDS") {
-      const { data: coord, error } = await supabase
+      const { data } = await supabase
         .from("coordenacoes")
         .select("id")
         .eq("coordenador_id", criado_por)
         .single();
-
-      if (error || !coord) {
-        await supabase.from("reunioes").delete().eq("id", reuniao.id);
-        return NextResponse.json(
-          { error: "Coordenação não encontrada" },
-          { status: 400 }
-        );
-      }
-
-      escopo.coordenacao_id = coord.id;
+      escopo.coordenacao_id = data?.id ?? null;
     }
 
-    // GDC → GLOBAL (🔥 SEM FILTRO)
-    if (tipo === "GDC") {
-      // nenhum escopo adicional
-    }
-
-    /* 3️⃣ INSERIR ESCOPO */
     const { error: escopoError } = await supabase
       .from("reuniao_escopo")
       .insert(escopo);
@@ -311,6 +324,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ evento: reuniao });
   }
+
+
 
 /* =====================================================
    DELETE → EXCLUIR REUNIÃO + ESCOPO
