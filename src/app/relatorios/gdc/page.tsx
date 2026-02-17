@@ -128,7 +128,7 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
   const compressImage = async (
     file: File,
     maxWidth = 1280,
-    quality = 0.7
+    maxSizeKB = 500
   ): Promise<string> => {
     const orientation = await exifr.orientation(file).catch(() => 1);
 
@@ -138,7 +138,7 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
       reader.onload = () => {
         const img = document.createElement("img");
 
-        img.onload = () => {
+        img.onload = async () => {
           let width = img.width;
           let height = img.height;
 
@@ -151,7 +151,6 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
           const ctx = canvas.getContext("2d");
           if (!ctx) return reject("Erro ao criar canvas");
 
-          // Ajusta canvas conforme rotação
           if (orientation === 6 || orientation === 8) {
             canvas.width = height;
             canvas.height = width;
@@ -160,7 +159,6 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
             canvas.height = height;
           }
 
-          // Corrige orientação
           switch (orientation) {
             case 3:
               ctx.translate(canvas.width, canvas.height);
@@ -178,7 +176,17 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
 
           ctx.drawImage(img, 0, 0, width, height);
 
-          const base64 = canvas.toDataURL("image/jpeg", quality);
+          let quality = 0.7;
+          let base64 = canvas.toDataURL("image/jpeg", quality);
+
+          while (
+            base64.length / 1024 > maxSizeKB &&
+            quality > 0.4
+          ) {
+            quality -= 0.05;
+            base64 = canvas.toDataURL("image/jpeg", quality);
+          }
+
           resolve(base64);
         };
 
@@ -206,6 +214,10 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
     doc.text("Relatório de GDC", 105, currentY, { align: "center" });
 
     currentY += 10;
+
+    if (dados.fotoGDC[0].size > 5 * 1024 * 1024) {
+      toast("Imagem grande detectada, otimizando automaticamente...");
+    }
 
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(14);

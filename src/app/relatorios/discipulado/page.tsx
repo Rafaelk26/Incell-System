@@ -200,70 +200,78 @@ export default function RelatorioDiscipulado() {
   }
 
   const compressImage = async (
-      file: File,
-      maxWidth = 1280,
-      quality = 0.7
-    ): Promise<string> => {
-      const orientation = await exifr.orientation(file).catch(() => 1);
-  
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-  
-        reader.onload = () => {
-          const img = document.createElement("img");
-  
-          img.onload = () => {
-            let width = img.width;
-            let height = img.height;
-  
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-  
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            if (!ctx) return reject("Erro ao criar canvas");
-  
-            // Ajusta canvas conforme rotação
-            if (orientation === 6 || orientation === 8) {
-              canvas.width = height;
-              canvas.height = width;
-            } else {
-              canvas.width = width;
-              canvas.height = height;
-            }
-  
-            // Corrige orientação
-            switch (orientation) {
-              case 3:
-                ctx.translate(canvas.width, canvas.height);
-                ctx.rotate(Math.PI);
-                break;
-              case 6:
-                ctx.translate(canvas.width, 0);
-                ctx.rotate(Math.PI / 2);
-                break;
-              case 8:
-                ctx.translate(0, canvas.height);
-                ctx.rotate(-Math.PI / 2);
-                break;
-            }
-  
-            ctx.drawImage(img, 0, 0, width, height);
-  
-            const base64 = canvas.toDataURL("image/jpeg", quality);
-            resolve(base64);
-          };
-  
-          img.onerror = reject;
-          img.src = reader.result as string;
+    file: File,
+    maxWidth = 1280,
+    maxSizeKB = 500
+  ): Promise<string> => {
+    const orientation = await exifr.orientation(file).catch(() => 1);
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const img = document.createElement("img");
+
+        img.onload = async () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject("Erro ao criar canvas");
+
+          if (orientation === 6 || orientation === 8) {
+            canvas.width = height;
+            canvas.height = width;
+          } else {
+            canvas.width = width;
+            canvas.height = height;
+          }
+
+          switch (orientation) {
+            case 3:
+              ctx.translate(canvas.width, canvas.height);
+              ctx.rotate(Math.PI);
+              break;
+            case 6:
+              ctx.translate(canvas.width, 0);
+              ctx.rotate(Math.PI / 2);
+              break;
+            case 8:
+              ctx.translate(0, canvas.height);
+              ctx.rotate(-Math.PI / 2);
+              break;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let quality = 0.7;
+          let base64 = canvas.toDataURL("image/jpeg", quality);
+
+          while (
+            base64.length / 1024 > maxSizeKB &&
+            quality > 0.4
+          ) {
+            quality -= 0.05;
+            base64 = canvas.toDataURL("image/jpeg", quality);
+          }
+
+          resolve(base64);
         };
-  
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    };
+
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
 
   async function gerarPdf(dados: RelatorioForm): Promise<string> {
@@ -272,6 +280,10 @@ export default function RelatorioDiscipulado() {
     const marginBottom = 20;
 
     let currentY = 10;
+
+    if (dados.fotoDiscipulado[0].size > 5 * 1024 * 1024) {
+      toast("Imagem grande detectada, otimizando automaticamente...");
+    }
 
     const logoBase64 = await urlToBase64(Incell.src);
     doc.addImage(logoBase64, "PNG", 85, currentY, 40, 20);

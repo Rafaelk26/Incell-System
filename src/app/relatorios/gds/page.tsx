@@ -186,10 +186,10 @@ export default function RelatorioGDS() {
     }
 
 
-    const compressImage = async (
+  const compressImage = async (
     file: File,
     maxWidth = 1280,
-    quality = 0.7
+    maxSizeKB = 500
   ): Promise<string> => {
     const orientation = await exifr.orientation(file).catch(() => 1);
 
@@ -199,7 +199,7 @@ export default function RelatorioGDS() {
       reader.onload = () => {
         const img = document.createElement("img");
 
-        img.onload = () => {
+        img.onload = async () => {
           let width = img.width;
           let height = img.height;
 
@@ -212,7 +212,6 @@ export default function RelatorioGDS() {
           const ctx = canvas.getContext("2d");
           if (!ctx) return reject("Erro ao criar canvas");
 
-          // Ajusta canvas conforme rotação
           if (orientation === 6 || orientation === 8) {
             canvas.width = height;
             canvas.height = width;
@@ -221,7 +220,6 @@ export default function RelatorioGDS() {
             canvas.height = height;
           }
 
-          // Corrige orientação
           switch (orientation) {
             case 3:
               ctx.translate(canvas.width, canvas.height);
@@ -239,7 +237,17 @@ export default function RelatorioGDS() {
 
           ctx.drawImage(img, 0, 0, width, height);
 
-          const base64 = canvas.toDataURL("image/jpeg", quality);
+          let quality = 0.7;
+          let base64 = canvas.toDataURL("image/jpeg", quality);
+
+          while (
+            base64.length / 1024 > maxSizeKB &&
+            quality > 0.4
+          ) {
+            quality -= 0.05;
+            base64 = canvas.toDataURL("image/jpeg", quality);
+          }
+
           resolve(base64);
         };
 
@@ -261,6 +269,10 @@ export default function RelatorioGDS() {
     doc.addImage(logoBase64, "PNG", 85, currentY, 40, 20);
 
     currentY += 30;
+
+    if (dados.fotoGDS[0].size > 5 * 1024 * 1024) {
+      toast("Imagem grande detectada, otimizando automaticamente...");
+    }
 
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(20);
