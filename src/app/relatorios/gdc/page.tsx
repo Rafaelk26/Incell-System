@@ -127,100 +127,87 @@ const [presentes, setPresentes] = useState<CoordenadorType[]>([]);
 
 
   const compressImage = async (
-    file: File,
-    maxWidth = 1280,
-    maxSizeKB = 500
-  ): Promise<string> => {
-    let fileToProcess = file;
+  file: File,
+  maxWidth = 1280,
+  maxSizeKB = 500
+): Promise<string> => {
 
-    /* =========================
-      HEIC → JPEG
-    ========================= */
-    if (
-      file.type === "image/heic" ||
-      file.name.toLowerCase().endsWith(".heic")
-    ) {
-      const convertedBlob = (await heic2any({
-        blob: file,
-        toType: "image/jpeg",
-        quality: 0.9,
-      })) as Blob;
+  // 🚨 GARANTIA ABSOLUTA: só roda no browser
+  if (typeof window === "undefined") {
+    throw new Error("compressImage só pode rodar no client");
+  }
 
-      fileToProcess = new File(
-        [convertedBlob],
-        file.name.replace(/\.heic$/i, ".jpg"),
-        { type: "image/jpeg" }
-      );
-    }
+  // imports dinâmicos (CLIENT ONLY)
+  const heic2any = (await import("heic2any")).default;
+  const exifr = await import("exifr");
 
-    const orientation = await exifr.orientation(fileToProcess).catch(() => 1);
+  let fileToProcess = file;
 
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+  /* =========================
+     HEIC → JPEG
+  ========================= */
+  if (
+    file.type === "image/heic" ||
+    file.name.toLowerCase().endsWith(".heic")
+  ) {
+    const convertedBlob = (await heic2any({
+      blob: file,
+      toType: "image/jpeg",
+      quality: 0.9,
+    })) as Blob;
 
-      reader.onload = () => {
-        const img = document.createElement("img");
+    fileToProcess = new File(
+      [convertedBlob],
+      file.name.replace(/\.heic$/i, ".jpg"),
+      { type: "image/jpeg" }
+    );
+  }
 
-        img.onload = async () => {
-          let width = img.width;
-          let height = img.height;
+  const orientation = await exifr.orientation(fileToProcess).catch(() => 1);
 
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return reject("Erro ao criar canvas");
+    reader.onload = () => {
+      const img = document.createElement("img");
 
-          if (orientation === 6 || orientation === 8) {
-            canvas.width = height;
-            canvas.height = width;
-          } else {
-            canvas.width = width;
-            canvas.height = height;
-          }
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
 
-          switch (orientation) {
-            case 3:
-              ctx.translate(canvas.width, canvas.height);
-              ctx.rotate(Math.PI);
-              break;
-            case 6:
-              ctx.translate(canvas.width, 0);
-              ctx.rotate(Math.PI / 2);
-              break;
-            case 8:
-              ctx.translate(0, canvas.height);
-              ctx.rotate(-Math.PI / 2);
-              break;
-          }
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
 
-          ctx.drawImage(img, 0, 0, width, height);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Erro ao criar canvas");
 
-          let quality = 0.8;
-          let base64 = canvas.toDataURL("image/jpeg", quality);
+        canvas.width = width;
+        canvas.height = height;
 
-          while (
-            base64.length / 1024 > maxSizeKB &&
-            quality > 0.4
-          ) {
-            quality -= 0.05;
-            base64 = canvas.toDataURL("image/jpeg", quality);
-          }
+        ctx.drawImage(img, 0, 0, width, height);
 
-          resolve(base64);
-        };
+        let quality = 0.8;
+        let base64 = canvas.toDataURL("image/jpeg", quality);
 
-        img.onerror = reject;
-        img.src = reader.result as string;
+        while (base64.length / 1024 > maxSizeKB && quality > 0.4) {
+          quality -= 0.05;
+          base64 = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        resolve(base64);
       };
 
-      reader.onerror = reject;
-      reader.readAsDataURL(fileToProcess);
-    });
-  };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(fileToProcess);
+  });
+};
 
 
   async function gerarPdf(dados: RelatorioForm): Promise<string> {
