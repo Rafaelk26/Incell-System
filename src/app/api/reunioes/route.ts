@@ -23,6 +23,47 @@ type Discipulo = {
 ===================================================== */
 export async function POST(req: Request) {
   const { userId, cargo } = await req.json();
+  let aniversarios: any[] = [];
+
+  // 🔎 BUSCAR CÉLULA DO USUÁRIO
+  const { data: celulaData } = await supabase
+    .from("celulas")
+    .select("id")
+    .eq("responsavel_id", userId)
+    .single();
+
+  const celulaId = celulaData?.id ?? null;
+
+
+  if (celulaId) {
+    const { data: discipulos } = await supabase
+      .from("discipulos")
+      .select("id, nome, dataNascimento")
+      .eq("celula_id", celulaId)
+      .not("dataNascimento", "is", null);
+
+    const anoAtual = new Date().getFullYear();
+
+    aniversarios =
+      discipulos?.map((d) => {
+        const [ano, mes, dia] = d.dataNascimento.split("-");
+
+        return {
+          id: `aniversario-${d.id}`,
+          title: `🎂 ${d.nome}`,
+          start: `${anoAtual}-${mes}-${dia}`,
+          editable: false,
+          backgroundColor: "#aa6b05",
+          borderColor: "#aa6b05",
+          classNames: ["font-manrope"],
+          extendedProps: {
+            tipo: "ANIVERSARIO",
+            descricao: "Aniversário",
+          },
+        };
+      }) ?? [];
+  }
+
 
   /* BUSCAR TODAS AS REUNIÕES + ESCOPO */
   const { data, error } = await supabase
@@ -222,7 +263,9 @@ export async function POST(req: Request) {
 
 
 
-  return NextResponse.json({ eventos });
+  return NextResponse.json({
+    eventos: [...eventos, ...aniversarios],
+  }); 
 }
 
 /* =====================================================
