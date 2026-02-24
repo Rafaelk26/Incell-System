@@ -10,6 +10,7 @@ import { FaAnglesUp } from "react-icons/fa6";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { ordenarPorTexto } from "@/functions/formatAZ";
+import { toast } from "react-hot-toast/headless";
 
 /* ===================== TYPES ===================== */
 
@@ -105,7 +106,9 @@ const lideresFiltrados = useMemo(() => {
       setLiderSelecionado(null);
 
       fetchLideres();
+      toast.success("Líder promovido com sucesso!");
     } catch (error) {
+      toast.error("Erro ao promover líder.");
       console.error("Erro ao promover líder:", error);
     }
   }
@@ -127,7 +130,9 @@ const lideresFiltrados = useMemo(() => {
       setLiderSelecionado(null);
 
       fetchLideres();
+      toast.success("Líder excluído com sucesso!");
     } catch (error) {
+      toast.error("Erro ao excluir líder.");
       console.error("Erro ao excluir líder:", error);
     }
   }

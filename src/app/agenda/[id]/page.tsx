@@ -56,6 +56,7 @@ export default function Agenda() {
       e.start.startsWith(dataSelecionada)
     );
   }, [eventos, dataSelecionada]);
+  
 
   return (
     <ProtectedLayout>

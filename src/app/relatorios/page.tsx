@@ -37,10 +37,13 @@ export default function Relatorios(){
                         <section className="w-full mt-16 flex flex-col items-center md:mt-14">
                             <h1 className="font-bold text-3xl font-manrope text-center md:text-4xl">Qual o tipo do relatório?</h1>
 
-                            <section className="flex flex-col gap-8 mt-10
-                            md:flex md:flex-row md:gap-6 md:mt-16">
+                            <section
+                            className="
+                                max-w-4xl mt-10 flex flex-col gap-8 justify-center
+                                md:flex-row md:flex-wrap md:gap-6 md:mt-16"
+                            >
                                 <Link href={"/relatorios/celula"}>
-                                    <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                    <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
                                     hover:scale-105">
                                         <BiSolidChurch size={48} />
                                         <span className="text-lg font-manrope font-semibold">Relatório de Célula</span>
@@ -49,7 +52,7 @@ export default function Relatorios(){
 
 
                                 <Link href={"/relatorios/discipulado"}>
-                                    <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                    <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
                                     hover:scale-105">
                                         <HiUsers size={48} />
                                         <span className="text-lg font-manrope font-semibold">Relatório de Discipulado</span>
@@ -59,7 +62,7 @@ export default function Relatorios(){
                                 {user?.cargo === "supervisor" && (
                                     <>
                                         <Link href={"/relatorios/gdl"}>
-                                            <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                            <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
                                             hover:scale-105">
                                                 <PiUsersFourFill size={48} />
                                                 <span className="text-lg font-manrope font-semibold">Relatório de GDL</span>
@@ -72,7 +75,7 @@ export default function Relatorios(){
                                 {user?.cargo === "coordenador" && (
                                     <>
                                         <Link href={"/relatorios/gds"}>
-                                            <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                            <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
                                             hover:scale-105">
                                                 <FaUsers size={48} />
                                                 <span className="text-lg font-manrope font-semibold">Relatório de GDS</span>
@@ -86,7 +89,7 @@ export default function Relatorios(){
                                 {user?.cargo === "pastor" && (
                                     <>
                                         <Link href={"/relatorios/gdc"}>
-                                            <div className="max-w-64 w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                            <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
                                             hover:scale-105">
                                                 <FaUsers size={48} />
                                                 <span className="text-lg font-manrope font-semibold">Relatório de GDC</span>
@@ -94,6 +97,47 @@ export default function Relatorios(){
                                         </Link>
                                     </>
                                 )}
+
+
+                                {/* {user?.cargo === "supervisor" && (
+                                    <>
+                                        <Link href={"/relatorios/supervisao/celula"}>
+                                            <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                            hover:scale-105">
+                                                <BiSolidChurch size={48} />
+                                                <span className="text-lg font-manrope font-semibold">Relatório de Supervisão de Célula</span>
+                                            </div>
+                                        </Link>
+                                    </>
+                                )}
+                                
+
+
+                                {user?.cargo === "supervisor" && (
+                                    <>
+                                        <Link href={"/relatorios/supervisao/discipulado"}>
+                                            <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                            hover:scale-105">
+                                                <FaUsers size={48} />
+                                                <span className="text-lg font-manrope font-semibold">Relatório de Supervisão de Discipulado</span>
+                                            </div>
+                                        </Link>
+                                    </>
+                                )}
+
+
+
+                                {user?.cargo === "coordenador" && (
+                                    <>
+                                        <Link href={"/relatorios/coordenacao/gdl"}>
+                                            <div className="w-64 flex flex-col items-start bg-[#514F4F]/40 px-6 py-8 gap-4 rounded-2xl transition-all
+                                            hover:scale-105">
+                                                <PiUsersFourFill size={48} />
+                                                <span className="text-lg font-manrope font-semibold">Relatório de Coordenação de GDL</span>
+                                            </div>
+                                        </Link>
+                                    </>
+                                )} */}
                             </section>
                         </section>
                     </main>

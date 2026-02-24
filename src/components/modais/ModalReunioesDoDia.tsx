@@ -37,28 +37,15 @@ export default function ModalReunioesDoDia({
 
 
   function renderDescricao(e: Evento) {
-  const tipo = e.extendedProps?.tipo;
-  const descricao = e.extendedProps?.descricao;
+    if (e.extendedProps?.tipo === "ANIVERSARIO") {
+      return "🎉 Aniversário de discípulo";
+    }
 
-  if (!descricao) return null;
+    const descricao = e.extendedProps?.descricao;
+    if (!descricao) return null;
 
-  switch (tipo) {
-    case "DISCIPULADO":
-      return `${descricao}`;
-
-    case "GDL":
-      return `${descricao}`;
-
-    case "GDS":
-      return `${descricao}`;
-
-    case "GDC":
-      return ` ${descricao}`;
-
-    default:
-      return null;
+    return descricao;
   }
-}
 
 
 
