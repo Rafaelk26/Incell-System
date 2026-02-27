@@ -621,7 +621,7 @@ const itensRelatorios = useMemo(() => {
                 {/* ======== CARDS PRINCIPAIS ======== */}
                 <section
                   ref={scrollRef}
-                  className={`w-full mt-5 hide-scrollbar ${
+                  className={`w-full mt-4 hide-scrollbar ${
                     isMobile || ["supervisor", "coordenador"].includes(user?.cargo)
                       ? "overflow-x-auto touch-pan-x cursor-grab active:cursor-grabbing"
                       : "overflow-visible"
