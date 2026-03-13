@@ -2,21 +2,22 @@
 
 export const dynamic = "force-dynamic";
 
-
 import ProtectedLayout from "@/app/middleware/protectedLayout";
-import { useAuth } from "../../context/useUser";
+import { useAuth } from "../../../../context/useUser";
 import { Navbar } from "@/components/all/navBar";
 import { Input } from "@/components/inputs";
 import { useForm } from "react-hook-form";
 import { Select } from "@/components/select";
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import Incell from "../../../../public/assets/file Incell black.png";
+import Incell from "../../../../../../public/assets/file Incell black.png";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { FaTrash } from "react-icons/fa6";
+import { FaTrash } from "react-icons/fa";
+
 
 /* =========================
    TYPES
@@ -70,9 +71,10 @@ type PessoaRelatorio = {
 export default function RelatorioCelula() {
   const { user } = useAuth();
   const { register, handleSubmit, reset, watch, setValue } = useForm<RelatorioForm>();
-
   const [discipulos, setDiscipulos] = useState<DiscipulosType[]>([]);
   const [celula, setCelula] = useState<CelulaType | null>(null);
+  const params = useParams();
+  const idLider = params.id;
 
 
   const oracaoInicio = watch("oracaoInicio");
@@ -80,6 +82,7 @@ export default function RelatorioCelula() {
   const oracaoLanche = watch("oracaoLanche");
   const ministracao = watch("ministracao");
   const dinamica = watch("dinamica");
+  
 
 
   const requestDiscipulos = useCallback(async () => {
@@ -105,7 +108,7 @@ export default function RelatorioCelula() {
     const { data, error } = await supabase
       .from("celulas")
       .select("id, nome")
-      .eq("responsavel_id", user.id)
+      .eq("responsavel_id", idLider)
       .single();
 
     if (error) {
@@ -122,7 +125,7 @@ export default function RelatorioCelula() {
     const { data, error } = await supabase
       .from("celulas")
       .select("id, nome")
-      .eq("responsavel_id", user.id)
+      .eq("responsavel_id", idLider)
       .single();
 
     if (error) {
@@ -440,8 +443,20 @@ export default function RelatorioCelula() {
           ? data.oracaoFinalOutro || ""
           : data.oracaoFinal;
 
+      const superiorPresenteFinal =
+        user.cargo === "supervisor"
+          ? "Sim"
+          : "";
+
+      const coordenadorPresenteFinal =
+        user.cargo === "coordenador"
+          ? "Sim"
+          : "";
+
       const dadosCorrigidos: RelatorioForm = {
         ...data,
+        supervisorPresente: superiorPresenteFinal,
+        coordenadorPresente: coordenadorPresenteFinal,
         oracaoInicio: oracaoInicioFinal,
         oracaoFinal: oracaoFinalFinal,
         oracaoLanche: oracaoLancheFinal,
@@ -457,7 +472,7 @@ export default function RelatorioCelula() {
       formData.append("conteudo", pdfBase64);
       formData.append("celula_id", celula.id);
 
-      const res = await fetch("/api/relatorios/celula", {
+      const res = await fetch("/api/relatorios/celula/supervisao", {
         method: "POST",
         body: formData,
       });
@@ -500,14 +515,19 @@ export default function RelatorioCelula() {
           md:mt-4 md:mb-10">
             <h1 className="font-bold text-3xl font-manrope text-center mt-4
             md:text-4xl md:text-start md:mt-0">
-              Relatório de Célula
+              Relatório de Supervisão de Célula
             </h1>
+
+            {/* Nome da célula selecionada */}
+            <span className="text-lg font-light text-center mt-1
+            md:text-start">{celula?.nome || "Carregando..."}</span>
 
             <form
               onSubmit={handleSubmit(handleSubmitRelatoryCell)}
               className="mt-10 flex flex-col gap-4 mb-24
               md:mb-0"
             >
+            
               <div className="w-full flex flex-col gap-4
               md:flex-row md:gap-10">
                 <Input
@@ -540,6 +560,8 @@ export default function RelatorioCelula() {
                     {...register("dinamica", { required: true })}
                   >
                     <option value="" className="text-black font-bold">Selecione</option>
+                    <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
+
                     {discipulos.map((d) => (
                       <option
                         key={d.id}
@@ -583,6 +605,7 @@ export default function RelatorioCelula() {
                     {...register("ministracao", { required: true })}
                   >
                     <option value="" className="text-black font-bold">Selecione</option>
+                    <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
 
                     {discipulos.map((d) => (
                       <option
@@ -626,6 +649,7 @@ export default function RelatorioCelula() {
                     {...register("oracaoInicio", { required: true })}
                   >
                     <option value="" className="text-black font-bold">Selecione</option>
+                    <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
 
                     {discipulos.map((d) => (
                       <option
@@ -673,6 +697,7 @@ export default function RelatorioCelula() {
                     {...register("oracaoLanche", { required: true })}
                   >
                     <option value="" className="text-black font-bold">Selecione</option>
+                    <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
 
                     {discipulos.map((d) => (
                       <option
@@ -717,6 +742,7 @@ export default function RelatorioCelula() {
                     {...register("oracaoFinal", { required: true })}
                   >
                     <option value="" className="text-black font-bold">Selecione</option>
+                    <option value={user?.nome} className="text-black font-bold">{user?.nome} - {user?.cargo}</option>
 
                     {discipulos.map((d) => (
                       <option
@@ -779,24 +805,22 @@ export default function RelatorioCelula() {
                   {...register("visitantes", { required: true })}
                 />
 
-                {user?.cargo === "lider" && (
+                {user?.cargo === "supervisor" && (
                   <>
                     <Select nome="Supervisor Presente?"
+                    disabled
                     {...register("supervisorPresente", { required: true })}>
-                      <option value={""} className="text-black font-bold">Selecione</option>
-                      <option value="Sim" className="text-black font-bold">Sim</option>
-                      <option value="Não" className="text-black font-bold">Não</option>
+                      <option value={"Sim"} className="text-black font-bold">Sim</option>
                     </Select>
                   </>
                 )}
 
-                {user?.cargo === "supervisor" && (
+                {user?.cargo === "coordenador" && (
                   <>
                     <Select nome="Coordenador Presente?"
+                    disabled
                     {...register("coordenadorPresente", { required: true })}>
-                      <option value={""} className="text-black font-bold">Selecione</option>
-                      <option value="Sim" className="text-black font-bold">Sim</option>
-                      <option value="Não" className="text-black font-bold">Não</option>
+                      <option value={"Sim"} className="text-black font-bold">Sim</option>
                     </Select>
                   </>
                 )}
@@ -822,8 +846,6 @@ export default function RelatorioCelula() {
                   type="file"
                   {...register("fotoCelula", { required: true })}
                 />
-
-
 
               <button
               className="w-full p-3 mt-4 bg-blue-600 font-manrope font-extrabold rounded-sm transition-all

@@ -78,14 +78,36 @@ export default function detalheLider(){
 
     const fetchRelatorios = async () => {
         try {
-            const { data: relatorios, error } = await supabase
+
+            /* RELATÓRIOS DE LÍDER */
+            const { data: relatoriosLider, error: errorLider } = await supabase
                 .from('relatorios')
                 .select('id, conteudo, tipo, responsavel, criado_em')
                 .eq('responsavel', idLider);
 
-            if (error) throw error;
+            if (errorLider) throw errorLider;
 
-            setRelatorios(relatorios);
+            /* RELATÓRIOS DE SUPERVISOR / COORDENADOR */
+            const { data: relatoriosSupCoord, error: errorSupCoord } = await supabase
+                .from('relatorios_supervisores_coordenadores')
+                .select('id, conteudo, tipo, responsavel, criado_em')
+                .eq('responsavel', idLider);
+
+            if (errorSupCoord) throw errorSupCoord;
+
+            /* JUNTAR TODOS */
+            const todosRelatorios = [
+                ...(relatoriosLider || []),
+                ...(relatoriosSupCoord || [])
+            ];
+
+            /* ORDENAR POR DATA */
+            todosRelatorios.sort((a, b) => 
+                new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
+            );
+
+            setRelatorios(todosRelatorios);
+
         }
         catch (error) {
             console.error("Erro ao buscar relatórios:", error);

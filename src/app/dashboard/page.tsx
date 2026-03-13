@@ -392,7 +392,7 @@ async function buscarRelatorios() {
 
     const lideresIds = lideres?.map(l => l.lider_id) || [];
 
-    responsaveis = lideresIds;
+    responsaveis = [user.id, ...lideresIds];
   }
 
 /* ================= COORDENADOR ================= */
@@ -436,7 +436,10 @@ if (user.cargo === "coordenador") {
   }
 
   // 👉 IDs corretos para usar no relatório
-  responsaveis = supervisores.map(s => s.supervisor_id);
+  responsaveis = [
+    user.id,
+    ...supervisores.map(s => s.supervisor_id)
+  ];
 }
 
   /* ================= PASTOR ================= */
@@ -453,20 +456,46 @@ if (user.cargo === "coordenador") {
   }
 
   /* ================= QUERY FINAL ================= */
-  const { data, error } = await supabase
+  
+  /* ================= RELATÓRIOS DE LÍDERES ================= */
+  const { data: relatoriosLideres, error: error1 } = await supabase
     .from("relatorios")
     .select("*")
     .in("responsavel", responsaveis)
     .in("tipo", tipos)
     .order("criado_em", { ascending: false })
-    .limit(10);
+    .limit(4);
 
-  if (error) {
-    console.error("Erro ao buscar relatórios:", error);
-    return [];
+  if (error1) {
+    console.error("Erro ao buscar relatórios:", error1);
   }
 
-  return data;
+  /* ================= RELATÓRIOS DE SUPERVISORES/COORDENADORES ================= */
+  const { data: relatoriosSuperiores, error: error2 } = await supabase
+    .from("relatorios_supervisores_coordenadores")
+    .select("*")
+    .in("responsavel", responsaveis)
+    .order("criado_em", { ascending: false })
+    .limit(4);
+
+  if (error2) {
+    console.error("Erro ao buscar relatórios de supervisão:", error2);
+  }
+
+  /* ================= JUNTA OS DOIS ================= */
+
+  const todosRelatorios = [
+    ...(relatoriosLideres || []),
+    ...(relatoriosSuperiores || [])
+  ]
+  .sort(
+    (a, b) =>
+      new Date(b.criado_em).getTime() -
+      new Date(a.criado_em).getTime()
+  )
+  .slice(0, 4);
+
+  return todosRelatorios;
 }
 
 useEffect(() => {
@@ -487,10 +516,27 @@ useEffect(() => {
 
 const itensRelatorios = useMemo(() => {
   return relatorios.map(r => {
+
     const nomeResponsavel =
-      (user?.cargo === "supervisor" || user?.cargo === "coordenador" || user?.cargo === "pastor")
+      user?.cargo === "supervisor" ||
+      user?.cargo === "coordenador" ||
+      user?.cargo === "pastor"
         ? mapUsuarios[r.responsavel]
         : null;
+
+    let labelResponsavel = "";
+
+    if (user?.cargo === "supervisor") {
+      labelResponsavel = "Líder";
+    }
+
+    if (user?.cargo === "coordenador") {
+      labelResponsavel = "Supervisor";
+    }
+
+    if (user?.cargo === "pastor") {
+      labelResponsavel = "Coordenador";
+    }
 
     return (
       <div
@@ -500,11 +546,7 @@ const itensRelatorios = useMemo(() => {
         {/* NOME DO RESPONSÁVEL */}
         {nomeResponsavel && (
           <span className="block text-sm text-zinc-400 mb-1">
-            {user?.cargo === "supervisor" && "Líder: "}
-            {user?.cargo === "coordenador" && "Supervisor: "}
-            {r.tipo === "GDS" && "Coordenador: "}
-            {r.tipo === "GDC" && "Pastor: "}
-            {nomeResponsavel}
+            {labelResponsavel}: {nomeResponsavel}
           </span>
         )}
 
