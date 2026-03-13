@@ -154,8 +154,8 @@ export default function CelulasSupervisao() {
               Selecionar Célula
             </h1>
 
-            <section className="w-full mt-6 flex flex-col items-center">
-              <table className="min-w-[1100px] border-collapse text-white 
+            <section className="w-full mt-6 flex flex-col items-center overflow-x-auto touch-pan-x">
+              <table className="w-full min-w-[500px] border-collapse text-white
                     md:w-full md:min-w-full">
                       {/* CABEÇALHO */}
                       <thead>
