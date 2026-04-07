@@ -30,6 +30,8 @@ interface CelulaProps {
   horario: string;
   bairro: string;
   idade: string;
+  rua: string;
+  numero: string;
 }
 
 interface UsuarioProps {
@@ -59,7 +61,7 @@ export default function AdminCelulas() {
   async function buscarCelulas() {
     const { data: celulas } = await supabase
       .from("celulas")
-      .select("id, nome, genero, responsavel_id, dia_semana, horario, bairro, idade");
+      .select("id, nome, genero, responsavel_id, dia_semana, horario, bairro, idade, rua, numero");
 
     if (celulas) setCelulasS(celulas);
     setLoading(false);
@@ -103,6 +105,8 @@ async function handleSaveEdit() {
     .update({
       nome: celulaSelecionada.nome,
       genero: celulaSelecionada.genero,
+      rua: celulaSelecionada.rua,
+      numero: celulaSelecionada.numero,
       bairro: celulaSelecionada.bairro,
     })
     .eq("id", celulaSelecionada.id);
@@ -540,6 +544,30 @@ const sortByNome = (a: CelulaProps, b: CelulaProps) => {
                     <option value="mista" className="font-bold text-black">Mista</option>
                     <option value="par" className="font-bold text-black">Par</option>
                   </Select>
+
+                  {/* Rua */}
+                  <Input
+                    value={celulaSelecionada.rua}
+                    onChange={(e) =>
+                      setCelulaSelecionada({
+                        ...celulaSelecionada,
+                        rua: e.target.value,
+                      })
+                    }
+                    placeholder="Rua da célula"
+                  />
+
+                  {/* Número */}
+                  <Input
+                    value={celulaSelecionada.numero}
+                    onChange={(e) =>
+                      setCelulaSelecionada({
+                        ...celulaSelecionada,
+                        numero: e.target.value,
+                      })
+                    }
+                    placeholder="Número"
+                  />
 
                   {/* Bairro */}
                   <Select
