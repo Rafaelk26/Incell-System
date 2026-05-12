@@ -5,7 +5,7 @@
       "schedule": "0 6 * * *"
     }, 
     {
-      "path": "/api/cron/limpar-relatorios?secret=relatorio_limpar_rota_2026_secure_X9pLk_shygb@!1403%",
+      "path": "/api/cron/limpar-relatorios",
       "schedule": "0 6 * * *"
     }
   ]

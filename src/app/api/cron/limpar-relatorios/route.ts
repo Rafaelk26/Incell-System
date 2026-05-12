@@ -3,12 +3,10 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const secret = searchParams.get("secret");
+    const isCron = req.headers.get("x-vercel-cron");
 
-    // 🔐 Validação segura
-    if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!isCron) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     console.log("CRON EXECUTOU:", new Date().toISOString());
