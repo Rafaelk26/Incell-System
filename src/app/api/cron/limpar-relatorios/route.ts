@@ -3,17 +3,24 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function GET(req: Request) {
   try {
-    // 🔐 Proteção básica (opcional mas recomendado)
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    const { searchParams } = new URL(req.url);
+    const secret = searchParams.get("secret");
+
+    // 🔐 Validação segura
+    if (secret !== process.env.CRON_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ⏰ Relatórios expirados (1 dia)
+    console.log("CRON EXECUTOU:", new Date().toISOString());
+
+    // ⏰ Buscar relatórios expirados (1 dia)
     const { data: relatorios, error } = await supabase
       .from("relatorios")
       .select("id, file_path")
-      .lte("criado_em", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      .lte(
+        "criado_em",
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      );
 
     if (error) throw error;
 
@@ -21,8 +28,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Nenhum relatório expirado" });
     }
 
-    // 🧹 Remover arquivos do bucket
-    const paths = relatorios.map(r => r.file_path);
+    // 🧹 Remover arquivos do storage
+    const paths = relatorios.map((r) => r.file_path);
 
     const { error: storageError } = await supabase
       .storage
@@ -31,8 +38,8 @@ export async function GET(req: Request) {
 
     if (storageError) throw storageError;
 
-    // 🗑️ Remover registros do banco
-    const ids = relatorios.map(r => r.id);
+    // 🗑️ Remover do banco
+    const ids = relatorios.map((r) => r.id);
 
     const { error: deleteError } = await supabase
       .from("relatorios")
@@ -42,7 +49,7 @@ export async function GET(req: Request) {
     if (deleteError) throw deleteError;
 
     return NextResponse.json({
-      message: "Relatórios expirados removidos",
+      message: "Relatórios removidos",
       removidos: ids.length,
     });
 
